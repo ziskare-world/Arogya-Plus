@@ -108,22 +108,22 @@ router.get(
       .select(
         "name email specialization phone clinicAddress clinicCoordinates hospitalName hospitalCoordinates createdByAdmin"
       )
-      .populate("createdByAdmin", "hospitalCoordinates");
+      .populate("createdByAdmin", "hospitalCoordinates")
+      .lean();
 
     const normalizedDoctors = doctors.map((doctor) => {
-      const data = doctor.toObject();
       const fallbackHospitalCoordinates =
-        data.hospitalCoordinates || data.createdByAdmin?.hospitalCoordinates || null;
+        doctor.hospitalCoordinates || doctor.createdByAdmin?.hospitalCoordinates || null;
 
       return {
-        _id: data._id,
-        name: data.name,
-        email: data.email,
-        specialization: data.specialization,
-        phone: data.phone,
-        clinicAddress: data.clinicAddress,
-        clinicCoordinates: data.clinicCoordinates || null,
-        hospitalName: data.hospitalName,
+        _id: doctor._id,
+        name: doctor.name,
+        email: doctor.email,
+        specialization: doctor.specialization,
+        phone: doctor.phone,
+        clinicAddress: doctor.clinicAddress,
+        clinicCoordinates: doctor.clinicCoordinates || null,
+        hospitalName: doctor.hospitalName,
         hospitalCoordinates: fallbackHospitalCoordinates
       };
     });

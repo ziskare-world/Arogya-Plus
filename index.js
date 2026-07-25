@@ -5,6 +5,9 @@ const dotenv = require("dotenv");
 const fs = require("fs");
 const path = require("path");
 const { Server } = require("socket.io");
+const helmet = require("helmet");
+const compression = require("compression");
+const rateLimit = require("express-rate-limit");
 
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
@@ -52,6 +55,33 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 const app = express();
+
+// Security & Performance Middlewares
+app.use(compression());
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false
+  })
+);
+
+// Rate limiters for security
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: process.env.NODE_ENV === "test" ? 1000 : 50,
+  message: { success: false, message: "Too many authentication requests, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: process.env.NODE_ENV === "test" ? 10000 : 500,
+  message: { success: false, message: "Too many requests, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 const server = http.createServer(app);
 const uiDirectory = path.join(__dirname, "ui");
 const VIDEO_ROOM_PREFIX = "video:";
@@ -69,8 +99,8 @@ app.use(
     origin: "*"
   })
 );
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // Attach Socket.io instance to each request for route-level real-time updates.
 app.use((req, res, next) => {
@@ -172,7 +202,7 @@ app.get("/super-admin/payments", sendUiPage("super-admin", "payments.html"));
 app.get("/super-admin/reports", sendUiPage("super-admin", "reports.html"));
 app.get("/super-admin/system-logs", sendUiPage("super-admin", "system-logs.html"));
 
-app.use(express.static(uiDirectory));
+app.use(express.static(uiDirectory, { maxAge: process.env.NODE_ENV === "production" ? "1d" : 0 }));
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({
@@ -187,6 +217,10 @@ app.get("/api/public-config", (req, res) => {
     googleMapsApiKey: resolveGoogleMapsApiKey()
   });
 });
+
+app.use("/api/", apiLimiter);
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/appointments", appointmentRoutes);

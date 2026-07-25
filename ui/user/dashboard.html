@@ -1,0 +1,87 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - User Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="../css/user.css" />
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="app-layout">
+        <div class="main-area">
+            <div id="topbar-container"></div>
+
+            <main class="page-content">
+                <div class="page-header">
+                    <div>
+                        <h2 id="welcome-title"></h2>
+                        <p id="dashboard-subtitle"></p>
+                    </div>
+                </div>
+
+                <div class="grid-4" style="margin-bottom:24px">
+                    <div class="stat-card blue">
+                        <div class="stat-icon">Appointments</div>
+                        <div id="stat-appointments" class="stat-value">0</div>
+                        <div class="stat-label">Next Appointments</div>
+                    </div>
+                    <div class="stat-card red">
+                        <div class="stat-icon">Prescriptions</div>
+                        <div id="stat-refills" class="stat-value">0</div>
+                        <div class="stat-label">Refill Due</div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="stat-icon">Medical Records</div>
+                        <div id="stat-records" class="stat-value">0</div>
+                        <div class="stat-label">Recent Records</div>
+                    </div>
+                    <div class="stat-card purple">
+                        <div class="stat-icon">INR</div>
+                        <div id="stat-balance" class="stat-value">0</div>
+                        <div class="stat-label">Balance Due</div>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Next Appointment</div>
+                            <button class="btn btn-ghost btn-sm" onclick="location.href='appointments.html'">View All</button>
+                        </div>
+                        <div
+                            style="padding:16px;background:#f8fafc;border-radius:12px;display:flex;align-items:center;gap:12px">
+                            <div
+                                style="width:48px;height:48px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:1rem">
+                                <span id="next-avatar">--</span>
+                            </div>
+                            <div style="flex:1">
+                                <div id="next-doctor" style="font-weight:700;color:var(--text-1)"></div>
+                                <div id="next-details" class="muted"></div>
+                            </div>
+                            <span id="next-status" class="badge badge-blue"></span>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Recent Activity</div>
+                        </div>
+                        <div id="recent-activity" style="display:flex;flex-direction:column;gap:12px"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="../backend-js/user-dashboard.js"></script>
+</body>
+
+</html>
+

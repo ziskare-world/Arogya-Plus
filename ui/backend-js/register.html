@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <meta name="theme-color" content="#2563eb" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+    <title>Arogya Plus — Create Account</title>
+    <link rel="stylesheet" href="css/global.css" />
+    <link rel="stylesheet" href="css/auth.css" />
+    <script src="/js/pwa-register.js" defer></script>
+    <style>
+        .form-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .gradient-text {
+            color: var(--blue);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="auth-page">
+
+        <!-- BRAND -->
+        <div class="auth-brand">
+            <div class="auth-logo">
+                <div class="auth-logo-icon">🏥</div>
+                <div class="auth-logo-text"><span>Arogya Plus</span> Health</div>
+            </div>
+            <h2>Join <span class="gradient-text">thousands</span> of healthcare professionals.</h2>
+            <p>Create your Arogya Plus account in under 2 minutes. No credit card required. Full access to all features
+                from
+                day one.</p>
+            <div class="auth-features">
+                <div class="auth-feature">
+                    <div class="auth-feature-icon" style="background:rgba(34,197,94,0.15)">✅</div>
+                    <div>
+                        <div class="auth-feature-text">HIPAA Compliant</div>
+                        <div class="auth-feature-sub">Your data is always protected</div>
+                    </div>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon" style="background:rgba(37,99,235,0.15)">⚡</div>
+                    <div>
+                        <div class="auth-feature-text">Real-Time Data</div>
+                        <div class="auth-feature-sub">Live updates across all modules</div>
+                    </div>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon" style="background:rgba(139,92,246,0.15)">🤖</div>
+                    <div>
+                        <div class="auth-feature-text">AI-Powered Insights</div>
+                        <div class="auth-feature-sub">Smart suggestions & predictions</div>
+                    </div>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon" style="background:#eff6ff">🌍</div>
+                    <div>
+                        <div class="auth-feature-text">Multi-Hospital Ready</div>
+                        <div class="auth-feature-sub">Manage multiple locations</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORM -->
+        <div class="auth-form-panel">
+            <div class="auth-form-box">
+                <h1>Create account 🚀</h1>
+                <p>Join Arogya Plus and revolutionize your practice</p>
+
+                
+
+                <div class="divider-text" style="margin-bottom:20px">or register with email</div>
+
+                <form class="form-stack" onsubmit="handleRegister(event)">
+                    <div class="grid-2" style="gap:12px">
+                        <div class="form-group">
+                            <label class="form-label">First Name</label>
+                            <input id="fname" type="text" class="form-input" placeholder="John" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Last Name</label>
+                            <input id="lname" type="text" class="form-input" placeholder="Doe" required />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">📧</span>
+                            <input id="email" type="email" class="form-input" placeholder="name@hospital.com"
+                                required />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <div class="input-wrap" style="position:relative">
+                            <span class="input-icon">🔑</span>
+                            <input id="password" type="password" class="form-input" placeholder="Min. 8 characters"
+                                required oninput="checkStrength(this.value)" />
+                            <button type="button" onclick="togglePass('password',this)"
+                                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-500);font-size:16px">👁</button>
+                        </div>
+                        <div class="strength-meter">
+                            <div class="strength-bars">
+                                <div class="strength-bar" id="sb1"></div>
+                                <div class="strength-bar" id="sb2"></div>
+                                <div class="strength-bar" id="sb3"></div>
+                                <div class="strength-bar" id="sb4"></div>
+                            </div>
+                            <div class="strength-label" id="strength-label">Enter a password</div>
+                        </div>
+                    </div>
+                    <label class="checkbox-row" style="margin-top:4px">
+                        <input type="checkbox" id="terms" required />
+                        I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+                    </label>
+                    <button type="submit" class="btn btn-primary btn-full btn-lg">Create Account →</button>
+                </form>
+
+                <div class="auth-footer-text">
+                    Already have an account? <a href="login.html">Sign in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { toast } from './js/utils.js';
+        window.toast = toast;
+
+        window.checkStrength = function (val) {
+            const bars = [document.getElementById('sb1'), document.getElementById('sb2'),
+            document.getElementById('sb3'), document.getElementById('sb4')];
+            const label = document.getElementById('strength-label');
+            const colors = ['', '#ef4444', '#f97316', '#eab308', '#22c55e'];
+            const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+            let score = 0;
+            if (val.length >= 8) score++;
+            if (/[A-Z]/.test(val)) score++;
+            if (/[0-9]/.test(val)) score++;
+            if (/[^A-Za-z0-9]/.test(val)) score++;
+            bars.forEach((b, i) => b.style.background = i < score ? colors[score] : 'var(--bg-alt)');
+            label.textContent = val ? labels[score] || 'Weak' : 'Enter a password';
+            label.style.color = colors[score] || 'var(--text-500)';
+        };
+
+        window.handleRegister = function (e) {
+            e.preventDefault();
+            const fn = document.getElementById('fname').value;
+            const ln = document.getElementById('lname').value;
+            const em = document.getElementById('email').value;
+            toast(`Welcome to Arogya Plus, ${fn}! Redirecting to login…`, 'success');
+            setTimeout(() => location.href = 'login.html', 1500);
+        };
+
+        window.togglePass = function (id, btn) {
+            const inp = document.getElementById(id);
+            if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+            else { inp.type = 'password'; btn.textContent = '👁'; }
+        };
+    </script>
+    <script src="/backend-js/authentication.js"></script>
+</body>
+
+</html>

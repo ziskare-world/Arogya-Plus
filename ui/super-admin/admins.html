@@ -1,0 +1,390 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - Hospitals</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+    <style>
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(2px);
+            z-index: 120;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-backdrop.hidden {
+            display: none;
+        }
+
+        .modal-panel {
+            width: 100%;
+            max-width: 620px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 20px;
+        }
+
+        .modal-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-panel::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 999px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            position: sticky;
+            top: -20px;
+            padding-top: 16px;
+            padding-bottom: 6px;
+            background: var(--surface);
+            z-index: 1;
+        }
+
+        .modal-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-100);
+        }
+
+        .close-btn {
+            border: none;
+            background: transparent;
+            font-size: 1.25rem;
+            color: var(--text-500);
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .hospital-map {
+            width: 100%;
+            min-height: 260px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #f8fafc;
+        }
+
+        .map-help {
+            font-size: .78rem;
+            color: var(--text-500);
+            margin-top: 8px;
+        }
+
+        .account-block {
+            border: 1px solid var(--border);
+            border-radius: var(--r-md);
+            padding: 14px;
+            background: #f8fafc;
+        }
+
+        .account-title {
+            font-size: .82rem;
+            font-weight: 700;
+            color: var(--text-200);
+            margin-bottom: 10px;
+        }
+
+        .id-popup-panel {
+            max-width: 560px;
+        }
+
+        .id-popup-meta {
+            font-size: .78rem;
+            color: var(--text-500);
+            margin-bottom: 12px;
+        }
+
+        .id-popup-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .id-popup-item {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px;
+            background: #ffffff;
+        }
+
+        #admins-tbody td {
+            vertical-align: top;
+        }
+
+        #admins-tbody td:nth-child(3) {
+            min-width: 170px;
+        }
+
+        .action-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            align-items: flex-start;
+        }
+
+        .mini-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .id-popup-panel {
+                max-width: 100%;
+            }
+
+            .mini-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container"></div>
+
+    <div id="admin-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true"
+        aria-labelledby="admin-modal-title">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <div id="admin-modal-title" class="modal-title">Add Hospital</div>
+                <button class="close-btn" type="button" onclick="closeAdminModal()" aria-label="Close">x</button>
+            </div>
+
+            <form id="admin-form" style="display:grid;gap:12px">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="admin-name">Base Account Name</label>
+                        <input id="admin-name" class="form-input" type="text" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="admin-phone">Phone</label>
+                        <input id="admin-phone" class="form-input" type="text" />
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="admin-hospital">Hospital Name</label>
+                        <input id="admin-hospital" class="form-input" type="text" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="admin-hospital-address">Hospital Address (Map)</label>
+                        <input id="admin-hospital-address" class="form-input" type="text"
+                            placeholder="Search address or click map" required />
+                        <button id="admin-address-search-btn" class="btn btn-outline btn-sm" type="button"
+                            style="margin-top:8px">Locate Address On Map</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="flex-between">
+                        <label class="form-label" for="admin-hospital-map">Hospital Location</label>
+                        <span id="admin-map-status" class="badge badge-blue">Initializing</span>
+                    </div>
+                    <div id="admin-hospital-map" class="hospital-map"></div>
+                    <div id="admin-map-help" class="map-help">Search address to locate on map, then click map to adjust exact hospital location.</div>
+                    <div id="admin-coords-label" class="map-help">Coordinates: -</div>
+                </div>
+
+                <div class="account-block">
+                    <div class="account-title">Account 1: Operations ID</div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="admin-ops-email">Operations Email</label>
+                            <input id="admin-ops-email" class="form-input" type="email" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="admin-ops-password">Operations Password</label>
+                            <input id="admin-ops-password" class="form-input" type="password" minlength="6" required />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="account-block">
+                    <div class="account-title">Account 2: Receptionist ID</div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="admin-rec-email">Receptionist Email</label>
+                            <input id="admin-rec-email" class="form-input" type="email" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="admin-rec-password">Receptionist Password</label>
+                            <input id="admin-rec-password" class="form-input" type="password" minlength="6" required />
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
+                    <button class="btn btn-outline" type="button" onclick="closeAdminModal()">Cancel</button>
+                    <button id="create-admin-btn" class="btn btn-primary" type="submit">Create Hospital + 2 IDs</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="hospital-ids-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true"
+        aria-labelledby="hospital-ids-title">
+        <div class="modal-panel id-popup-panel">
+            <div class="modal-header">
+                <div id="hospital-ids-title" class="modal-title">Hospital Admin IDs</div>
+                <button class="close-btn" type="button" onclick="closeHospitalIdsModal()" aria-label="Close">x</button>
+            </div>
+            <div id="hospital-ids-meta" class="id-popup-meta">-</div>
+            <div id="hospital-ids-list" class="id-popup-list"></div>
+        </div>
+    </div>
+
+    <div id="hospital-edit-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true"
+        aria-labelledby="hospital-edit-title">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <div id="hospital-edit-title" class="modal-title">Update Hospital Details</div>
+                <button class="close-btn" type="button" onclick="closeHospitalEditModal()" aria-label="Close">x</button>
+            </div>
+
+            <form id="hospital-edit-form" style="display:grid;gap:12px">
+                <div class="form-group">
+                    <label class="form-label" for="edit-current-hospital-name">Current Hospital</label>
+                    <input id="edit-current-hospital-name" class="form-input" type="text" readonly />
+                </div>
+
+                <div class="mini-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="edit-hospital-name">Hospital Name</label>
+                        <input id="edit-hospital-name" class="form-input" type="text" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-hospital-address">Hospital Address</label>
+                        <input id="edit-hospital-address" class="form-input" type="text" />
+                    </div>
+                </div>
+
+                <div class="mini-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="edit-hospital-lat">Latitude</label>
+                        <input id="edit-hospital-lat" class="form-input" type="number" step="any"
+                            placeholder="20.593700" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-hospital-lng">Longitude</label>
+                        <input id="edit-hospital-lng" class="form-input" type="number" step="any"
+                            placeholder="78.962900" />
+                    </div>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
+                    <button class="btn btn-outline" type="button" onclick="closeHospitalEditModal()">Cancel</button>
+                    <button id="update-hospital-btn" class="btn btn-primary" type="submit">Update Hospital</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="admin-password-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true"
+        aria-labelledby="admin-password-title">
+        <div class="modal-panel" style="max-width:520px">
+            <div class="modal-header">
+                <div id="admin-password-title" class="modal-title">Update Admin Password</div>
+                <button class="close-btn" type="button" onclick="closeAdminPasswordModal()" aria-label="Close">x</button>
+            </div>
+
+            <div id="admin-password-meta" class="id-popup-meta">-</div>
+
+            <form id="admin-password-form" style="display:grid;gap:12px">
+                <div class="form-group">
+                    <label class="form-label" for="new-admin-password">New Password</label>
+                    <input id="new-admin-password" class="form-input" type="password" minlength="6" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="confirm-admin-password">Confirm Password</label>
+                    <input id="confirm-admin-password" class="form-input" type="password" minlength="6" required />
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
+                    <button class="btn btn-outline" type="button" onclick="closeAdminPasswordModal()">Cancel</button>
+                    <button id="update-admin-password-btn" class="btn btn-primary" type="submit">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="app-layout">
+        <div class="main-area">
+            <div id="topbar-container"></div>
+
+            <main class="page-content">
+                <div class="page-header flex-between">
+                    <div>
+                        <h2>Hospital Management</h2>
+                        <p id="admin-subtitle">Add hospitals and generate operations + receptionist IDs.</p>
+                    </div>
+                    <button class="btn btn-primary" type="button" onclick="openAdminModal()">+ Add Hospital</button>
+                </div>
+
+                <div class="stat-grid" style="margin-bottom:24px">
+                    <div class="stat-card blue card-sm">
+                        <div id="admin-count" class="stat-value">0</div>
+                        <div class="stat-label">Created Admin IDs</div>
+                    </div>
+                    <div class="stat-card green card-sm">
+                        <div id="admin-active-count" class="stat-value">0</div>
+                        <div class="stat-label">Active IDs</div>
+                    </div>
+                    <div class="stat-card cyan card-sm">
+                        <div id="admin-hospital-count" class="stat-value">0</div>
+                        <div class="stat-label">Hospitals Covered</div>
+                    </div>
+                    <div class="stat-card purple card-sm">
+                        <div id="admin-full-count" class="stat-value">0</div>
+                        <div class="stat-label">Ops + Reception IDs</div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:20px">
+                    <div class="card-header">
+                        <div class="card-title">Hospital Admin IDs Created By You</div>
+                        <button class="btn btn-outline btn-sm" type="button" onclick="reloadAdmins()">Refresh</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Hospital</th>
+                                    <th>Location</th>
+                                    <th>Admin IDs</th>
+                                    <th>Active IDs</th>
+                                    <th>Created On</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admins-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="../backend-js/super-admin-admins.js"></script>
+</body>
+
+</html>
+

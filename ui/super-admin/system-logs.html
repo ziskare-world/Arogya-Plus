@@ -1,0 +1,60 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - System Logs</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="app-layout">
+        <div class="main-area">
+            <div id="topbar-container"></div>
+            <main class="page-content">
+                <div class="page-header">
+                    <h2>System Audit Logs</h2>
+                    <button class="btn btn-outline" onclick="toast('Exporting logs...','info')">Export CSV</button>
+                </div>
+                <div class="card" style="margin-top:20px">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Level</th>
+                                    <th>Module</th>
+                                    <th>Event</th>
+                                    <th>Actor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>2026-02-21 12:05:42</td>
+                                    <td><span class="badge badge-blue">INFO</span></td>
+                                    <td>Auth Service</td>
+                                    <td>Successful Login: super-admin@arogyaplus.com</td>
+                                    <td>System</td>
+                                </tr>
+                                <tr>
+                                    <td>2026-02-21 11:58:12</td>
+                                    <td><span class="badge badge-red">WARN</span></td>
+                                    <td>DB Cluster</td>
+                                    <td>High latency detected in primary node</td>
+                                    <td>MonitoringAgent</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script type="module" src="../backend-js/super-admin-system-logs.js"></script>
+</body>
+
+</html>
+

@@ -1,0 +1,156 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - Emergency Queue</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+    <style>
+        .emr-banner {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: var(--r-xl);
+            padding: 20px 28px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .pulse-red {
+            animation: blink 1s step-end infinite;
+            font-size: 2rem;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0
+            }
+        }
+
+        .queue-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: border-color var(--t-mid);
+            cursor: pointer;
+        }
+
+        .queue-card:hover {
+            border-color: var(--border-hover);
+        }
+
+        .queue-num {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .q-critical {
+            background: #ffe4e6;
+            color: #dc2626;
+        }
+
+        .q-urgent {
+            background: #fefce8;
+            color: #ca8a04;
+        }
+
+        .q-stable {
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .vital-mini {
+            text-align: center;
+        }
+
+        .vm-val {
+            font-size: .95rem;
+            font-weight: 700;
+            color: var(--blue);
+        }
+
+        .vm-lbl {
+            font-size: .62rem;
+            color: var(--text-500);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="app-layout">
+
+        <!-- Sidebar injected by JS -->
+        <div class="main-area">
+            <div id="topbar-container"></div>
+
+            <main class="page-content">
+                <!-- Alert Banner -->
+                <div class="emr-banner">
+                    <div class="pulse-red">!</div>
+                    <div style="flex:1">
+                        <div style="font-weight:700;font-size:1.05rem;color:var(--text-1)">Emergency Room - Live Queue
+                        </div>
+                        <div style="font-size:.83rem;color:var(--text-400)"><span id="emr-count">3</span> patients
+                            currently in triage</div>
+                    </div>
+                    <button class="btn btn-danger" onclick="addPatient()">+ Add Patient</button>
+                    <button class="btn btn-outline btn-sm" onclick="toast('Refreshed','success')">Refresh</button>
+                </div>
+
+                <div class="grid-4" style="margin-bottom:24px">
+                    <div class="stat-card red card-sm">
+                        <div class="stat-value" style="color:#dc2626">3</div>
+                        <div class="stat-label">Active Cases</div>
+                    </div>
+                    <div class="stat-card yellow card-sm">
+                        <div class="stat-value" style="color:#ca8a04">12</div>
+                        <div class="stat-label">Today's Total</div>
+                    </div>
+                    <div class="stat-card green card-sm">
+                        <div class="stat-value">9</div>
+                        <div class="stat-label">Resolved</div>
+                    </div>
+                    <div class="stat-card cyan card-sm">
+                        <div class="stat-value">~8m</div>
+                        <div class="stat-label">Avg. Response</div>
+                    </div>
+                </div>
+
+                <div class="grid-2" style="align-items:start">
+                    <!-- Queue -->
+                    <div>
+                        <div class="section-title" style="margin-bottom:14px">Triage Queue</div>
+                        <div id="queue-list" style="display:flex;flex-direction:column;gap:10px"></div>
+                    </div>
+                    <!-- Resolved today -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Resolved Today</div><span class="badge badge-green">9 cases</span>
+                        </div>
+                        <div id="resolved-list"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="../backend-js/super-admin-emergency.js"></script>
+</body>
+
+</html>
+

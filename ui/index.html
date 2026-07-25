@@ -1,0 +1,1747 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta name="theme-color" content="#2563eb" />
+  <title>Arogya Plus Platform Hub</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="css/global.css" />
+  <script src="/js/pwa-register.js" defer></script>
+  <script type="module" src="assets/spline-viewer.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700;800&display=swap');
+
+    :root {
+      --page-bg-1: #f7fbff;
+      --page-bg-2: #eaf3ff;
+      --ink-1: #0f172a;
+      --ink-2: #475569;
+      --brand-1: #2563eb;
+      --brand-2: #0ea5e9;
+    }
+
+    /* Public Nav */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 10% -10%, rgba(37, 99, 235, 0.18), transparent 40%),
+        radial-gradient(circle at 110% 8%, rgba(6, 182, 212, 0.2), transparent 44%),
+        linear-gradient(180deg, var(--page-bg-1) 0%, var(--page-bg-2) 100%);
+      color: var(--ink-1);
+      font-family: 'Manrope', 'Segoe UI', sans-serif;
+      min-height: 100vh
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit
+    }
+
+    .pub-nav {
+      position: fixed;
+      top: 10px;
+      left: 22px;
+      right: 22px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 0 34px;
+      height: 62px;
+      background: rgba(248, 252, 255, 0.82);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(191, 219, 254, 0.7);
+      border-radius: 14px;
+      box-shadow: 0 16px 38px rgba(15, 23, 42, 0.08);
+    }
+
+    .pub-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-right: auto;
+      font-family: 'Space Grotesk', 'Manrope', sans-serif;
+    }
+
+    .pub-logo-icon {
+      font-size: 1.5rem
+    }
+
+    .pub-logo span {
+      color: #2563eb;
+    }
+
+    .pub-links {
+      display: flex;
+      gap: 4px;
+      margin-right: 24px
+    }
+
+    .pub-link {
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: .83rem;
+      font-weight: 600;
+      color: #486179;
+      transition: color .2s, background .2s, transform .2s;
+    }
+
+    .pub-link:hover {
+      color: #0f172a;
+      background: rgba(37, 99, 235, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .pub-link.active,
+    .pub-link.active:hover {
+      color: var(--brand-1);
+      background: rgba(37, 99, 235, 0.14);
+    }
+
+    .pub-actions {
+      display: flex;
+      gap: 8px
+    }
+
+    .btn-nav-login {
+      padding: 8px 20px;
+      border-radius: 999px;
+      font-size: .82rem;
+      font-weight: 600;
+      border: 1px solid rgba(37, 99, 235, 0.32);
+      color: #1d4ed8;
+      background: rgba(255, 255, 255, 0.65);
+      cursor: pointer;
+      transition: all .2s;
+      font-family: inherit;
+    }
+
+    .btn-nav-login:hover {
+      background: rgba(37, 99, 235, 0.12);
+    }
+
+    .btn-nav-cta {
+      padding: 8px 20px;
+      border-radius: 999px;
+      font-size: .82rem;
+      font-weight: 700;
+      border: none;
+      color: #fff;
+      background: linear-gradient(135deg, var(--brand-1), var(--brand-2));
+      cursor: pointer;
+      transition: transform .2s, box-shadow .2s, opacity .2s;
+      font-family: inherit;
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.28);
+    }
+
+    .btn-nav-cta:hover {
+      opacity: .95;
+      transform: translateY(-1px);
+      box-shadow: 0 14px 24px rgba(37, 99, 235, 0.34);
+    }
+
+    /* Page wrapper (no sidebar) */
+    .page-wrap {
+      padding-top: 86px
+    }
+  </style>
+  <style>
+    /* Hero */
+    .hero {
+      position: relative;
+      isolation: isolate;
+      min-height: calc(100vh - 110px);
+      display: flex;
+      align-items: center;
+      padding: 72px 72px 62px;
+      margin: 10px 22px 0;
+      border-radius: 22px;
+      overflow: hidden;
+      background: #020617;
+      box-shadow: 0 28px 58px rgba(2, 6, 23, 0.32);
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background-image: linear-gradient(rgba(56, 189, 248, 0.14) 1px, transparent 1px), linear-gradient(90deg, rgba(56, 189, 248, 0.14) 1px, transparent 1px);
+      background-size: 42px 42px;
+      pointer-events: none;
+      opacity: 0.44;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 18% 20%, rgba(37, 99, 235, 0.22), transparent 46%),
+        linear-gradient(90deg, rgba(2, 6, 23, 0.88) 0%, rgba(2, 6, 23, 0.62) 40%, rgba(2, 6, 23, 0.35) 68%, rgba(2, 6, 23, 0.58) 100%);
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(34, 197, 94, 0.16);
+      border: 1px solid rgba(74, 222, 128, 0.54);
+      border-radius: var(--r-full);
+      padding: 7px 16px;
+      font-size: .72rem;
+      font-weight: 700;
+      color: #86efac;
+      margin-bottom: 20px;
+      box-shadow: 0 0 22px rgba(34, 197, 94, 0.18);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 3;
+      max-width: 620px;
+    }
+
+    .hero-content h1 {
+      font-family: 'Space Grotesk', 'Manrope', sans-serif;
+      font-size: clamp(2.1rem, 5vw, 4.2rem);
+      font-weight: 800;
+      line-height: 1.03;
+      letter-spacing: -0.03em;
+      margin-bottom: 18px;
+      color: #ffffff;
+      text-shadow: 0 12px 30px rgba(14, 165, 233, 0.22);
+    }
+
+    .hero-content p {
+      color: #cdd6ec;
+      font-size: 1.02rem;
+      line-height: 1.7;
+      max-width: 560px;
+      margin-bottom: 26px;
+    }
+
+    .hero-tags {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+    }
+
+    .hero-tag {
+      padding: 7px 16px;
+      border-radius: var(--r-full);
+      font-size: .75rem;
+      font-weight: 700;
+      border: 1px solid;
+      cursor: pointer;
+      transition: transform .2s, opacity .2s, box-shadow .2s;
+    }
+
+    .hero-tag:hover {
+      opacity: .94;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.22);
+    }
+
+    .t-blue {
+      color: #60a5fa;
+      border-color: #60a5fa;
+      background: rgba(37, 99, 235, .12);
+    }
+
+    .t-green {
+      color: #4ade80;
+      border-color: #4ade80;
+      background: rgba(34, 197, 94, .12);
+    }
+
+    .t-red {
+      color: #f87171;
+      border-color: #f87171;
+      background: rgba(239, 68, 68, .12);
+    }
+
+    .t-purple {
+      color: #c4b5fd;
+      border-color: #c4b5fd;
+      background: rgba(139, 92, 246, .12);
+    }
+
+    .t-yellow {
+      color: #facc15;
+      border-color: #facc15;
+      background: rgba(234, 179, 8, .12);
+    }
+
+    /* Heart Visual */
+    .hero-visual {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+      opacity: 0.95;
+    }
+
+    .hero-spline {
+      width: 100%;
+      height: 100%;
+      display: block;
+      filter: saturate(1.1) contrast(1.08);
+    }
+
+    /* Static radar rings */
+    .radar-rings {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .r-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid #e2e8f0;
+    }
+
+    .r-ring.r1 {
+      width: 75px;
+      height: 75px;
+      border-color: var(--blue-dim);
+    }
+
+    .r-ring.r2 {
+      width: 130px;
+      height: 130px;
+    }
+
+    .r-ring.r3 {
+      width: 195px;
+      height: 195px;
+      border-color: var(--blue-dim);
+    }
+
+    .r-ring.r4 {
+      width: 270px;
+      height: 270px;
+      border-color: var(--blue-dim);
+    }
+
+    /* Orbital rotating dot on r3 */
+    .orbit-wrap {
+      position: absolute;
+      width: 195px;
+      height: 195px;
+      border-radius: 50%;
+      animation: orbit 6s linear infinite;
+    }
+
+    @keyframes orbit {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .orbit-dot {
+      position: absolute;
+      top: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2563eb;
+      box-shadow: 0 0 10px 1px rgba(37, 99, 235, .4);
+    }
+
+    /* Anatomical heart */
+    .heart-wrap {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 120px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .heart-glow {
+      position: absolute;
+      inset: -20px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(220, 38, 38, .18) 0%, transparent 70%);
+      animation: hpulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes hpulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: .8;
+      }
+
+      50% {
+        transform: scale(1.18);
+        opacity: 1;
+      }
+    }
+
+    .anat-heart {
+      position: relative;
+      z-index: 2;
+      animation: hbeat2 1.5s ease-in-out infinite;
+      filter: drop-shadow(0 0 18px rgba(220, 38, 38, .2)) drop-shadow(0 0 4px rgba(37, 99, 235, .1));
+    }
+
+    @keyframes hbeat2 {
+
+      0%,
+      100% {
+        transform: scale(1)
+      }
+
+      14% {
+        transform: scale(1.1)
+      }
+
+      28% {
+        transform: scale(1)
+      }
+
+      42% {
+        transform: scale(1.06)
+      }
+    }
+
+    /* Branch connector SVG overlay */
+    .branch-svg {
+      display: none;
+    }
+
+    /* Vitals panel */
+    .vitals-panel {
+      display: none;
+    }
+
+    .vital-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 11px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 195px;
+      transition: transform .25s, border-color .25s;
+      cursor: default;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .vital-card:hover {
+      transform: translateX(-5px);
+      border-color: var(--blue);
+    }
+
+    .vcicon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .vc-hr {
+      background: rgba(220, 38, 38, .16);
+    }
+
+    .vc-hs {
+      background: rgba(37, 99, 235, .16);
+    }
+
+    .vclbl {
+      font-size: .62rem;
+      color: var(--text-500);
+      letter-spacing: .04em;
+      margin-bottom: 2px;
+    }
+
+    .vcval {
+      font-size: 1.35rem;
+      font-weight: 800;
+      line-height: 1;
+      color: #000000b5;
+    }
+
+    .vcunit {
+      font-size: .58rem;
+      color: var(--text-500);
+      margin-left: 2px;
+    }
+
+    /* Mini vitals strip with canvas ECG */
+    .vitals-mini {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 10px 16px;
+      min-width: 195px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .vmini-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+
+    .vm2 {
+      text-align: center;
+    }
+
+    .vm2l {
+      font-size: .58rem;
+      color: var(--text-500);
+    }
+
+    .vm2v {
+      font-size: .9rem;
+      font-weight: 700;
+      color: var(--blue);
+    }
+
+    #ecg-canvas {
+      display: block;
+      width: 100%;
+      border-radius: 4px;
+    }
+
+    /* Tabs Bar */
+    .tabs-bar {
+      background: var(--bg-800);
+      padding: 14px 28px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab-btn {
+      padding: 8px 17px;
+      border-radius: var(--r-md);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-300);
+      font-size: .82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s;
+      font-family: inherit;
+    }
+
+    .tab-btn:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+    }
+
+    .tab-btn.active {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+    }
+
+    /* Tab Panels */
+    .tab-panel {
+      display: none;
+      padding: 28px;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* Doctor cards */
+    .doc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 14px;
+    }
+
+    .dc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 22px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .dc:hover {
+      border-color: var(--blue);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .dc-av {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      margin: 0 auto 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      border: 2px solid var(--border);
+    }
+
+    .dc-name {
+      font-size: .88rem;
+      font-weight: 700;
+      color: var(--text-100);
+    }
+
+    .dc-spec {
+      font-size: .73rem;
+      color: var(--text-400);
+      margin-top: 3px;
+    }
+
+    .dc-avail {
+      font-size: .68rem;
+      margin-top: 8px;
+    }
+
+    /* Queue cards */
+    .qc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 16px;
+      display: flex;
+      gap: 14px;
+      margin-bottom: 10px;
+      transition: border-color .2s;
+    }
+
+    .qc:hover {
+      border-color: var(--border-hover);
+    }
+
+    .qnum {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* Pharma grid */
+    .mg {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .mc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 14px;
+      text-align: center;
+      transition: border-color .2s;
+      cursor: pointer;
+    }
+
+    .mc:hover {
+      border-color: var(--blue);
+    }
+
+    .mi {
+      font-size: 2rem;
+      margin-bottom: 6px;
+    }
+
+    .mn {
+      font-size: .82rem;
+      font-weight: 600;
+    }
+
+    .mt2 {
+      font-size: .7rem;
+      color: var(--text-500);
+    }
+
+    .mp {
+      font-size: .84rem;
+      font-weight: 700;
+      color: var(--blue);
+      margin-top: 4px;
+    }
+
+    /* Token box */
+    .tok-box {
+      background: var(--blue-dim);
+      border: 1px dashed var(--blue);
+      border-radius: var(--r-lg);
+      padding: 28px;
+      text-align: center;
+    }
+
+    /* Report bar */
+    .rbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    /* Map placeholder */
+    .map-ph {
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      height: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .map-ph::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(var(--border)1px, transparent 1px), linear-gradient(90deg, var(--border)1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    .amb-move {
+      position: relative;
+      z-index: 1;
+      font-size: 2.2rem;
+      animation: drive 2.8s linear infinite;
+    }
+
+    @keyframes drive {
+      0% {
+        transform: translateX(-50px)
+      }
+
+      100% {
+        transform: translateX(50px)
+      }
+    }
+
+    @media(max-width:900px) {
+      .hero {
+        padding: 40px 22px 34px;
+        margin: 8px 10px 0;
+        border-radius: 16px;
+        min-height: 520px;
+      }
+
+      .hero::after {
+        background:
+          radial-gradient(circle at 30% 10%, rgba(37, 99, 235, 0.2), transparent 55%),
+          linear-gradient(180deg, rgba(2, 6, 23, 0.78) 0%, rgba(2, 6, 23, 0.62) 42%, rgba(2, 6, 23, 0.86) 100%);
+      }
+
+      .hero-content h1 {
+        font-size: clamp(1.9rem, 8vw, 2.9rem);
+      }
+
+      .hero-content p {
+        font-size: .95rem;
+      }
+
+      .tab-panel {
+        padding: 18px;
+      }
+
+      .pub-nav {
+        top: 8px;
+        left: 10px;
+        right: 10px;
+        height: 58px;
+        padding: 0 14px;
+      }
+
+      .pub-links {
+        display: none;
+      }
+
+      .page-wrap {
+        padding-top: 78px;
+      }
+
+      .page-wrap>section:nth-of-type(2) {
+        padding: 58px 20px 64px !important;
+      }
+
+      .page-wrap>section:nth-of-type(2)>div:first-child {
+        margin-bottom: 32px !important;
+      }
+
+      .page-wrap>section:nth-of-type(2)>div:last-child {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+      }
+    }
+
+    @media(max-width:520px) {
+      .pub-nav {
+        min-height: 52px;
+        height: auto;
+        padding: 8px 10px;
+      }
+
+      .pub-actions {
+        margin-left: auto;
+        gap: 6px;
+      }
+
+      .btn-nav-login {
+        display: none;
+      }
+
+      .btn-nav-cta {
+        padding: 8px 12px;
+        font-size: .78rem;
+      }
+
+      .page-wrap {
+        padding-top: 86px;
+      }
+
+      .hero {
+        padding: 30px 16px 28px;
+        min-height: 480px;
+      }
+
+      .hero-content p {
+        font-size: .9rem;
+      }
+
+      .hero-tags {
+        gap: 6px;
+      }
+
+      .hero-tag {
+        font-size: .72rem;
+      }
+    }
+  </style>
+  <style>
+    /* ── FEAT-CARD ANIMATIONS ── */
+    @keyframes featIn {
+      from {
+        opacity: 0;
+        transform: translateY(24px) scale(.97);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .feat-card {
+      background: linear-gradient(150deg, #ffffff 0%, #f6faff 100%);
+      border: 1px solid #d7e6ff;
+      border-radius: 20px;
+      padding: 24px 20px;
+      position: relative;
+      overflow: hidden;
+      cursor: default;
+      /* entrance starts hidden */
+      opacity: 0;
+      transform: translateY(24px) scale(.97);
+      transition:
+        transform .35s cubic-bezier(.22, .68, 0, 1.3),
+        border-color .3s ease,
+        box-shadow .3s ease,
+        background .3s ease;
+      box-shadow: 0 12px 26px rgba(15, 23, 42, 0.07);
+    }
+
+    /* animated in by JS observer */
+    .feat-card.visible {
+      animation: featIn .5s cubic-bezier(.22, .68, 0, 1.3) forwards;
+    }
+
+    /* shimmer line across top - removed for simple design */
+    .feat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -42%;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.22), transparent);
+      transform: skewX(-22deg);
+      transition: left .7s ease;
+    }
+
+    .feat-card:hover::before {
+      left: 128%;
+    }
+
+    .feat-card::after {
+      content: '';
+      position: absolute;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      top: -64px;
+      right: -64px;
+      opacity: 0;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0) 68%);
+      transition: opacity .25s;
+    }
+
+    .feat-card:hover::after {
+      opacity: 1;
+    }
+
+    /* hover lift + glow */
+    .feat-card:hover {
+      transform: translateY(-10px) scale(1.02);
+      border-color: #93c5fd;
+      box-shadow: 0 20px 40px rgba(30, 64, 175, 0.16);
+      background: linear-gradient(150deg, #ffffff 0%, #eef5ff 100%);
+    }
+
+    .feat-name {
+      font-family: 'Space Grotesk', 'Manrope', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+      transition: color .25s;
+    }
+
+    .feat-card:hover .feat-name {
+      color: #1d4ed8;
+    }
+
+    .feat-desc {
+      font-size: .84rem;
+      color: #53647f;
+      line-height: 1.58;
+    }
+
+    /* Landing sections */
+    .section-shell {
+      padding: 76px 60px 86px;
+      border-top: 1px solid #dbeafe;
+    }
+
+    .section-shell.bg-ice {
+      background: linear-gradient(180deg, #f9fcff 0%, #edf5ff 100%);
+    }
+
+    .section-shell.bg-white {
+      background: #ffffff;
+    }
+
+    .section-shell.bg-sky {
+      background: linear-gradient(180deg, #ffffff 0%, #f0f7ff 100%);
+    }
+
+    .section-head {
+      text-align: center;
+      margin-bottom: 42px;
+    }
+
+    .section-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 7px 16px;
+      font-size: .72rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .kicker-blue {
+      background: rgba(37, 99, 235, .11);
+      border: 1px solid rgba(37, 99, 235, .35);
+      color: #1d4ed8;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, .12);
+    }
+
+    .kicker-cyan {
+      background: rgba(14, 165, 233, .11);
+      border: 1px solid rgba(14, 165, 233, .35);
+      color: #0369a1;
+      box-shadow: 0 8px 20px rgba(14, 165, 233, .12);
+    }
+
+    .kicker-green {
+      background: rgba(16, 185, 129, .12);
+      border: 1px solid rgba(16, 185, 129, .34);
+      color: #047857;
+      box-shadow: 0 8px 20px rgba(16, 185, 129, .13);
+    }
+
+    .section-title {
+      font-family: 'Space Grotesk', 'Manrope', sans-serif;
+      font-size: clamp(1.7rem, 4vw, 2.9rem);
+      font-weight: 800;
+      color: #0b1736;
+      letter-spacing: -.02em;
+    }
+
+    .section-subtitle {
+      color: #4b5d79;
+      font-size: 1rem;
+      margin-top: 10px;
+    }
+
+    .service-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(220px, 1fr));
+      gap: 18px;
+    }
+
+    .service-card {
+      background: linear-gradient(165deg, #ffffff 0%, #f4f9ff 100%);
+      border: 1px solid #d7e6ff;
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 12px 26px rgba(15, 23, 42, 0.07);
+      transition: transform .3s ease, border-color .25s ease, box-shadow .25s ease;
+    }
+
+    .service-card:hover {
+      transform: translateY(-8px);
+      border-color: #93c5fd;
+      box-shadow: 0 20px 40px rgba(30, 64, 175, 0.16);
+    }
+
+    .service-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      margin-bottom: 12px;
+      background: rgba(37, 99, 235, .12);
+      border: 1px solid rgba(37, 99, 235, .2);
+    }
+
+    .service-name {
+      font-family: 'Space Grotesk', 'Manrope', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+
+    .service-desc {
+      color: #53647f;
+      font-size: .85rem;
+      line-height: 1.58;
+    }
+
+    .landing-doctor-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(190px, 1fr));
+      gap: 16px;
+    }
+
+    .landing-doctor-card {
+      background: #ffffff;
+      border: 1px solid #d7e6ff;
+      border-radius: 18px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+      transition: transform .3s ease, border-color .25s ease, box-shadow .25s ease;
+    }
+
+    .landing-doctor-card:hover {
+      transform: translateY(-8px);
+      border-color: #7dd3fc;
+      box-shadow: 0 18px 36px rgba(2, 132, 199, 0.16);
+    }
+
+    .landing-doctor-avatar {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(14, 165, 233, .12);
+      border: 1px solid rgba(14, 165, 233, .28);
+      margin-bottom: 12px;
+      font-size: 1.4rem;
+    }
+
+    .landing-doctor-name {
+      font-size: .94rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .landing-doctor-spec {
+      color: #4b5d79;
+      font-size: .8rem;
+      margin-top: 4px;
+    }
+
+    .landing-doctor-time {
+      display: inline-flex;
+      margin-top: 10px;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: .7rem;
+      font-weight: 700;
+      color: #0369a1;
+      background: rgba(14, 165, 233, .12);
+      border: 1px solid rgba(14, 165, 233, .24);
+    }
+
+    .landing-doctor-meta {
+      margin-top: 8px;
+      font-size: .76rem;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    .nearest-doctor-note {
+      margin-top: 10px;
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: .68rem;
+      font-weight: 700;
+      background: rgba(16, 185, 129, .14);
+      color: #047857;
+      border: 1px solid rgba(16, 185, 129, .3);
+    }
+
+    .nearest-summary {
+      margin-top: 8px;
+      text-align: center;
+      color: #475569;
+      font-size: .88rem;
+    }
+
+    .doctor-loading {
+      text-align: center;
+      color: #64748b;
+      font-size: .88rem;
+      padding: 12px 8px;
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 20px;
+    }
+
+    .contact-card {
+      background: #ffffff;
+      border: 1px solid #d7e6ff;
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+    }
+
+    .contact-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      color: #334155;
+      font-size: .9rem;
+    }
+
+    .contact-label {
+      font-weight: 700;
+      color: #0f172a;
+      min-width: 82px;
+    }
+
+    .contact-form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .contact-form input,
+    .contact-form textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      font-family: inherit;
+      font-size: .9rem;
+      color: #0f172a;
+      background: #f8fbff;
+    }
+
+    .contact-form input:focus,
+    .contact-form textarea:focus {
+      outline: none;
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+      background: #ffffff;
+    }
+
+    .contact-form textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .contact-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: .84rem;
+      font-weight: 700;
+      color: #ffffff;
+      background: linear-gradient(135deg, #2563eb, #0ea5e9);
+      cursor: pointer;
+      width: fit-content;
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.26);
+      transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease;
+    }
+
+    .contact-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 24px rgba(37, 99, 235, 0.32);
+      opacity: .96;
+    }
+
+    @media(max-width:900px) {
+      .section-shell {
+        padding: 58px 20px 64px;
+      }
+
+      .service-grid,
+      .landing-doctor-grid,
+      .contact-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+
+<body>
+  <div id="toast-container"></div>
+
+  <!-- PUBLIC NAVIGATION -->
+  <nav class="pub-nav">
+    <div class="pub-logo">
+      <span class="pub-logo-icon">&#127973;</span>
+      <span>Arogya Plus</span>
+    </div>
+    <div class="pub-links">
+      <a href="#hero" class="pub-link active">Home</a>
+      <a href="#features" class="pub-link">Features</a>
+      <a href="#services" class="pub-link">Services</a>
+      <a href="#doctors" class="pub-link">Doctors</a>
+      <a href="#contact" class="pub-link">Contact</a>
+    </div>
+    <div class="pub-actions">
+      <button class="btn-nav-login" onclick="location.href='/login'">Log In</button>
+      <button class="btn-nav-cta" onclick="location.href='/register'">Get Started</button>
+    </div>
+  </nav>
+
+  <div class="page-wrap">
+
+    <!-- HERO -->
+    <section class="hero" id="hero">
+      <div class="hero-content">
+        <div class="hero-badge">&#128994; All Systems Operational</div>
+        <h1>Arogya Plus Healthcare Platform</h1>
+        <p>Appointments, doctor portal, emergency queue, insurance claims, payments, notifications - all in one
+          interactive experience.</p>
+        <div class="hero-tags">
+          <span class="hero-tag t-blue">Scheduling</span>
+          <span class="hero-tag t-green">Payments</span>
+          <span class="hero-tag t-red">Emergency</span>
+          <span class="hero-tag t-purple">Doctor Portal</span>
+          <span class="hero-tag t-yellow">Analytics</span>
+        </div>
+      </div>
+      <!-- Animated Heart Visual -->
+      <div class="hero-visual">
+        <spline-viewer class="hero-spline" url="assets/scene.splinecode"></spline-viewer>
+      </div>
+
+
+      <!-- SVG branch connector lines from rings to vitals -->
+      
+
+      <!-- Vitals Panel -->
+      <div class="vitals-panel">
+      </div>
+    </section>
+
+    <script>
+      /* ECG canvas animation */
+      (function () {
+        const cv = document.getElementById('ecg-canvas');
+        if (!cv) return;
+        const ctx = cv.getContext('2d');
+        // ECG waveform template (normalized 0-1)
+        const wave = [
+          0, 0, 0, 0, 0, 0.04, 0.06, 0.04, 0, 0,      // P wave
+          0, -0.12, -0.1, 0,                     // Q
+          0, 0.9, 1.0, 0.88, 0,                   // R spike
+          -0.18, -0.16, 0,                      // S
+          0.08, 0.1, 0.09, 0.08, 0, 0, 0, 0, 0, 0,    // T wave
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0    // flat line
+        ];
+        const SEG = wave.length;
+        let offset = 0;
+        function resize() {
+          cv.width = cv.clientWidth || 163;
+          cv.height = 36;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+        function draw() {
+          const W = cv.width, H = cv.height;
+          ctx.clearRect(0, 0, W, H);
+          ctx.strokeStyle = '#2563eb';
+          ctx.lineWidth = 1.2;
+          ctx.shadowColor = '#2563eb';
+          ctx.shadowBlur = 4;
+          ctx.beginPath();
+          const pts = W + SEG;
+          for (let x = 0; x < W; x++) {
+            const i = Math.floor((x + offset) % SEG);
+            const y = H / 2 - wave[i] * (H * 0.42);
+            x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+          offset = (offset + 0.7) % SEG;
+          requestAnimationFrame(draw);
+        }
+        draw();
+
+        /* Live-ish heart rate fluctuation */
+        const hrEl = document.getElementById('hr-val');
+        setInterval(() => {
+          if (hrEl) hrEl.textContent = 84 + Math.floor(Math.random() * 5);
+        }, 1800);
+      })();
+    </script>
+
+    <!-- FEATURES SECTION -->
+    <section class="section-shell bg-ice" id="features">
+      <div class="section-head">
+        <div class="section-kicker kicker-blue">&#10022; Platform Features</div>
+        <h2 class="section-title">Everything your hospital needs</h2>
+        <p class="section-subtitle">10 integrated modules, one unified platform</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px">
+        <div class="feat-card">
+          <div class="feat-name">Appointment Booking</div>
+          <div class="feat-desc">Schedule &amp; manage patient visits</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-name">Doctor Portal</div>
+          <div class="feat-desc">36 specialists, live availability</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-name">Emergency Triage</div>
+          <div class="feat-desc">Real-time ER queue with vitals</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-name">Payments &amp; Billing</div>
+          <div class="feat-desc">Insurance, cash, UPI accepted</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-name">Insurance Claims</div>
+          <div class="feat-desc">Submit &amp; track claims online</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-name">Token Verification</div>
+          <div class="feat-desc">Secure patient identity checks</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-name">Analytics &amp; Reports</div>
+          <div class="feat-desc">Hospital KPIs at a glance</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-name">Ambulance Dispatch</div>
+          <div class="feat-desc">GPS-tracked emergency units</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-name">Pharma Suggest</div>
+          <div class="feat-desc">Medicine catalog &amp; ordering</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-name">Notifications</div>
+          <div class="feat-desc">Real-time alerts for all events</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-shell bg-white" id="services">
+      <div class="section-head">
+        <div class="section-kicker kicker-cyan">&#9889; Core Services</div>
+        <h2 class="section-title">Healthcare services for every workflow</h2>
+        <p class="section-subtitle">Patient-first operations from intake to emergency response</p>
+      </div>
+      <div class="service-grid">
+        <div class="service-card">
+          <div class="service-icon">&#128197;</div>
+          <div class="service-name">Smart Appointment Scheduling</div>
+          <div class="service-desc">Book, reschedule, and track consultations with real-time doctor availability.</div>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">&#128657;</div>
+          <div class="service-name">Ambulance Coordination</div>
+          <div class="service-desc">Dispatch nearest units quickly with live route and emergency status updates.</div>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">&#128209;</div>
+          <div class="service-name">Medical Records Access</div>
+          <div class="service-desc">Secure patient history, prescriptions, and reports in one connected portal.</div>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">&#128179;</div>
+          <div class="service-name">Billing and Payments</div>
+          <div class="service-desc">Transparent invoicing with support for online payment and insurance workflows.</div>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">&#129658;</div>
+          <div class="service-name">Emergency Queue Triage</div>
+          <div class="service-desc">Prioritize critical cases using severity-aware queue handling and live updates.</div>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">&#128200;</div>
+          <div class="service-name">Operational Analytics</div>
+          <div class="service-desc">Track occupancy, utilization, and service efficiency with instant dashboards.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-shell bg-sky" id="doctors">
+      <div class="section-head">
+        <div class="section-kicker kicker-green">&#129658; Meet Our Doctors</div>
+        <h2 class="section-title">Experienced specialists available daily</h2>
+        <p class="section-subtitle">Multi-specialty teams ready to support your treatment journey</p>
+      </div>
+      <div id="nearest-doctor-summary" class="nearest-summary">Loading doctors from database...</div>
+      <div class="landing-doctor-grid" id="landing-doctor-grid" style="margin-top:16px">
+        <div class="landing-doctor-card">
+          <div class="doctor-loading">Loading doctors...</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-shell bg-white" id="contact">
+      <div class="section-head">
+        <div class="section-kicker kicker-blue">&#9993; Contact Us</div>
+        <h2 class="section-title">Need support or want a demo?</h2>
+        <p class="section-subtitle">Reach out to our team and we will get back quickly</p>
+      </div>
+      <div class="contact-grid">
+        <div class="contact-card">
+          <h3 style="font-family:'Space Grotesk','Manrope',sans-serif;font-size:1.2rem;color:#0f172a;">Arogya Plus Support Desk</h3>
+          <p style="margin-top:8px;color:#4b5d79;font-size:.9rem;line-height:1.6;">
+            Contact our operations team for onboarding help, technical support, and service inquiries.
+          </p>
+          <div class="contact-list">
+            <div class="contact-item"><span class="contact-label">Phone</span><span>+91 98765 43210</span></div>
+            <div class="contact-item"><span class="contact-label">Email</span><span>support@arogyaplus.com</span></div>
+            <div class="contact-item"><span class="contact-label">Address</span><span>Sector 18, Noida, Uttar Pradesh</span></div>
+            <div class="contact-item"><span class="contact-label">Hours</span><span>Mon-Sat, 8:00 AM-8:00 PM</span></div>
+          </div>
+        </div>
+        <div class="contact-card">
+          <form class="contact-form" onsubmit="event.preventDefault()">
+            <input type="text" placeholder="Your Name" />
+            <input type="email" placeholder="Email Address" />
+            <input type="text" placeholder="Subject" />
+            <textarea placeholder="How can we help you?"></textarea>
+            <button class="contact-btn" type="submit">Send Message</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- end page-wrap -->
+  <script>
+    /* Staggered scroll-entrance for feat-cards */
+    const cards = document.querySelectorAll('.feat-card');
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const idx = [...cards].indexOf(entry.target);
+          setTimeout(() => entry.target.classList.add('visible'), idx * 60);
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    cards.forEach(c => io.observe(c));
+
+    /* Public nav active tab highlighting */
+    const navLinks = Array.from(document.querySelectorAll('.pub-link[href^="#"]'));
+    const sectionMap = navLinks
+      .map((link) => {
+        const id = link.getAttribute('href').slice(1);
+        const section = document.getElementById(id);
+        return section ? { link, section } : null;
+      })
+      .filter(Boolean);
+
+    sectionMap.forEach(({ link }) => {
+      link.addEventListener('click', () => {
+        navLinks.forEach((item) => item.classList.remove('active'));
+        link.classList.add('active');
+      });
+    });
+
+    const linkObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const match = sectionMap.find(({ section }) => section === entry.target);
+        if (!match) return;
+        navLinks.forEach((item) => item.classList.remove('active'));
+        match.link.classList.add('active');
+      });
+    }, { threshold: 0.45 });
+
+    sectionMap.forEach(({ section }) => linkObserver.observe(section));
+
+    const escapeHtml = (value = '') =>
+      String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+
+    const getDoctorId = (doctor) =>
+      String(doctor?._id || doctor?.id || doctor?.email || doctor?.name || '');
+
+    const normalizeDoctorCoords = (doctor) => {
+      const tryPair = (latValue, lngValue) => {
+        const lat = Number(latValue);
+        const lng = Number(lngValue);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+        if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+        return { lat, lng };
+      };
+
+      const direct = [
+        doctor?.clinicCoordinates,
+        doctor?.hospitalCoordinates,
+        doctor?.resolvedCoordinates,
+        doctor?.createdByAdmin?.hospitalCoordinates,
+        doctor?.coordinates,
+        doctor?.location
+      ];
+
+      for (const item of direct) {
+        const parsed = tryPair(item?.lat, item?.lng);
+        if (parsed) return parsed;
+      }
+
+      if (Array.isArray(doctor?.location?.coordinates) && doctor.location.coordinates.length >= 2) {
+        const parsed = tryPair(doctor.location.coordinates[1], doctor.location.coordinates[0]);
+        if (parsed) return parsed;
+      }
+
+      return tryPair(doctor?.lat, doctor?.lng);
+    };
+
+    const distanceKm = (from, to) => {
+      const earthRadiusKm = 6371;
+      const dLat = ((to.lat - from.lat) * Math.PI) / 180;
+      const dLng = ((to.lng - from.lng) * Math.PI) / 180;
+      const fromLat = (from.lat * Math.PI) / 180;
+      const toLat = (to.lat * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(fromLat) * Math.cos(toLat) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return earthRadiusKm * c;
+    };
+
+    const getCurrentLocation = () =>
+      new Promise((resolve) => {
+        if (!navigator.geolocation) {
+          resolve(null);
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            resolve({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            });
+          },
+          () => resolve(null),
+          { enableHighAccuracy: true, timeout: 7000, maximumAge: 60000 }
+        );
+      });
+
+    const doctorsGridEl = document.getElementById('landing-doctor-grid');
+    const nearestSummaryEl = document.getElementById('nearest-doctor-summary');
+
+    const renderDoctorsFromDb = (doctors, nearestId = '', distanceById = {}) => {
+      if (!doctorsGridEl) return;
+      if (!Array.isArray(doctors) || !doctors.length) {
+        doctorsGridEl.innerHTML = `
+          <div class="landing-doctor-card">
+            <div class="doctor-loading">No doctors found in database.</div>
+          </div>`;
+        return;
+      }
+
+      const sorted = [...doctors].sort((a, b) => {
+        const aId = getDoctorId(a);
+        const bId = getDoctorId(b);
+        if (nearestId && aId === nearestId) return -1;
+        if (nearestId && bId === nearestId) return 1;
+        return String(a.name || '').localeCompare(String(b.name || ''));
+      });
+
+      doctorsGridEl.innerHTML = sorted.slice(0, 8).map((doctor) => {
+        const id = getDoctorId(doctor);
+        const isNearest = nearestId && id === nearestId;
+        const name = doctor?.name || 'Doctor';
+        const specialization = doctor?.specialization || 'General Physician';
+        const email = doctor?.email || '-';
+        const phone = doctor?.phone || '-';
+        const hospitalName = doctor?.hospitalName || doctor?.clinicAddress || '';
+        const initials = name
+          .split(' ')
+          .map((part) => part[0])
+          .join('')
+          .toUpperCase()
+          .slice(0, 2) || 'DR';
+        const distance = distanceById[id];
+        const distanceLabel = Number.isFinite(distance)
+          ? `${distance.toFixed(1)} km away`
+          : (hospitalName ? hospitalName : 'Distance unavailable');
+
+        return `
+          <div class="landing-doctor-card">
+            <div class="landing-doctor-avatar">${escapeHtml(initials)}</div>
+            <div class="landing-doctor-name">${escapeHtml(name)}</div>
+            <div class="landing-doctor-spec">${escapeHtml(specialization)}</div>
+            <div class="landing-doctor-meta">${escapeHtml(email)} | ${escapeHtml(phone)}</div>
+            <div class="landing-doctor-time">${escapeHtml(distanceLabel)}</div>
+            ${isNearest ? '<div class="nearest-doctor-note">Nearest Doctor</div>' : ''}
+          </div>`;
+      }).join('');
+    };
+
+    const loadLandingDoctors = async () => {
+      if (!doctorsGridEl || !nearestSummaryEl) return;
+
+      try {
+        const response = await fetch('/api/auth/doctors', {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+          credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+          throw new Error('Unable to load doctors');
+        }
+
+        const data = await response.json();
+        const doctors = Array.isArray(data?.doctors) ? data.doctors : [];
+        if (!doctors.length) {
+          nearestSummaryEl.textContent = 'No active doctors are available right now.';
+          renderDoctorsFromDb([]);
+          return;
+        }
+
+        const userCoords = await getCurrentLocation();
+        const distanceById = {};
+        let nearestDoctorId = getDoctorId(doctors[0]);
+        let nearestDistance = Number.POSITIVE_INFINITY;
+        let hasDistanceData = false;
+
+        if (userCoords) {
+          doctors.forEach((doctor) => {
+            const coords = normalizeDoctorCoords(doctor);
+            if (!coords) return;
+            const id = getDoctorId(doctor);
+            const km = distanceKm(userCoords, coords);
+            if (!Number.isFinite(km)) return;
+            hasDistanceData = true;
+            distanceById[id] = km;
+            if (km < nearestDistance) {
+              nearestDistance = km;
+              nearestDoctorId = id;
+            }
+          });
+        }
+
+        const nearestDoctor = doctors.find((doctor) => getDoctorId(doctor) === nearestDoctorId) || doctors[0];
+        const nearestName = nearestDoctor?.name || 'Doctor';
+
+        if (userCoords && hasDistanceData && Number.isFinite(nearestDistance)) {
+          nearestSummaryEl.textContent = `Nearest doctor: ${nearestName} (${nearestDistance.toFixed(1)} km from your current location).`;
+        } else if (!userCoords) {
+          nearestSummaryEl.textContent = `Nearest doctor: ${nearestName}. Allow location access to calculate exact distance.`;
+        } else {
+          nearestSummaryEl.textContent = `Nearest doctor: ${nearestName}. Exact distance is currently unavailable.`;
+        }
+
+        renderDoctorsFromDb(doctors, nearestDoctorId, distanceById);
+      } catch (error) {
+        nearestSummaryEl.textContent = 'Failed to load doctors from database.';
+        doctorsGridEl.innerHTML = `
+          <div class="landing-doctor-card">
+            <div class="doctor-loading">${escapeHtml(error.message || 'Unable to fetch doctors')}</div>
+          </div>`;
+      }
+    };
+
+    loadLandingDoctors();
+  </script>
+</body>
+
+</html>

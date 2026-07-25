@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - My Profile</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/user.css" />
+    <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="app-layout">
+        <div class="main-area">
+            <div id="topbar-container"></div>
+            <main class="page-content">
+                <div class="page-header flex-between">
+                    <h2>My Profile</h2>
+                    <button id="save-profile-btn" class="btn btn-primary" type="button">Save Profile</button>
+                </div>
+                <div class="grid-2" style="margin-top:20px">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Personal info</div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:16px">
+                            <div class="form-group">
+                                <label class="form-label" for="profile-name">Full Name</label>
+                                <input id="profile-name" class="form-input" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="profile-email">Email</label>
+                                <input id="profile-email" class="form-input" type="email" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="profile-phone">Phone</label>
+                                <input id="profile-phone" class="form-input" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Security</div>
+                        </div>
+                        <button id="change-password-btn" class="btn btn-ghost" style="width:100%">Change Password</button>
+                        <button id="delete-account-btn" class="btn btn-outline" style="width:100%;margin-top:12px;color:var(--red)">Delete Account</button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script type="module" src="../backend-js/user-profile.js"></script>
+</body>
+
+</html>
+

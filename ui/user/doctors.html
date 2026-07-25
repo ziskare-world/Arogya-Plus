@@ -1,0 +1,97 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - Find Doctors</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/user.css" />
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <style>
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 150;
+            padding: 16px;
+        }
+
+        .modal-backdrop.hidden {
+            display: none;
+        }
+
+        .modal-card {
+            width: 100%;
+            max-width: 560px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container"></div>
+
+    <div id="book-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+        <div class="modal-card">
+            <div class="card-header">
+                <div class="card-title">Book Appointment</div>
+                <button class="btn btn-ghost btn-sm" type="button" onclick="window.closeDoctorBookingModal()">Close</button>
+            </div>
+            <form id="doctor-book-form" style="display:grid;gap:12px">
+                <div class="form-group">
+                    <label class="form-label" for="selected-doctor">Doctor</label>
+                    <input id="selected-doctor" class="form-input" type="text" readonly />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="doctor-appointment-date">Appointment Date & Time</label>
+                    <input id="doctor-appointment-date" class="form-input" type="datetime-local" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="doctor-consultation-type">Consultation Type</label>
+                    <select id="doctor-consultation-type" class="form-input" required>
+                        <option value="in_person">In-Person</option>
+                        <option value="video">Video Consultancy</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="doctor-appointment-reason">Reason</label>
+                    <input id="doctor-appointment-reason" class="form-input" type="text" required placeholder="Consultation reason" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="doctor-appointment-notes">Notes (optional)</label>
+                    <textarea id="doctor-appointment-notes" class="form-input" rows="3"></textarea>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
+                    <button class="btn btn-outline" type="button" onclick="window.closeDoctorBookingModal()">Cancel</button>
+                    <button id="doctor-book-submit-btn" class="btn btn-primary" type="submit">Book</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="app-layout">
+        <div class="main-area">
+            <div id="topbar-container"></div>
+            <main class="page-content">
+                <div class="page-header flex-between">
+                    <h2>Find Doctors</h2>
+                    <input class="form-input" style="width:240px" placeholder="Search doctors..." id="search" />
+                </div>
+                <div id="nearest-doctor-label" class="muted" style="margin-top:6px"></div>
+                <div class="grid-auto" id="doc-grid" style="margin-top:20px"></div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="../backend-js/user-doctors.js"></script>
+</body>
+
+</html>
+

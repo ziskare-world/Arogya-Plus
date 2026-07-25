@@ -1,0 +1,172 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - Payments</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="app-layout">
+        <!-- Sidebar injected by JS -->
+        <div class="main-area">
+            <div id="topbar-container"></div>
+
+            <main class="page-content">
+                <div class="page-header flex-between">
+                    <div>
+                        <h2>Payments &amp; Billing</h2>
+                        <p>Financial overview and transaction history</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="showPayForm()">+ New Payment</button>
+                </div>
+
+                <div class="stat-grid" style="margin-bottom:24px">
+                    <div class="stat-card green card-sm">
+                        <div class="stat-icon green">REV</div>
+                        <div class="stat-value">INR 48,200</div>
+                        <div class="stat-label">Total Revenue</div>
+                        <div class="stat-change up">up 18% this month</div>
+                    </div>
+                    <div class="stat-card yellow card-sm">
+                        <div class="stat-icon" style="background:#fefce8">DUE</div>
+                        <div class="stat-value" style="color:#ca8a04">INR 3,150</div>
+                        <div class="stat-label">Pending</div>
+                        <div class="stat-change">12 invoices due</div>
+                    </div>
+                    <div class="stat-card red card-sm">
+                        <div class="stat-icon red">REF</div>
+                        <div class="stat-value">INR 1,280</div>
+                        <div class="stat-label">Refunds</div>
+                        <div class="stat-change down">3 new refunds</div>
+                    </div>
+                    <div class="stat-card blue card-sm">
+                        <div class="stat-icon blue">INS</div>
+                        <div class="stat-value">INR 22,400</div>
+                        <div class="stat-label">Insurance Claims</div>
+                        <div class="stat-change up">24 approved</div>
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-bottom:24px">
+                    <!-- New Payment -->
+                    <div class="card" id="pay-form-card">
+                        <div class="card-header">
+                            <div class="card-title">Process Payment</div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:14px">
+                            <div class="grid-2" style="gap:12px">
+                                <div class="form-group"><label class="form-label">Patient ID</label><input id="pay-pid"
+                                        class="form-input" placeholder="PAT-001" /></div>
+                                <div class="form-group"><label class="form-label">Amount (INR)</label><input id="pay-amt"
+                                        type="number" class="form-input" placeholder="0.00" /></div>
+                            </div>
+                            <div class="form-group"><label class="form-label">Payment Method</label>
+                                <select id="pay-method" class="form-input">
+                                    <option>Credit Card</option>
+                                    <option>Debit Card</option>
+                                    <option>Insurance</option>
+                                    <option>Cash</option>
+                                    <option>UPI</option>
+                                    <option>Bank Transfer</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label class="form-label">Description</label><input id="pay-desc"
+                                    class="form-input" placeholder="e.g. Consultation fee" /></div>
+                            <button class="btn btn-primary btn-full" onclick="addPayment()">Process Payment</button>
+                        </div>
+                    </div>
+                    <!-- Payment breakdown donut -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Revenue Breakdown</div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:12px">
+                            <div class="flex-between">
+                                <div style="display:flex;align-items:center;gap:8px">
+                                    <div style="width:10px;height:10px;border-radius:50%;background:var(--blue)">
+                                    </div>
+                                    <span style="font-size:.83rem">Insurance</span>
+                                </div>
+                                <div style="font-weight:700">INR 22,400 <span
+                                        style="color:var(--text-500);font-size:.75rem">46%</span></div>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" style="width:46%;background:var(--blue)"></div>
+                            </div>
+                            <div class="flex-between">
+                                <div style="display:flex;align-items:center;gap:8px">
+                                    <div style="width:10px;height:10px;border-radius:50%;background:var(--blue)">
+                                    </div>
+                                    <span style="font-size:.83rem">Credit Card</span>
+                                </div>
+                                <div style="font-weight:700">INR 14,800 <span
+                                        style="color:var(--text-500);font-size:.75rem">31%</span></div>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" style="width:31%"></div>
+                            </div>
+                            <div class="flex-between">
+                                <div style="display:flex;align-items:center;gap:8px">
+                                    <div style="width:10px;height:10px;border-radius:50%;background:var(--green)">
+                                    </div>
+                                    <span style="font-size:.83rem">Cash</span>
+                                </div>
+                                <div style="font-weight:700">INR 8,200 <span
+                                        style="color:var(--text-500);font-size:.75rem">17%</span></div>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" style="width:17%;background:var(--green)"></div>
+                            </div>
+                            <div class="flex-between">
+                                <div style="display:flex;align-items:center;gap:8px">
+                                    <div style="width:10px;height:10px;border-radius:50%;background:var(--purple)">
+                                    </div><span style="font-size:.83rem">UPI / Other</span>
+                                </div>
+                                <div style="font-weight:700">INR 2,800 <span
+                                        style="color:var(--text-500);font-size:.75rem">6%</span></div>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" style="width:6%;background:var(--purple)">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transactions Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Transaction History</div>
+                        <button class="btn btn-outline btn-sm" onclick="toast('Exporting CSV...','info')">Export CSV</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>TXN ID</th>
+                                    <th>Patient</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Description</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="txn-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="../backend-js/admin-payments.js"></script>
+</body>
+
+</html>
+

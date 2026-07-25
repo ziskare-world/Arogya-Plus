@@ -1,0 +1,128 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - Doctors</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+    <style>
+        .doctor-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 24px;
+            text-align: center;
+            transition: all var(--t-mid);
+            cursor: pointer;
+        }
+
+        .doctor-card:hover {
+            border-color: var(--blue);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow);
+        }
+
+        .doc-avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            margin: 0 auto 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            border: 2px solid var(--border);
+        }
+
+        .doc-stars {
+            color: #eab308;
+            font-size: .8rem;
+            margin: 6px 0;
+        }
+
+        .doc-stat {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .ds-val {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-100);
+        }
+
+        .ds-lbl {
+            font-size: .65rem;
+            color: var(--text-500);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="app-layout">
+
+        <!-- Sidebar injected by JS -->
+        <div class="main-area">
+            <div id="topbar-container"></div>
+
+            <main class="page-content">
+                <div class="page-header flex-between">
+                    <div>
+                        <h2>Medical Staff</h2>
+                        <p>36 doctors registered - 12 currently online</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="toast('Add doctor form coming soon','info')">+ Add
+                        Doctor</button>
+                </div>
+
+                <div class="stat-grid" style="margin-bottom:24px">
+                    <div class="stat-card blue card-sm">
+                        <div class="stat-value">36</div>
+                        <div class="stat-label">Total Doctors</div>
+                    </div>
+                    <div class="stat-card green card-sm">
+                        <div class="stat-value">12</div>
+                        <div class="stat-label">Online Now</div>
+                    </div>
+                    <div class="stat-card cyan card-sm">
+                        <div class="stat-value">4.8</div>
+                        <div class="stat-label">Avg. Rating</div>
+                    </div>
+                    <div class="stat-card purple card-sm">
+                        <div class="stat-value">8</div>
+                        <div class="stat-label">Specializations</div>
+                    </div>
+                </div>
+
+                <!-- Filter chips -->
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px" id="spec-filters">
+                    <button class="btn btn-outline btn-sm active" onclick="filterSpec('',this)">All</button>
+                    <button class="btn btn-outline btn-sm" onclick="filterSpec('Cardiologist',this)">
+                        Cardiology</button>
+                    <button class="btn btn-outline btn-sm" onclick="filterSpec('Neurologist',this)">
+                        Neurology</button>
+                    <button class="btn btn-outline btn-sm" onclick="filterSpec('Pediatrician',this)">
+                        Pediatrician</button>
+                    <button class="btn btn-outline btn-sm" onclick="filterSpec('Orthopedist',this)">
+                        Orthopedics</button>
+                    <button class="btn btn-outline btn-sm" onclick="filterSpec('Dermatologist',this)">
+                        Dermatology</button>
+                </div>
+
+                <div class="grid-auto" id="doc-grid"></div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="../backend-js/super-admin-doctors.js"></script>
+</body>
+
+</html>
+

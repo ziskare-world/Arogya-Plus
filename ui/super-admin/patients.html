@@ -1,0 +1,82 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - Patients</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="app-layout">
+
+        <!-- Sidebar injected by JS -->
+        <div class="main-area">
+            <div id="topbar-container"></div>
+
+            <main class="page-content">
+                <div class="page-header flex-between">
+                    <div>
+                        <h2>Patient Management</h2>
+                        <p>1,842 registered patients</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="toast('Add patient form coming soon','info')">+ Add
+                        Patient</button>
+                </div>
+
+                <div class="stat-grid" style="margin-bottom:24px">
+                    <div class="stat-card blue card-sm">
+                        <div class="stat-value">1,842</div>
+                        <div class="stat-label">Total Patients</div>
+                    </div>
+                    <div class="stat-card green card-sm">
+                        <div class="stat-value">1,204</div>
+                        <div class="stat-label">Active</div>
+                    </div>
+                    <div class="stat-card red card-sm">
+                        <div class="stat-value">24</div>
+                        <div class="stat-label">Critical</div>
+                    </div>
+                    <div class="stat-card cyan card-sm">
+                        <div class="stat-value">614</div>
+                        <div class="stat-label">Discharged</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Patient Records</div>
+                        <div style="display:flex;gap:8px">
+                            <button class="btn btn-outline btn-sm" onclick="toast('Export CSV','info')">Export</button>
+                        </div>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Patient ID</th>
+                                    <th>Name</th>
+                                    <th>Age</th>
+                                    <th>Blood Type</th>
+                                    <th>Phone</th>
+                                    <th>Last Visit</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pat-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="../backend-js/super-admin-patients.js"></script>
+</body>
+
+</html>
+

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - Ambulance Booking</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/user.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+    <style>
+        .ambulance-layout {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 20px;
+        }
+
+        #ambulance-map {
+            width: 100%;
+            min-height: 420px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #f8fafc;
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .mode-toggle .btn.active {
+            background: var(--blue);
+            color: #fff;
+            border-color: var(--blue);
+        }
+
+        .tracking-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tracking-row:last-child {
+            border-bottom: none;
+        }
+
+        .map-help {
+            font-size: .78rem;
+            color: var(--text-500);
+        }
+
+        @media(max-width: 980px) {
+            .ambulance-layout {
+                grid-template-columns: 1fr;
+            }
+
+            #ambulance-map {
+                min-height: 360px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="app-layout">
+        <div class="main-area">
+            <div id="topbar-container"></div>
+            <main class="page-content">
+                <div class="page-header flex-between">
+                    <div>
+                        <h2>Ambulance Booking</h2>
+                        <p>Select pickup location and problem. System auto-assigns nearest hospital, free doctor, and ambulance.</p>
+                    </div>
+                    <button class="btn btn-outline btn-sm" type="button" onclick="window.refreshAmbulanceBookings()">Refresh</button>
+                </div>
+
+                <div class="ambulance-layout">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Location Map</div>
+                            <span id="map-status" class="badge badge-blue">Initializing</span>
+                        </div>
+                        <div id="ambulance-map"></div>
+                        <div class="map-help" style="margin-top:10px">
+                            Select pickup location on map. Assigned hospital and ambulance live location will appear after booking.
+                        </div>
+                        <div class="map-help" id="last-live-update" style="margin-top:6px"></div>
+                        <div class="map-help" id="route-summary" style="margin-top:4px">Shortest route: -</div>
+                        <div class="map-help" id="ambulance-distance" style="margin-top:4px">Ambulance distance: -</div>
+                        <div class="map-help" id="refresh-interval-info" style="margin-top:4px"></div>
+                    </div>
+
+                    <div style="display:flex;flex-direction:column;gap:20px">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">New Booking</div>
+                            </div>
+                            <div class="mode-toggle" style="margin-bottom:12px">
+                                <button id="mode-pickup-btn" class="btn btn-outline btn-sm active" type="button">Select Pickup</button>
+                                <button id="mode-hospital-btn" class="btn btn-outline btn-sm" type="button">Select Hospital</button>
+                                <button id="use-current-btn" class="btn btn-ghost btn-sm" type="button">Use Current Location</button>
+                            </div>
+                            <form id="ambulance-booking-form" style="display:grid;gap:12px">
+                                <div class="form-group">
+                                    <label class="form-label" for="problem-description-input">Problem / Symptoms</label>
+                                    <textarea id="problem-description-input" class="form-input" rows="2"
+                                        placeholder="Describe emergency problem (example: chest pain, fracture, breathing issue)"
+                                        required></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="pickup-location-input">Pickup Location</label>
+                                    <input id="pickup-location-input" class="form-input" placeholder="Click map or type address" />
+                                    <div class="map-help" id="pickup-coords-label"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="hospital-location-input">Assigned Hospital</label>
+                                    <input id="hospital-location-input" class="form-input" placeholder="Will be auto-assigned on booking" />
+                                    <div class="map-help" id="hospital-coords-label"></div>
+                                </div>
+                                <button id="book-ambulance-btn" class="btn btn-primary btn-full" type="submit">Book Ambulance</button>
+                            </form>
+                            <div class="map-help" id="google-map-key-help" style="margin-top:10px"></div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Active Booking Status</div>
+                            </div>
+                            <div id="active-booking-panel" class="muted">No active ambulance booking.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:20px">
+                    <div class="card-header">
+                        <div class="card-title">My Ambulance Requests</div>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Booking ID</th>
+                                    <th>Pickup</th>
+                                    <th>Hospital</th>
+                                    <th>Assigned Doctor</th>
+                                    <th>Ambulance</th>
+                                    <th>Status</th>
+                                    <th>ETA</th>
+                                    <th>Requested At</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ambulance-history-body">
+                                <tr>
+                                    <td colspan="8" class="muted" style="text-align:center">Loading ambulance bookings...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="../backend-js/user-ambulance-booking.js"></script>
+</body>
+
+</html>

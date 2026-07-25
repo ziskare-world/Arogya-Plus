@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <meta name="theme-color" content="#2563eb" />
+    <title>Arogya Plus - Video Consultancy</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+    <link rel="stylesheet" href="/css/global.css" />
+    <link rel="stylesheet" href="/css/dashboard.css" />
+    <script src="/js/pwa-register.js" defer></script>
+    <style>
+        .video-page {
+            min-height: 100vh;
+            padding: 20px;
+            background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+        }
+
+        .video-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .prejoin-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .media-settings-panel {
+            margin-bottom: 12px;
+        }
+
+        .permission-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .settings-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .video-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .video-stage {
+            position: relative;
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            background: #0f172a;
+            overflow: hidden;
+            min-height: 460px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .remote-video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+            padding: 12px;
+            min-height: 460px;
+        }
+
+        .video-tile {
+            position: relative;
+            background: #111827;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            min-height: 180px;
+        }
+
+        .video-tile video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #020617;
+        }
+
+        .video-label {
+            position: absolute;
+            left: 8px;
+            bottom: 8px;
+            background: rgba(0, 0, 0, 0.65);
+            color: #fff;
+            font-size: .72rem;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 999px;
+        }
+
+        .local-tile {
+            position: absolute;
+            right: 12px;
+            bottom: 12px;
+            width: 220px;
+            height: 140px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: var(--shadow-lg);
+            background: #020617;
+        }
+
+        .local-tile video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .empty-stage {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #cbd5e1;
+            font-size: .9rem;
+            min-height: 420px;
+            text-align: center;
+            padding: 24px;
+        }
+
+        .controls-bar {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .side-panel {
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            background: var(--surface);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            flex-direction: column;
+            min-height: 520px;
+        }
+
+        .side-section {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .participants-list {
+            list-style: none;
+            display: grid;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .participants-list li {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            font-size: .8rem;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .feedback-form {
+            display: grid;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .chat-box {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            height: 100%;
+            padding: 12px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 180px;
+        }
+
+        .chat-item {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #ffffff;
+            padding: 8px;
+            font-size: .78rem;
+        }
+
+        .chat-item .meta {
+            font-size: .7rem;
+            color: var(--text-500);
+            margin-bottom: 4px;
+        }
+
+        .chat-form {
+            display: flex;
+            gap: 8px;
+        }
+
+        .status-line {
+            font-size: .78rem;
+            color: var(--text-500);
+            margin-top: 6px;
+        }
+
+        .popup-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.55);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 180;
+            padding: 16px;
+        }
+
+        .popup-backdrop.hidden {
+            display: none !important;
+        }
+
+        .popup-card {
+            width: 100%;
+            max-width: 520px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 16px;
+        }
+
+        .star-picker {
+            display: flex;
+            gap: 8px;
+            margin: 8px 0 4px;
+        }
+
+        .star-btn {
+            border: none;
+            background: transparent;
+            color: #cbd5e1;
+            font-size: 1.7rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0;
+        }
+
+        .star-btn.active {
+            color: #f59e0b;
+        }
+
+        @media (max-width: 1000px) {
+            .video-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .local-tile {
+                width: 170px;
+                height: 112px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container"></div>
+
+    <main class="video-page">
+        <div class="video-header">
+            <div>
+                <h2>Video Consultancy</h2>
+                <p id="video-subtitle">Secure consultation room for doctor and patient.</p>
+            </div>
+            <div class="header-actions">
+                <span id="connection-pill" class="badge badge-yellow">Not Connected</span>
+                <button id="leave-call-btn" class="btn btn-outline btn-sm" type="button" disabled>Leave Room</button>
+            </div>
+        </div>
+
+        <section id="media-settings-panel" class="card media-settings-panel">
+            <div class="card-header">
+                <div class="card-title">Permissions & Device Settings</div>
+            </div>
+            <div class="permission-pills">
+                <span id="camera-permission-status" class="badge badge-yellow">Camera: unknown</span>
+                <span id="microphone-permission-status" class="badge badge-yellow">Mic: unknown</span>
+                <span id="speaker-permission-status" class="badge badge-cyan">Speaker: browser default</span>
+            </div>
+
+            <div class="device-grid">
+                <div class="form-group">
+                    <label class="form-label" for="camera-device-select">Camera Device</label>
+                    <select id="camera-device-select" class="form-input"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="mic-device-select">Microphone Device</label>
+                    <select id="mic-device-select" class="form-input"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="speaker-device-select">Speaker Device</label>
+                    <select id="speaker-device-select" class="form-input"></select>
+                </div>
+            </div>
+
+            <div class="settings-actions">
+                <button id="request-media-permission-btn" class="btn btn-outline btn-sm" type="button">
+                    Request Camera/Mic Permission
+                </button>
+                <button id="refresh-permissions-btn" class="btn btn-outline btn-sm" type="button">
+                    Refresh Devices
+                </button>
+            </div>
+            <div id="media-settings-hint" class="status-line"></div>
+        </section>
+
+        <section id="prejoin-panel" class="card">
+            <div class="card-header">
+                <div id="prejoin-title" class="card-title">Join Video Room</div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="display-name-input">Display Name</label>
+                    <input id="display-name-input" class="form-input" type="text" placeholder="Your name" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="email-input">Email</label>
+                    <input id="email-input" class="form-input" type="email" placeholder="name@example.com" />
+                </div>
+            </div>
+
+            <div class="grid-2" style="margin-top:10px">
+                <div class="form-group">
+                    <label class="form-label" for="room-key-input">Room Key</label>
+                    <input id="room-key-input" class="form-input" type="text" placeholder="Enter room key" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="appointment-id-input">Appointment ID</label>
+                    <input id="appointment-id-input" class="form-input" type="text" readonly />
+                </div>
+            </div>
+
+            <div class="prejoin-actions">
+                <button id="generate-room-btn" class="btn btn-outline btn-sm" type="button">Generate Room Key</button>
+                <button id="copy-room-btn" class="btn btn-outline btn-sm" type="button">Copy Room Key</button>
+                <button id="join-room-btn" class="btn btn-primary btn-sm" type="button">Join Video Room</button>
+            </div>
+            <div id="room-help-line" class="status-line"></div>
+        </section>
+
+        <section id="call-panel" class="hidden">
+            <div class="video-layout">
+                <div>
+                    <div class="video-stage">
+                        <div id="remote-video-grid" class="remote-video-grid"></div>
+                        <div class="local-tile">
+                            <video id="local-video" autoplay muted playsinline></video>
+                            <div class="video-label">You</div>
+                        </div>
+                    </div>
+
+                    <div class="controls-bar">
+                        <button id="toggle-mic-btn" class="btn btn-outline btn-sm" type="button">Mute Mic</button>
+                        <button id="toggle-cam-btn" class="btn btn-outline btn-sm" type="button">Hide Camera</button>
+                        <button id="switch-camera-btn" class="btn btn-outline btn-sm" type="button">Switch Camera</button>
+                        <button id="toggle-screen-btn" class="btn btn-outline btn-sm" type="button">Share Screen</button>
+                        <button id="mark-complete-btn" class="btn btn-success btn-sm hidden" type="button">Mark Appointment Completed</button>
+                    </div>
+                </div>
+
+                <aside class="side-panel">
+                    <div class="side-section">
+                        <div class="card-title">Room Details</div>
+                        <div class="status-line">Room Key: <strong id="active-room-key">-</strong></div>
+                        <div class="status-line">Role: <strong id="active-role">-</strong></div>
+                    </div>
+
+                    <div class="side-section">
+                        <div class="card-title">Participants</div>
+                        <ul id="participants-list" class="participants-list"></ul>
+                    </div>
+
+                    <div id="feedback-section" class="side-section hidden">
+                        <div class="card-title">Consultation Feedback</div>
+                        <div id="rating-status-line" class="status-line">Rating is available after completion.</div>
+                        <div class="feedback-form">
+                            <button id="open-rating-popup-btn" class="btn btn-primary btn-sm" type="button">Rate Doctor</button>
+                        </div>
+                    </div>
+
+                    <div class="chat-box">
+                        <div class="card-title">In-Call Chat</div>
+                        <div id="chat-messages" class="chat-messages"></div>
+                        <form id="chat-form" class="chat-form">
+                            <input id="chat-input" class="form-input" type="text" placeholder="Type a message" />
+                            <button class="btn btn-primary btn-sm" type="submit">Send</button>
+                        </form>
+                    </div>
+                </aside>
+            </div>
+        </section>
+    </main>
+
+    <div id="video-rating-modal" class="popup-backdrop hidden" role="dialog" aria-modal="true">
+        <div class="popup-card">
+            <div class="card-header">
+                <div class="card-title">Rate Doctor</div>
+                <button id="video-rating-close-btn" class="btn btn-ghost btn-sm" type="button">Close</button>
+            </div>
+            <div id="video-rating-doctor-label" class="status-line">Share your consultation feedback</div>
+
+            <div class="form-group" style="margin-top:10px">
+                <label class="form-label">Star Rating</label>
+                <div id="video-rating-stars" class="star-picker" role="radiogroup" aria-label="Doctor rating">
+                    <button class="star-btn" type="button" data-value="1" aria-label="1 star">&#9733;</button>
+                    <button class="star-btn" type="button" data-value="2" aria-label="2 stars">&#9733;</button>
+                    <button class="star-btn" type="button" data-value="3" aria-label="3 stars">&#9733;</button>
+                    <button class="star-btn" type="button" data-value="4" aria-label="4 stars">&#9733;</button>
+                    <button class="star-btn" type="button" data-value="5" aria-label="5 stars">&#9733;</button>
+                </div>
+                <div id="video-rating-value-label" class="status-line">5/5</div>
+            </div>
+
+            <div class="form-group" style="margin-top:6px">
+                <label class="form-label" for="doctor-review-input">Review (optional)</label>
+                <textarea id="doctor-review-input" class="form-input" rows="3"
+                    placeholder="Write your consultation feedback"></textarea>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
+                <button id="video-rating-cancel-btn" class="btn btn-outline" type="button">Cancel</button>
+                <button id="submit-rating-btn" class="btn btn-primary" type="button">Submit Rating</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module" src="/backend-js/video-consultation.js"></script>
+</body>
+
+</html>

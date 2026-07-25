@@ -1,0 +1,318 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - Dashboard</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+    <style>
+        .welcome-card {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: var(--r-xl);
+            padding: 28px 32px;
+            margin-bottom: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-card::before {
+            content: '';
+            position: absolute;
+            right: -60px;
+            top: -60px;
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(37, 99, 235, .05) 0%, transparent 70%);
+        }
+
+        .welcome-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: var(--r-full);
+            padding: 4px 12px;
+            font-size: .72rem;
+            font-weight: 600;
+            color: #16a34a;
+            margin-bottom: 12px;
+        }
+
+        .quick-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-100);
+            margin-bottom: 16px;
+        }
+
+        .two-col-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        .three-col-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        .stat-grid .stat-card .stat-icon {
+            width: auto;
+            height: auto;
+            border-radius: var(--r-full);
+            padding: 4px 10px;
+            margin-bottom: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .66rem;
+            line-height: 1.2;
+            font-weight: 700;
+        }
+
+        .quick-grid .quick-action-icon {
+            width: auto;
+            min-height: 24px;
+            border-radius: var(--r-full);
+            padding: 4px 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .66rem;
+            line-height: 1.2;
+            font-weight: 700;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            color: var(--text-300);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="overlay" id="overlay"></div>
+
+    <div class="app-layout">
+        <!-- Sidebar injected by JS -->
+        <div class="main-area">
+            <div id="topbar-container"></div>
+
+            <!-- PAGE CONTENT -->
+            <main class="page-content">
+
+                <!-- Welcome Banner -->
+                <div class="welcome-card">
+                    <div>
+                        <div class="welcome-tag">System Operational</div>
+                        <h2 style="font-size:1.5rem;color:var(--text-100);margin-bottom:6px">Good morning, <span
+                                id="welcome-name">Admin</span>!</h2>
+                        <p style="color:var(--text-400);font-size:.88rem">Today is <span id="today-date"></span>.
+                            You
+                            have <strong style="color:var(--yellow-light)">5 appointments</strong> scheduled today.
+                        </p>
+                    </div>
+                    <div style="display:flex;gap:24px;position:relative">
+                        <div style="text-align:center">
+                            <div style="font-size:2rem;font-weight:800;color:var(--blue)">94%</div>
+                            <div style="font-size:.72rem;color:var(--text-400)">Bed Occupancy</div>
+                        </div>
+                        <div style="text-align:center">
+                            <div style="font-size:2rem;font-weight:800;color:var(--green-light)">12</div>
+                            <div style="font-size:.72rem;color:var(--text-400)">Doctors Online</div>
+                        </div>
+                        <div style="text-align:center">
+                            <div style="font-size:2rem;font-weight:800;color:var(--yellow-light)">3</div>
+                            <div style="font-size:.72rem;color:var(--text-400)">Emergencies</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stat Cards -->
+                <div class="stat-grid">
+                    <div class="stat-card blue">
+                        <div class="stat-icon blue">Appointments</div>
+                        <div class="stat-value" id="s-appt">248</div>
+                        <div class="stat-label">Total Appointments</div>
+                        <div class="stat-change up">Up 12% from last month</div>
+                    </div>
+                    <div class="stat-card cyan">
+                        <div class="stat-icon cyan">Doctors</div>
+                        <div class="stat-value" id="s-docs">36</div>
+                        <div class="stat-label">Active Doctors</div>
+                        <div class="stat-change up">Up 3 new this week</div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="stat-icon green">Patients</div>
+                        <div class="stat-value" id="s-patients">1,842</div>
+                        <div class="stat-label">Total Patients</div>
+                        <div class="stat-change up">Up 8% from last month</div>
+                    </div>
+                    <div class="stat-card red">
+                        <div class="stat-icon red">Emergency</div>
+                        <div class="stat-value" id="s-emr">3</div>
+                        <div class="stat-label">Active Emergencies</div>
+                        <div class="stat-change down">Down 2 resolved today</div>
+                    </div>
+                    <div class="stat-card purple">
+                        <div class="stat-icon purple">Revenue</div>
+                        <div class="stat-value" id="s-rev">INR 48k</div>
+                        <div class="stat-label">Monthly Revenue</div>
+                        <div class="stat-change up">Up 18% from last month</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="section-title">Quick Actions</div>
+                <div class="quick-grid" style="margin-bottom:28px">
+                    <a class="quick-action" href="appointments.html">
+                        <div class="quick-action-icon">Appointments</div>
+                        <div class="quick-action-label">New Appointment</div>
+                    </a>
+                    <a class="quick-action" href="patients.html">
+                        <div class="quick-action-icon">Patients</div>
+                        <div class="quick-action-label">Add Patient</div>
+                    </a>
+                    <a class="quick-action" href="emergency.html">
+                        <div class="quick-action-icon">Emergency</div>
+                        <div class="quick-action-label">Emergency</div>
+                    </a>
+                    <a class="quick-action" href="payments.html">
+                        <div class="quick-action-icon">Payments</div>
+                        <div class="quick-action-label">New Payment</div>
+                    </a>
+                    <a class="quick-action" href="doctors.html">
+                        <div class="quick-action-icon">Doctors</div>
+                        <div class="quick-action-label">Find Doctor</div>
+                    </a>
+                    <a class="quick-action" href="reports.html">
+                        <div class="quick-action-icon">Reports</div>
+                        <div class="quick-action-label">View Reports</div>
+                    </a>
+                </div>
+
+                <!-- Charts + Activity -->
+                <div class="two-col-layout">
+                    <!-- Bar Chart -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Weekly Appointments</div>
+                            <span class="badge badge-cyan">This Week</span>
+                        </div>
+                        <div class="chart-area" id="weekly-chart"></div>
+                        <div style="display:flex;justify-content:space-around;margin-top:8px">
+                            <div style="text-align:center">
+                                <div style="font-size:.65rem;color:var(--text-500)">Mon</div>
+                            </div>
+                            <div style="text-align:center">
+                                <div style="font-size:.65rem;color:var(--text-500)">Tue</div>
+                            </div>
+                            <div style="text-align:center">
+                                <div style="font-size:.65rem;color:var(--text-500)">Wed</div>
+                            </div>
+                            <div style="text-align:center">
+                                <div style="font-size:.65rem;color:var(--text-500)">Thu</div>
+                            </div>
+                            <div style="text-align:center">
+                                <div style="font-size:.65rem;color:var(--text-500)">Fri</div>
+                            </div>
+                            <div style="text-align:center">
+                                <div style="font-size:.65rem;color:var(--text-500)">Sat</div>
+                            </div>
+                            <div style="text-align:center">
+                                <div style="font-size:.65rem;color:var(--text-500)">Sun</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Activity Feed -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Live Activity</div>
+                            <button class="btn btn-ghost btn-sm" onclick="refreshActivity()">Refresh</button>
+                        </div>
+                        <div id="activity-feed"></div>
+                        <div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px">
+                            <div class="card-title" style="font-size:.9rem;margin-bottom:8px">Doctor Reviews</div>
+                            <div id="dashboard-doctor-reviews" class="muted">Loading doctor reviews...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Appointments + Doctors / Donut -->
+                <div class="three-col-layout">
+                    <div class="card" style="grid-column:span 2">
+                        <div class="card-header">
+                            <div class="card-title">Today's Appointments</div>
+                            <a href="appointments.html" class="btn btn-outline btn-sm">View All</a>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Patient</th>
+                                        <th>Doctor</th>
+                                        <th>Time</th>
+                                        <th>Reason</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="today-appts"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Bed Donut -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Bed Occupancy</div>
+                        </div>
+                        <div class="donut-wrap" style="width:130px;height:130px;margin-bottom:20px">
+                            <svg id="donut-svg" viewBox="0 0 120 120" width="130" height="130"></svg>
+                            <div class="donut-center">
+                                <div style="font-size:1.6rem;font-weight:800;color:var(--text-100)">94%</div>
+                                <div style="font-size:.7rem;color:var(--text-500)">Occupied</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:10px">
+                            <div class="flex-between"><span style="font-size:.8rem;color:var(--text-400)">Total
+                                    Beds</span><span style="font-weight:700">200</span></div>
+                            <div class="flex-between"><span
+                                    style="font-size:.8rem;color:var(--text-400)">Occupied</span><span
+                                    style="font-weight:700;color:var(--red-light)">188</span></div>
+                            <div class="flex-between"><span
+                                    style="font-size:.8rem;color:var(--text-400)">Available</span><span
+                                    style="font-weight:700;color:var(--green-light)">12</span></div>
+                            <div class="flex-between"><span
+                                    style="font-size:.8rem;color:var(--text-400)">ICU</span><span
+                                    style="font-weight:700;color:var(--yellow-light)">24/30</span></div>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="../backend-js/admin-dashboard.js"></script>
+</body>
+
+</html>
+
+
+

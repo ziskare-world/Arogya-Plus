@@ -1,0 +1,167 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - Reports &amp; Analytics</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+    <style>
+        .metric-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .metric-label {
+            font-size: .78rem;
+            color: var(--text-400);
+            width: 130px;
+            flex-shrink: 0;
+        }
+
+        .metric-val {
+            font-size: .78rem;
+            font-weight: 700;
+            width: 44px;
+            text-align: right;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="app-layout">
+        <!-- Sidebar injected by JS -->
+        <div class="main-area">
+            <div id="topbar-container"></div>
+
+            <main class="page-content">
+                <div class="page-header flex-between">
+                    <div>
+                        <h2>Hospital Analytics</h2>
+                        <p>Performance metrics and operational insights</p>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                        <select class="form-input" style="width:auto;padding:8px 12px;font-size:.83rem"
+                            onchange="toast('Period changed','info')">
+                            <option>This Month</option>
+                            <option>Last Month</option>
+                            <option>Last 3 Months</option>
+                            <option>This Year</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- KPI Row -->
+                <div class="stat-grid" style="margin-bottom:28px">
+                    <div class="stat-card blue card-sm">
+                        <div class="stat-value">2,841</div>
+                        <div class="stat-label">Total Visits</div>
+                        <div class="stat-change up">up 14%</div>
+                    </div>
+                    <div class="stat-card green card-sm">
+                        <div class="stat-value">INR 48k</div>
+                        <div class="stat-label">Revenue</div>
+                        <div class="stat-change up">up 18%</div>
+                    </div>
+                    <div class="stat-card cyan card-sm">
+                        <div class="stat-value">4.8/5</div>
+                        <div class="stat-label">Satisfaction</div>
+                        <div class="stat-change up">up 0.2</div>
+                    </div>
+                    <div class="stat-card purple card-sm">
+                        <div class="stat-value">96%</div>
+                        <div class="stat-label">Uptime</div>
+                        <div class="stat-change up">up 1%</div>
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-bottom:24px">
+                    <!-- Monthly Bar Chart -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Monthly Appointments</div><span class="badge badge-blue">2026</span>
+                        </div>
+                        <div class="chart-area" id="monthly-chart" style="height:200px"></div>
+                        <div style="display:flex;justify-content:space-around;margin-top:8px">
+                            <span style="font-size:.62rem;color:var(--text-500)">Jan</span>
+                            <span style="font-size:.62rem;color:var(--text-500)">Feb</span>
+                            <span style="font-size:.62rem;color:var(--text-500)">Mar</span>
+                            <span style="font-size:.62rem;color:var(--text-500)">Apr</span>
+                            <span style="font-size:.62rem;color:var(--text-500)">May</span>
+                            <span style="font-size:.62rem;color:var(--text-500)">Jun</span>
+                        </div>
+                    </div>
+                    <!-- Dept Performance -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Department Performance</div>
+                        </div>
+                        <div id="dept-bars"></div>
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-bottom:24px">
+                    <!-- Top Doctors -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Top Performing Doctors</div>
+                        </div>
+                        <div id="top-docs"></div>
+                    </div>
+                    <!-- Disease Stats -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Common Diagnoses</div>
+                        </div>
+                        <div id="diag-list"></div>
+                    </div>
+                </div>
+
+                <!-- Revenue monthly trend -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Revenue Trend (Last 6 Months)</div><span class="badge badge-green">up
+                            18%
+                            Overall</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;text-align:center">
+                        <div>
+                            <div style="font-size:1.1rem;font-weight:700;color:var(--blue)">INR 32k</div>
+                            <div style="font-size:.7rem;color:var(--text-500)">Sep</div>
+                        </div>
+                        <div>
+                            <div style="font-size:1.1rem;font-weight:700;color:var(--blue)">INR 35k</div>
+                            <div style="font-size:.7rem;color:var(--text-500)">Oct</div>
+                        </div>
+                        <div>
+                            <div style="font-size:1.1rem;font-weight:700;color:var(--blue)">INR 38k</div>
+                            <div style="font-size:.7rem;color:var(--text-500)">Nov</div>
+                        </div>
+                        <div>
+                            <div style="font-size:1.1rem;font-weight:700;color:var(--blue)">INR 41k</div>
+                            <div style="font-size:.7rem;color:var(--text-500)">Dec</div>
+                        </div>
+                        <div>
+                            <div style="font-size:1.1rem;font-weight:700;color:var(--blue)">INR 45k</div>
+                            <div style="font-size:.7rem;color:var(--text-500)">Jan</div>
+                        </div>
+                        <div>
+                            <div style="font-size:1.3rem;font-weight:800;color:#16a34a">INR 48k</div>
+                            <div style="font-size:.7rem;color:var(--text-500)">Feb peak</div>
+                        </div>
+                    </div>
+                    <div class="chart-area" id="revenue-chart" style="margin-top:16px;height:120px"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="../backend-js/admin-reports.js"></script>
+</body>
+
+</html>
+

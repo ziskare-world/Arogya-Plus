@@ -1,0 +1,75 @@
+:root {
+  /* Colors - Light Theme */
+  --bg-900: #ffffff;
+  --bg-800: #f8fafc;
+  --bg-750: #f1f5f9;
+  --bg-700: #e2e8f0;
+  --bg-600: #cbd5e1;
+  --bg-500: #94a3b8;
+
+  --surface: #ffffff;
+  --surface-hover: #f1f5f9;
+  --border: #e2e8f0;
+  --border-hover: #cbd5e1;
+
+  /* Brand - Professional Blue */
+  --blue: #2563eb;
+  --blue-hover: #1d4ed8;
+  --blue-light: #60a5fa;
+  --cyan: #0891b2;
+  --cyan-hover: #0e7490;
+  --indigo: #4f46e5;
+  --purple: #7c3aed;
+
+  /* Status */
+  --green: #16a34a;
+  --green-light: #22c55e;
+  --yellow: #ca8a04;
+  --yellow-light: #eab308;
+  --red: #dc2626;
+  --red-light: #ef4444;
+  --orange: #ea580c;
+
+  /* Text - Dark Palette */
+  --text-100: #0f172a;
+  /* Main heading */
+  --text-200: #1e293b;
+  /* Body text */
+  --text-300: #334155;
+  /* Secondary text */
+  --text-400: #64748b;
+  /* Muted text */
+  --text-500: #94a3b8;
+  /* Placeholder/Subtle */
+
+  /* Sidebar */
+  --sidebar-w: 260px;
+  --sidebar-collapsed: 72px;
+  --header-h: 68px;
+
+  /* Shadows - Subtle and Soft */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-glow-blue: none;
+  --shadow-glow-cyan: none;
+
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+  --r-full: 9999px;
+
+  /* Transitions */
+  --t-fast: 0.15s ease;
+  --t-mid: 0.25s ease;
+  --t-slow: 0.4s ease;
+
+  /* Gradients - Subtle */
+  --grad-blue: linear-gradient(135deg, #2563eb, #4f46e5);
+  --grad-cyan: linear-gradient(135deg, #0891b2, #1d4ed8);
+  --grad-green: linear-gradient(135deg, #16a34a, #0891b2);
+  --grad-red: linear-gradient(135deg, #dc2626, #ea580c);
+  --grad-hero: radial-gradient(circle at top, #f8fafc 0%, #ffffff 100%);
+}

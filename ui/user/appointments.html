@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - My Appointments</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/user.css" />
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <style>
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 150;
+            padding: 16px;
+        }
+
+        .modal-backdrop.hidden {
+            display: none;
+        }
+
+        .modal-card {
+            width: 100%;
+            max-width: 560px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 20px;
+        }
+
+        .actions-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .star-picker {
+            display: flex;
+            gap: 6px;
+            margin: 8px 0 2px;
+        }
+
+        .star-btn {
+            border: none;
+            background: transparent;
+            color: #cbd5e1;
+            font-size: 1.6rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0;
+        }
+
+        .star-btn.active {
+            color: #f59e0b;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container"></div>
+
+    <div id="book-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+        <div class="modal-card">
+            <div class="card-header">
+                <div class="card-title">Book Appointment</div>
+                <button class="btn btn-ghost btn-sm" type="button" onclick="window.closeBookModal()">Close</button>
+            </div>
+            <form id="book-form" style="display:grid;gap:12px">
+                <div class="form-group">
+                    <label class="form-label" for="doctor-id">Doctor</label>
+                    <select id="doctor-id" class="form-input" required></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="appointment-date">Appointment Date & Time</label>
+                    <input id="appointment-date" class="form-input" type="datetime-local" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="appointment-consultation-type">Consultation Type</label>
+                    <select id="appointment-consultation-type" class="form-input" required>
+                        <option value="in_person">In-Person</option>
+                        <option value="video">Video Consultancy</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="appointment-reason">Reason</label>
+                    <input id="appointment-reason" class="form-input" type="text" placeholder="Consultation reason" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="appointment-notes">Notes (optional)</label>
+                    <textarea id="appointment-notes" class="form-input" rows="3" placeholder="Additional details"></textarea>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
+                    <button class="btn btn-outline" type="button" onclick="window.closeBookModal()">Cancel</button>
+                    <button id="book-submit-btn" class="btn btn-primary" type="submit">Book Appointment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="rating-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+        <div class="modal-card" style="max-width:520px">
+            <div class="card-header">
+                <div class="card-title">Rate Doctor</div>
+                <button class="btn btn-ghost btn-sm" type="button" onclick="window.closeRatingModal()">Close</button>
+            </div>
+
+            <div id="rating-modal-doctor" class="muted" style="margin-bottom:8px">Select your rating</div>
+
+            <div class="form-group">
+                <label class="form-label">Star Rating</label>
+                <div id="rating-stars" class="star-picker" role="radiogroup" aria-label="Doctor rating">
+                    <button class="star-btn" type="button" data-value="1" aria-label="1 star">&#9733;</button>
+                    <button class="star-btn" type="button" data-value="2" aria-label="2 stars">&#9733;</button>
+                    <button class="star-btn" type="button" data-value="3" aria-label="3 stars">&#9733;</button>
+                    <button class="star-btn" type="button" data-value="4" aria-label="4 stars">&#9733;</button>
+                    <button class="star-btn" type="button" data-value="5" aria-label="5 stars">&#9733;</button>
+                </div>
+                <div id="rating-value-label" class="status-line">5/5</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="rating-review-input">Review (optional)</label>
+                <textarea id="rating-review-input" class="form-input" rows="3"
+                    placeholder="Write your feedback"></textarea>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
+                <button class="btn btn-outline" type="button" onclick="window.closeRatingModal()">Cancel</button>
+                <button id="rating-submit-btn" class="btn btn-primary" type="button">Submit Rating</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-layout">
+        <div class="main-area">
+            <div id="topbar-container"></div>
+            <main class="page-content">
+                <div class="page-header flex-between">
+                    <h2>My Appointments</h2>
+                    <button class="btn btn-primary" type="button" onclick="window.openBookModal()">+ Book Appointment</button>
+                </div>
+                <div class="card" style="margin-top:20px">
+                    <div id="appt-list" style="display:flex;flex-direction:column;gap:12px">
+                        <div class="muted">Loading appointments...</div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="../backend-js/user-appointments.js"></script>
+</body>
+
+</html>
+

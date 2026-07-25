@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - Doctors</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+    <style>
+        .doctor-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 20px;
+            transition: all var(--t-mid);
+        }
+
+        .doctor-card:hover {
+            border-color: var(--blue);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+
+        .doc-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            background: var(--grad-blue);
+            margin-bottom: 12px;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(2px);
+            z-index: 120;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-backdrop.hidden {
+            display: none;
+        }
+
+        .modal-panel {
+            width: 100%;
+            max-width: 560px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 20px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .modal-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-100);
+        }
+
+        .close-btn {
+            border: none;
+            background: transparent;
+            font-size: 1.25rem;
+            color: var(--text-500);
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .filters-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .hint {
+            font-size: .74rem;
+            color: var(--text-500);
+        }
+
+        .doctors-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 340px;
+            gap: 18px;
+            align-items: start;
+        }
+
+        .reviews-side {
+            position: sticky;
+            top: 12px;
+            max-height: calc(100vh - 130px);
+            overflow: hidden;
+        }
+
+        .review-list {
+            display: grid;
+            gap: 10px;
+            overflow-y: auto;
+            max-height: calc(100vh - 230px);
+            padding-right: 4px;
+        }
+
+        .review-item {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px;
+            background: #f8fafc;
+        }
+
+        .review-item-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .review-stars {
+            color: #f59e0b;
+            font-size: .82rem;
+            letter-spacing: .8px;
+        }
+
+        .review-note {
+            font-size: .78rem;
+            color: var(--text-300);
+            margin-top: 6px;
+            line-height: 1.45;
+        }
+
+        .review-meta {
+            font-size: .72rem;
+            color: var(--text-500);
+            margin-top: 6px;
+        }
+
+        @media (max-width: 1120px) {
+            .doctors-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .reviews-side {
+                position: static;
+                max-height: none;
+            }
+
+            .review-list {
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container"></div>
+
+    <div id="doctor-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true"
+        aria-labelledby="doctor-modal-title">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <div id="doctor-modal-title" class="modal-title">Create Doctor Account</div>
+                <button class="close-btn" type="button" onclick="closeDoctorModal()" aria-label="Close">x</button>
+            </div>
+
+            <form id="doctor-form" style="display:grid;gap:12px">
+                <div class="form-group">
+                    <label class="form-label" for="doctor-name">Doctor Name</label>
+                    <input id="doctor-name" class="form-input" type="text" required />
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="doctor-email">Email</label>
+                        <input id="doctor-email" class="form-input" type="email" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="doctor-password">Password</label>
+                        <input id="doctor-password" class="form-input" type="password" minlength="6" required />
+                        <div id="password-hint" class="hint">Minimum 6 characters</div>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="doctor-specialization">Specialization</label>
+                        <input id="doctor-specialization" class="form-input" type="text" placeholder="Cardiology"
+                            required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="doctor-phone">Phone</label>
+                        <input id="doctor-phone" class="form-input" type="text" placeholder="Optional" />
+                    </div>
+                </div>
+
+                <div id="doctor-status-group" class="form-group" style="display:none">
+                    <label class="form-label" for="doctor-active">Status</label>
+                    <select id="doctor-active" class="form-input">
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+                    </select>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
+                    <button class="btn btn-outline" type="button" onclick="closeDoctorModal()">Cancel</button>
+                    <button id="create-doctor-btn" class="btn btn-primary" type="submit">Create Doctor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="app-layout">
+        <div class="main-area">
+            <div id="topbar-container"></div>
+
+            <main class="page-content">
+                <div class="page-header flex-between">
+                    <div>
+                        <h2>Medical Staff</h2>
+                        <p id="doc-subtitle">Doctors created by your admin account.</p>
+                    </div>
+                    <button class="btn btn-primary" type="button" onclick="openDoctorModal()">+ Add Doctor</button>
+                </div>
+
+                <div class="stat-grid" style="margin-bottom:24px">
+                    <div class="stat-card blue card-sm">
+                        <div id="stat-total-doctors" class="stat-value">0</div>
+                        <div class="stat-label">Total Doctors</div>
+                    </div>
+                    <div class="stat-card green card-sm">
+                        <div id="stat-active-doctors" class="stat-value">0</div>
+                        <div class="stat-label">Active</div>
+                    </div>
+                    <div class="stat-card cyan card-sm">
+                        <div id="stat-specializations" class="stat-value">0</div>
+                        <div class="stat-label">Specializations</div>
+                    </div>
+                    <div class="stat-card purple card-sm">
+                        <div id="stat-created-today" class="stat-value">0</div>
+                        <div class="stat-label">Created Today</div>
+                    </div>
+                </div>
+
+                <div class="doctors-layout">
+                    <div>
+                        <div class="card" style="margin-bottom:18px">
+                            <div class="filters-row">
+                                <input id="doctor-search" class="form-input" style="max-width:320px"
+                                    placeholder="Search by name, email, specialization..." />
+                                <button class="btn btn-outline btn-sm" type="button" onclick="reloadDoctors()">Refresh</button>
+                            </div>
+                            <div id="spec-filters" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+                        </div>
+                        <div id="doc-grid" class="grid-auto"></div>
+                    </div>
+
+                    <aside class="card reviews-side">
+                        <div class="card-header">
+                            <div class="card-title">Doctor Reviews</div>
+                            <span id="review-count" class="badge badge-yellow">0</span>
+                        </div>
+                        <div id="doctor-review-list" class="review-list">
+                            <div class="muted">Loading reviews...</div>
+                        </div>
+                    </aside>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="../backend-js/admin-doctors.js"></script>
+</body>
+
+</html>
+

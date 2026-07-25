@@ -1,0 +1,115 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - Super Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="app-layout">
+        <!-- Sidebar injected by JS -->
+        <div class="main-area">
+            <div id="topbar-container"></div>
+
+            <main class="page-content">
+                <div class="page-header">
+                    <div>
+                        <h2>System Control Panel</h2>
+                        <p>Global oversight of hospital network and infrastructure.</p>
+                    </div>
+                </div>
+
+                <div class="stat-grid">
+                    <div class="stat-card blue">
+                        <div class="stat-value">12</div>
+                        <div class="stat-label">Hospitals Connected</div>
+                        <div class="stat-change up">+2 this month</div>
+                    </div>
+                    <div class="stat-card purple">
+                        <div class="stat-value">842</div>
+                        <div class="stat-label">Active Administrators</div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="stat-value">99.9%</div>
+                        <div class="stat-label">System Uptime</div>
+                    </div>
+                    <div class="stat-card yellow">
+                        <div class="stat-value">INR 4.2M</div>
+                        <div class="stat-label">Total GTV</div>
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-top:24px">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Recent System Logs</div>
+                            <button class="btn btn-ghost btn-sm" onclick="location.href='system-logs.html'">View
+                                All</button>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>Action</th>
+                                        <th>User</th>
+                                        <th>Severity</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>12:05 PM</td>
+                                        <td>Global Config Updated</td>
+                                        <td>SuperAdmin_1</td>
+                                        <td><span class="badge badge-blue">Low</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>11:42 AM</td>
+                                        <td>Failed Login Attempt</td>
+                                        <td>IP: 192.168.1.42</td>
+                                        <td><span class="badge badge-red">High</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Infrastructure Health</div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:16px;padding:12px">
+                            <div>
+                                <div class="flex-between mb-5"><span class="muted">Primary DB CPU</span><span>24%</span>
+                                </div>
+                                <div class="progress-track">
+                                    <div class="progress-fill" style="width:24%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex-between mb-5"><span class="muted">API Gateway
+                                        Load</span><span>68%</span></div>
+                                <div class="progress-track">
+                                    <div class="progress-fill" style="width:68%;background:var(--yellow)"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="../backend-js/super-admin-dashboard.js"></script>
+</body>
+
+</html>
+
+

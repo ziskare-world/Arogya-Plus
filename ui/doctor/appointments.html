@@ -1,0 +1,54 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - Doctor Appointments</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="app-layout">
+        <!-- Sidebar injected by JS -->
+        <div class="main-area">
+            <div id="topbar-container"></div>
+            <main class="page-content">
+                <div class="page-header">
+                    <h2>Daily Schedule</h2>
+                    <div style="display:flex;gap:8px">
+                        <button class="btn btn-outline btn-sm">Today</button>
+                        <button class="btn btn-outline btn-sm">Weekly</button>
+                    </div>
+                </div>
+                <!-- Schedule rendering -->
+                <div class="card" style="margin-top:20px">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Patient</th>
+                                    <th>Symptoms</th>
+                                    <th>Type</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" style="text-align:center;color:var(--text-500)">Loading appointments...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script type="module" src="../backend-js/doctor-appointments.js"></script>
+</body>
+
+</html>
+

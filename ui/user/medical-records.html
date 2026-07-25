@@ -1,0 +1,100 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - Medical Records</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/user.css" />
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <style>
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 150;
+            padding: 16px;
+        }
+
+        .modal-backdrop.hidden {
+            display: none;
+        }
+
+        .modal-card {
+            width: 100%;
+            max-width: 620px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container"></div>
+
+    <div id="record-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+        <div class="modal-card">
+            <div class="card-header">
+                <div class="card-title">Upload Medical Record</div>
+                <button class="btn btn-ghost btn-sm" type="button" onclick="window.closeRecordModal()">Close</button>
+            </div>
+            <form id="record-form" style="display:grid;gap:12px">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="record-title">Title</label>
+                        <input id="record-title" class="form-input" type="text" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="record-type">Type</label>
+                        <input id="record-type" class="form-input" type="text" placeholder="Lab Report / Prescription" />
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="record-date">Record Date</label>
+                        <input id="record-date" class="form-input" type="date" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="record-url">Document URL (optional)</label>
+                        <input id="record-url" class="form-input" type="text" placeholder="https://..." />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="record-notes">Notes (optional)</label>
+                    <textarea id="record-notes" class="form-input" rows="3"></textarea>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
+                    <button class="btn btn-outline" type="button" onclick="window.closeRecordModal()">Cancel</button>
+                    <button id="record-submit-btn" class="btn btn-primary" type="submit">Save Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="app-layout">
+        <div class="main-area">
+            <div id="topbar-container"></div>
+            <main class="page-content">
+                <div class="page-header flex-between">
+                    <h2>Medical Records</h2>
+                    <button class="btn btn-outline" type="button" onclick="window.openRecordModal()">Upload Record</button>
+                </div>
+                <div class="card" style="margin-top:20px">
+                    <div id="record-list" style="display:flex;flex-direction:column;gap:12px">
+                        <div class="muted">Loading records...</div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script type="module" src="../backend-js/user-medical-records.js"></script>
+</body>
+
+</html>
+

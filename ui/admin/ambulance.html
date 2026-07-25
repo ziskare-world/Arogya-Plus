@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - Ambulance Desk</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+    <style>
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 1.35fr 1fr;
+            gap: 16px;
+        }
+
+        .mini-note {
+            font-size: .78rem;
+            color: var(--text-500);
+            margin-top: 6px;
+        }
+
+        .tag-free {
+            color: #16a34a;
+            font-weight: 600;
+        }
+
+        .tag-busy {
+            color: #f59e0b;
+            font-weight: 600;
+        }
+
+        .inline-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        @media (max-width: 1080px) {
+            .layout-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="app-layout">
+        <div class="main-area">
+            <div id="topbar-container"></div>
+            <main class="page-content">
+                <div class="page-header flex-between">
+                    <div>
+                        <h2>Ambulance Reception Desk</h2>
+                        <p>Incoming ambulance bookings, nearest-hospital assignments, and available ambulance inventory.</p>
+                    </div>
+                    <button id="refresh-ambulance-dashboard-btn" class="btn btn-outline btn-sm" type="button">Refresh</button>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="stat-card blue card-sm">
+                        <div id="stat-total-bookings" class="stat-value">0</div>
+                        <div class="stat-label">Total Requests</div>
+                    </div>
+                    <div class="stat-card yellow card-sm">
+                        <div id="stat-active-bookings" class="stat-value">0</div>
+                        <div class="stat-label">Active Requests</div>
+                    </div>
+                    <div class="stat-card green card-sm">
+                        <div id="stat-available-fleet" class="stat-value">0</div>
+                        <div class="stat-label">Available Ambulance</div>
+                    </div>
+                    <div class="stat-card red card-sm">
+                        <div id="stat-unavailable-fleet" class="stat-value">0</div>
+                        <div class="stat-label">Unavailable Ambulance</div>
+                    </div>
+                </div>
+
+                <div class="layout-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Ambulance Requests Received</div>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Booking</th>
+                                        <th>Patient</th>
+                                        <th>Pickup</th>
+                                        <th>Problem</th>
+                                        <th>Assigned Doctor</th>
+                                        <th>Ambulance</th>
+                                        <th>Status</th>
+                                        <th>ETA</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ambulance-requests-body">
+                                    <tr>
+                                        <td colspan="9" class="muted" style="text-align:center">Loading ambulance requests...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;flex-direction:column;gap:16px">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Add Ambulance Inventory</div>
+                            </div>
+                            <div id="fleet-permission-note" class="mini-note"></div>
+                            <form id="fleet-form" style="display:grid;gap:10px;margin-top:8px">
+                                <div class="form-group">
+                                    <label class="form-label" for="fleet-vehicle-number">Vehicle Number</label>
+                                    <input id="fleet-vehicle-number" class="form-input" placeholder="OD-02-AB-1234" required />
+                                </div>
+                                <div class="grid-2" style="gap:10px">
+                                    <div class="form-group">
+                                        <label class="form-label" for="fleet-driver-name">Driver Name</label>
+                                        <input id="fleet-driver-name" class="form-input" placeholder="Driver name" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="fleet-driver-phone">Driver Phone</label>
+                                        <input id="fleet-driver-phone" class="form-input" placeholder="Phone" />
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="fleet-status">Initial Status</label>
+                                    <select id="fleet-status" class="form-input">
+                                        <option value="available">Available</option>
+                                        <option value="maintenance">Maintenance</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </div>
+                                <button id="fleet-submit-btn" class="btn btn-primary btn-full" type="submit">Add Ambulance</button>
+                            </form>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Ambulance Availability</div>
+                            </div>
+                            <div class="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Vehicle</th>
+                                            <th>Driver</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ambulance-fleet-body">
+                                        <tr>
+                                            <td colspan="4" class="muted" style="text-align:center">Loading ambulance inventory...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="../backend-js/admin-ambulance.js"></script>
+</body>
+
+</html>

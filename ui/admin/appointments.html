@@ -1,0 +1,212 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - Appointments</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+    <style>
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .tab-pills {
+            display: flex;
+            gap: 6px;
+            padding: 4px;
+            background: var(--bg-alt);
+            border-radius: var(--r-md);
+            border: 1px solid var(--border);
+        }
+
+        .tab-pill {
+            padding: 7px 16px;
+            border-radius: var(--r-sm);
+            font-size: .82rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: var(--text-400);
+            transition: all var(--t-fast);
+        }
+
+        .tab-pill.active {
+            background: var(--blue);
+            color: #fff;
+        }
+
+        .appt-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(4px);
+        }
+
+        .appt-modal.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-xl);
+            padding: 28px;
+            width: 90%;
+            max-width: 500px;
+            animation: pop .25s ease;
+        }
+
+        @keyframes pop {
+            from {
+                transform: scale(.9);
+                opacity: 0
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="overlay" id="overlay"></div>
+    <div class="app-layout">
+        <!-- Sidebar injected by JS -->
+        <div class="main-area">
+            <div id="topbar-container"></div>
+
+            <main class="page-content">
+                <div class="page-header flex-between">
+                    <div>
+                        <h2>Appointments</h2>
+                        <p>Manage and schedule all patient appointments</p>
+                    </div>
+                    <button class="btn btn-primary"
+                        onclick="document.querySelector('.appt-modal').classList.add('open')">+ New
+                        Appointment</button>
+                </div>
+
+                <!-- Stat strip -->
+                <div class="grid-4" style="margin-bottom:24px">
+                    <div class="stat-card blue card-sm">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                    <div class="stat-card green card-sm">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Confirmed</div>
+                    </div>
+                    <div class="stat-card yellow card-sm" style="--yellow:#eab308">
+                        <div class="stat-value" style="color:#eab308">0</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                    <div class="stat-card red card-sm">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Cancelled</div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="filter-bar">
+                    <div class="tab-pills">
+                        <button class="tab-pill active" onclick="filterAppts('all',this)">All</button>
+                        <button class="tab-pill" onclick="filterAppts('Confirmed',this)">Confirmed</button>
+                        <button class="tab-pill" onclick="filterAppts('Pending',this)">Pending</button>
+                        <button class="tab-pill" onclick="filterAppts('Cancelled',this)">Cancelled</button>
+                    </div>
+                    <input type="date" class="form-input" style="width:160px;padding:8px 12px" id="date-filter" />
+                </div>
+
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Patient</th>
+                                    <th>Doctor</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Reason</th>
+                                    <th>Consultation</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="appt-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="appt-modal" id="appt-modal">
+        <div class="modal-box">
+            <div class="flex-between mb-20">
+                <h3>New Appointment</h3>
+                <button class="btn btn-ghost btn-icon"
+                    onclick="document.querySelector('.appt-modal').classList.remove('open')">x</button>
+            </div>
+            <div class="form-stack" style="display:flex;flex-direction:column;gap:14px">
+                <div class="grid-2" style="gap:12px">
+                    <div class="form-group"><label class="form-label">Patient Name</label><input id="m-patient"
+                            class="form-input" placeholder="Enter patient name" /></div>
+                    <div class="form-group"><label class="form-label">Doctor</label>
+                        <select id="m-doctor" class="form-input">
+                            <option value="">Loading doctors...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid-2" style="gap:12px">
+                    <div class="form-group"><label class="form-label">Date</label><input id="m-date" type="date"
+                            class="form-input" /></div>
+                    <div class="form-group"><label class="form-label">Time</label><input id="m-time" type="time"
+                            class="form-input" /></div>
+                </div>
+                <div class="form-group"><label class="form-label">Reason</label>
+                    <select id="m-reason" class="form-input">
+                        <option>General Checkup</option>
+                        <option>Follow-up</option>
+                        <option>Emergency</option>
+                        <option>Lab Results</option>
+                        <option>Cardiology</option>
+                        <option>Neurology</option>
+                    </select>
+                </div>
+                <div class="form-group"><label class="form-label">Consultation Type</label>
+                    <select id="m-consultation-type" class="form-input">
+                        <option value="in_person">In-Person</option>
+                        <option value="video">Video Consultancy</option>
+                    </select>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:8px">
+                    <button class="btn btn-outline btn-full"
+                        onclick="document.querySelector('.appt-modal').classList.remove('open')">Cancel</button>
+                    <button class="btn btn-primary btn-full" onclick="bookAppt()">Book Appointment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="../backend-js/admin-appointments.js"></script>
+</body>
+
+</html>
+
+

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <meta name="theme-color" content="#2563eb" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+    <title>Arogya Plus — Sign In</title>
+    <link rel="stylesheet" href="css/global.css" />
+    <link rel="stylesheet" href="css/auth.css" />
+    <script src="/js/pwa-register.js" defer></script>
+    <style>
+        .gradient-text {
+            color: var(--blue);
+        }
+
+        .form-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .forgot-link {
+            font-size: .82rem;
+            color: var(--blue);
+            text-align: right;
+            display: block;
+            margin-top: -8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="auth-page">
+
+        <!-- LEFT BRAND PANEL -->
+        <div class="auth-brand">
+            <div class="auth-logo">
+                <div class="auth-logo-icon">🏥</div>
+                <div class="auth-logo-text"><span>Arogya Plus</span> Health</div>
+            </div>
+            <h2>Care beyond <span class="gradient-text">boundaries.</span></h2>
+            <p>The all-in-one hospital management platform — appointments, emergency queue, billing, doctor portal, and
+                more, unified in one intelligent experience.</p>
+            <div class="auth-features">
+                <div class="auth-feature">
+                    <div class="auth-feature-icon" style="background:rgba(37,99,235,0.15)">📅</div>
+                    <div>
+                        <div class="auth-feature-text">Smart Scheduling</div>
+                        <div class="auth-feature-sub">AI-powered appointment management</div>
+                    </div>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon" style="background:rgba(239,68,68,0.15)">🚨</div>
+                    <div>
+                        <div class="auth-feature-text">Emergency Queue</div>
+                        <div class="auth-feature-sub">Real-time triage & prioritization</div>
+                    </div>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon" style="background:rgba(34,197,94,0.15)">💳</div>
+                    <div>
+                        <div class="auth-feature-text">Seamless Billing</div>
+                        <div class="auth-feature-sub">Insurance claims & payments</div>
+                    </div>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon" style="background:rgba(139,92,246,0.15)">📊</div>
+                    <div>
+                        <div class="auth-feature-text">Live Analytics</div>
+                        <div class="auth-feature-sub">Dashboards & health reports</div>
+                    </div>
+                </div>
+            </div>
+            <div class="auth-vitals-card" style="position:relative;left:auto;bottom:auto;margin-top:32px">
+                <div class="vitals-pulse">🫀</div>
+                <div>
+                    <div style="font-size:.7rem;color:var(--text-400)">Heart Rate</div>
+                    <div style="font-size:1.2rem;font-weight:800;color:var(--text-100)">86 <span
+                            style="font-size:.65rem;font-weight:400;color:var(--text-400)">bpm</span></div>
+                </div>
+                <div style="width:1px;height:36px;background:var(--border);margin:0 4px"></div>
+                <div>
+                    <div style="font-size:.7rem;color:var(--text-400)">SPO2</div>
+                    <div style="font-size:1.2rem;font-weight:800;color:var(--blue)">98%</div>
+                </div>
+                <div>
+                    <div style="font-size:.7rem;color:var(--text-400)">Temp</div>
+                    <div style="font-size:1.2rem;font-weight:800;color:var(--green-light)">37°C</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT FORM PANEL -->
+        <div class="auth-form-panel">
+            <div class="auth-form-box">
+                <h1>Welcome back 👋</h1>
+                <p>Sign in to your Arogya Plus account to continue</p>
+
+                <div class="divider-text" style="margin-bottom:20px">or continue with email</div>
+
+                <form class="form-stack">
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">📧</span>
+                            <input id="email" type="email" class="form-input" placeholder="name@hospital.com"
+                                required />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <div class="input-wrap" style="position:relative">
+                            <span class="input-icon">🔑</span>
+                            <input id="password" type="password" class="form-input" placeholder="Enter your password"
+                                required />
+                            <button type="button" class="input-action" onclick="togglePass('password',this)"
+                                style="right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-500);font-size:16px;padding:4px">👁</button>
+                        </div>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between">
+                        <label class="checkbox-row"><input type="checkbox" id="remember" /> Remember me</label>
+                        <a href="forgot-password.html" class="forgot-link">Forgot password?</a>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:4px" id="loginBtn">Sign In</button>
+                </form>
+
+                <div class="auth-footer-text">
+                    Don't have an account? <a href="register.html">Create one free</a>
+                </div>
+
+                <div
+                    style="margin-top:24px;padding:14px;border:1px solid var(--border);border-radius:var(--r-md);font-size:.78rem;color:var(--text-400);text-align:center">
+                    🔐 Demo: <code style="color:var(--blue)">super-admin@arogyaplus.com</code> / <code
+                        style="color:var(--blue)">123456</code>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script src="/backend-js/authentication.js"></script>
+</html>

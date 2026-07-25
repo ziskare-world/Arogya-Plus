@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -255,8 +255,52 @@
                     </div>
                 </div>
 
-                <!-- Today's Appointments + Doctors / Donut -->
-                <div class="three-col-layout">
+                <!-- Live Monitoring & System Broadcast Alert Panel -->
+                <div class="two-col-layout">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">📡 Live Resource & Connection Monitor</div>
+                            <span class="badge badge-green" id="live-status-badge">Live Updates Active</span>
+                        </div>
+                        <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 0;">
+                            <div class="stat-card" style="padding:12px">
+                                <div class="stat-label">Active Sockets</div>
+                                <div class="stat-value" id="live-sockets" style="font-size:1.2rem">0</div>
+                            </div>
+                            <div class="stat-card" style="padding:12px">
+                                <div class="stat-label">Video Consult Rooms</div>
+                                <div class="stat-value" id="live-rooms" style="font-size:1.2rem">0</div>
+                            </div>
+                            <div class="stat-card" style="padding:12px">
+                                <div class="stat-label">Memory Usage</div>
+                                <div class="stat-value" id="live-memory" style="font-size:1.2rem">0 MB</div>
+                            </div>
+                            <div class="stat-card" style="padding:12px">
+                                <div class="stat-label">Uptime</div>
+                                <div class="stat-value" id="live-uptime" style="font-size:1.2rem">0s</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">📢 Broadcast System Alert</div>
+                            <span class="badge badge-yellow">All Users</span>
+                        </div>
+                        <form id="broadcast-alert-form" style="display:flex;flex-direction:column;gap:8px">
+                            <input type="text" id="broadcast-title" placeholder="Alert Title (e.g., System Notice)" required class="form-input" style="font-size:.8rem;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r-sm)">
+                            <input type="text" id="broadcast-message" placeholder="Message content..." required class="form-input" style="font-size:.8rem;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r-sm)">
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <select id="broadcast-level" style="font-size:.78rem;padding:6px;border:1px solid var(--border);border-radius:var(--r-sm)">
+                                    <option value="info">Info</option>
+                                    <option value="warning">Warning</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                                <button type="submit" class="btn btn-primary btn-sm" style="flex:1">Broadcast Alert</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
                     <div class="card" style="grid-column:span 2">
                         <div class="card-header">
                             <div class="card-title">Today's Appointments</div>

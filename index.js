@@ -102,9 +102,10 @@ app.use(
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
-// Attach Socket.io instance to each request for route-level real-time updates.
+// Attach Socket.io instance & helper to each request for route-level real-time updates.
 app.use((req, res, next) => {
   req.io = io;
+  req.getVideoRooms = () => videoRooms;
   next();
 });
 

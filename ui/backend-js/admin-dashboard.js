@@ -348,6 +348,60 @@ window.refreshActivity = function refreshActivity() {
   toast("Activity feed refreshed", "success");
 };
 
+const loadLiveMetrics = async () => {
+  try {
+    const res = await apiRequest("/api/admin/live-metrics");
+    if (!res.success) return;
+
+    const liveSockets = document.getElementById("live-sockets");
+    const liveRooms = document.getElementById("live-rooms");
+    const liveMemory = document.getElementById("live-memory");
+    const liveUptime = document.getElementById("live-uptime");
+
+    if (liveSockets) liveSockets.textContent = String(res.server.connectedSockets || 0);
+    if (liveRooms) liveRooms.textContent = String(res.server.activeVideoRooms || 0);
+    if (liveMemory) liveMemory.textContent = `${res.server.memoryRssMb || 0} MB`;
+    if (liveUptime) {
+      const up = Number(res.server.uptimeSeconds || 0);
+      const mins = Math.floor(up / 60);
+      liveUptime.textContent = mins > 0 ? `${mins}m ${up % 60}s` : `${up}s`;
+    }
+  } catch {
+    // Live polling quiet fallback
+  }
+};
+
+const setupBroadcastAlertForm = () => {
+  const form = document.getElementById("broadcast-alert-form");
+  if (!form) return;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const title = document.getElementById("broadcast-title")?.value.trim();
+    const message = document.getElementById("broadcast-message")?.value.trim();
+    const level = document.getElementById("broadcast-level")?.value || "info";
+
+    if (!title || !message) {
+      toast("Please enter both title and message for broadcast alert", "warn");
+      return;
+    }
+
+    try {
+      const res = await apiRequest("/api/admin/broadcast-alert", {
+        method: "POST",
+        body: JSON.stringify({ title, message, level })
+      });
+
+      if (res.success) {
+        toast(`System alert broadcasted to all connected users (${level})`, "success");
+        form.reset();
+      }
+    } catch (err) {
+      toast(err.message || "Failed to send broadcast alert", "error");
+    }
+  });
+};
+
 const init = async () => {
   const session = ensureSession({
     allowedRoles: ["admin"],
@@ -377,6 +431,8 @@ const init = async () => {
     activityFeedEl.innerHTML = '<div class="muted" style="padding:8px 0">Loading activity...</div>';
   }
 
+  setupBroadcastAlertForm();
+
   try {
     await loadDashboardData();
     renderSummary();
@@ -385,6 +441,10 @@ const init = async () => {
     renderActivity();
     renderDoctorReviews();
     renderOccupancy();
+    await loadLiveMetrics();
+
+    // Poll live server metrics every 10 seconds
+    setInterval(loadLiveMetrics, 10000);
   } catch (error) {
     toast(error.message, "error");
   }

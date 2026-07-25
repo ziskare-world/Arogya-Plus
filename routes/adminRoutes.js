@@ -790,4 +790,138 @@ router.patch(
   })
 );
 
+router.get(
+  "/live-metrics",
+  protect,
+  authorize("admin", "super-admin"),
+  asyncHandler(async (req, res) => {
+    const memory = process.memoryUsage();
+    const uptimeSeconds = Math.floor(process.uptime());
+    const connectedSockets = req.io ? req.io.engine.clientsCount : 0;
+    const videoRoomsMap = typeof req.getVideoRooms === "function" ? req.getVideoRooms() : null;
+    const activeVideoRooms = videoRoomsMap ? videoRoomsMap.size : 0;
+
+    const [
+      totalPatients,
+      totalDoctors,
+      totalAdmins,
+      pendingAppointments,
+      waitingEmergencies,
+      inProgressEmergencies,
+      availableAmbulances,
+      dispatchedAmbulances
+    ] = await Promise.all([
+      User.countDocuments({ role: "patient" }),
+      User.countDocuments({ role: "doctor" }),
+      User.countDocuments({ role: "admin" }),
+      Appointment.countDocuments({ status: "pending" }),
+      Emergency.countDocuments({ status: "waiting" }),
+      Emergency.countDocuments({ status: "in_progress" }),
+      AmbulanceFleet.countDocuments({ status: "available" }),
+      AmbulanceFleet.countDocuments({ status: "dispatched" })
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      server: {
+        uptimeSeconds,
+        memoryRssMb: (memory.rss / (1024 * 1024)).toFixed(2),
+        heapUsedMb: (memory.heapUsed / (1024 * 1024)).toFixed(2),
+        connectedSockets,
+        activeVideoRooms
+      },
+      counts: {
+        totalPatients,
+        totalDoctors,
+        totalAdmins,
+        pendingAppointments,
+        waitingEmergencies,
+        inProgressEmergencies,
+        availableAmbulances,
+        dispatchedAmbulances
+      }
+    });
+  })
+);
+
+router.patch(
+  "/users/:id/role",
+  protect,
+  authorize("super-admin"),
+  [
+    param("id").isMongoId().withMessage("Valid user id is required"),
+    body("role")
+      .isIn(["patient", "doctor", "admin", "super-admin"])
+      .withMessage("Invalid user role"),
+    body("accessLevel")
+      .optional()
+      .isIn(["full", "operations", "limited", "receptionist"])
+      .withMessage("Invalid access level")
+  ],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    user.role = req.body.role;
+    if (req.body.accessLevel) {
+      user.accessLevel = req.body.accessLevel;
+    }
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "User role updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        accessLevel: user.accessLevel,
+        isActive: user.isActive
+      }
+    });
+  })
+);
+
+router.post(
+  "/broadcast-alert",
+  protect,
+  authorize("admin", "super-admin"),
+  [
+    body("title").trim().notEmpty().withMessage("Alert title is required"),
+    body("message").trim().notEmpty().withMessage("Alert message is required"),
+    body("level")
+      .optional()
+      .isIn(["info", "warning", "critical"])
+      .withMessage("Invalid alert level")
+  ],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const { title, message, level = "info" } = req.body;
+
+    const alertPayload = {
+      id: `alert-${Date.now()}`,
+      title,
+      message,
+      level,
+      sender: req.user.name,
+      senderRole: req.user.role,
+      timestamp: new Date().toISOString()
+    };
+
+    if (req.io) {
+      req.io.emit("system:broadcast-alert", alertPayload);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "System alert broadcasted to all connected users",
+      alert: alertPayload
+    });
+  })
+);
+
 module.exports = router;

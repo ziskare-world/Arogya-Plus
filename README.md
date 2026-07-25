@@ -212,6 +212,7 @@ ArogyaPlus/
 │   ├── pushService.js               # Web-Push notification dispatcher
 │   └── symptomChecker.js            # Diagnostic rule engine for AI triage
 ├── .env.example                     # Environment variables configuration template
+├── SECRETS.md                       # Local secrets & credentials (git-ignored)
 ├── index.js                         # Application entry point (Express & Socket.io server)
 ├── package.json                     # Node.js dependencies & scripts configuration
 └── README.md                        # Complete project documentation
@@ -233,15 +234,15 @@ cp .env.example .env
 |---|---|---|---|---|
 | `PORT` | Number | No | `3000` | HTTP server port |
 | `MONGO_URI` | String | Yes | `mongodb://127.0.0.1:27017/smart-health-management` | MongoDB connection string |
-| `JWT_SECRET` | String | Yes | *(Secret key)* | JWT secret key for signature verification |
-| `RAZORPAY_KEY_ID` | String | No | `rzp_test_...` | Razorpay Key ID (*activates live mode if present*) |
-| `RAZORPAY_KEY_SECRET` | String | No | *(Secret)* | Razorpay Key Secret (*activates live mode if present*) |
-| `GOOGLE_MAPS_API_KEY` | String | No | *(API key)* | Google Maps API key for map widgets |
-| `VAPID_PUBLIC_KEY` | String | No | *(VAPID Key)* | Public VAPID key for Web Push Notifications |
-| `VAPID_PRIVATE_KEY` | String | No | *(VAPID Secret)* | Private VAPID key for Web Push Signing |
-| `VAPID_SUBJECT` | String | No | `mailto:admin@arogyaplus.com` | Mailto contact for Web Push service |
-| `SUPER_ADMIN_EMAIL` | String | No | `super-admin@arogyaplus.com` | Default super-admin email |
-| `SUPER_ADMIN_PASSWORD` | String | No | `123456` | Default super-admin password |
+| `JWT_SECRET` | String | Yes | *(Configured in .env)* | JWT secret key for signature verification |
+| `RAZORPAY_KEY_ID` | String | No | *(Configured in .env)* | Razorpay Key ID (*activates live mode if present*) |
+| `RAZORPAY_KEY_SECRET` | String | No | *(Configured in .env)* | Razorpay Key Secret (*activates live mode if present*) |
+| `GOOGLE_MAPS_API_KEY` | String | No | *(Configured in .env)* | Google Maps API key for map widgets |
+| `VAPID_PUBLIC_KEY` | String | No | *(Configured in .env)* | Public VAPID key for Web Push Notifications |
+| `VAPID_PRIVATE_KEY` | String | No | *(Configured in .env)* | Private VAPID key for Web Push Signing |
+| `VAPID_SUBJECT` | String | No | *(Configured in .env)* | Mailto contact for Web Push service |
+| `SUPER_ADMIN_EMAIL` | String | No | *(Configured in .env)* | Default super-admin email |
+| `SUPER_ADMIN_PASSWORD` | String | No | *(Configured in .env)* | Default super-admin password |
 
 > [!TIP]
 > If `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are omitted, the application automatically enters **Mock Payment Mode**, allowing developers to test full payment flows without real gateway credentials.
@@ -287,7 +288,7 @@ Output:
 ```text
 Server running at http://127.0.0.1:3000
 MongoDB connected: 127.0.0.1
-[Auth] Super admin created: super-admin@arogyaplus.com
+[Auth] Super admin created / verified
 ```
 
 ### 4️⃣ Production Server
@@ -300,15 +301,13 @@ npm start
 
 ---
 
-## 🔐 Default Access Credentials
+## 🔐 Default Access Credentials & Security
 
-Upon initial database initialization, the system automatically bootstraps a default **Super Admin** user:
+> [!SECURITY]
+> All default initial system credentials, passwords, and private API secret keys are maintained in a separate local file: [`SECRETS.md`](file:///d:/ArogyaPlus/SECRETS.md).
+> 
+> **Note**: `SECRETS.md` and `.env` are listed in `.gitignore` and are **NEVER** pushed to GitHub or public repositories. Please refer to your local `SECRETS.md` file for initial admin login credentials.
 
-| Account Role | Email Address | Default Password | Access Level |
-|---|---|---|---|
-| **Super Admin** | `super-admin@arogyaplus.com` | `123456` | Full System Access |
-
-*You can customize these initial credentials by supplying `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` in your `.env` file.*
 
 ---
 

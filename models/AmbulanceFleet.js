@@ -34,9 +34,14 @@ const ambulanceFleetSchema = new mongoose.Schema(
       enum: ["available", "dispatched", "maintenance", "inactive"],
       default: "available"
     },
+    speed: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
     currentCoordinates: {
-      lat: { type: Number, min: -90, max: 90 },
-      lng: { type: Number, min: -180, max: 180 }
+      lat: { type: Number, min: -90, max: 90, default: 28.6139 },
+      lng: { type: Number, min: -180, max: 180, default: 77.2090 }
     },
     lastAssignedAt: {
       type: Date

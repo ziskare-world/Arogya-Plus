@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -7,6 +7,7 @@
     <title>Arogya Plus - Hospitals</title>
     <link rel="stylesheet" href="../css/global.css" />
     <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         .modal-backdrop {
             position: fixed;
@@ -383,6 +384,14 @@
         </div>
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="../js/map.js"></script>
+    <script src="../js/routing.js"></script>
+    <script src="../js/geolocation.js"></script>
+    <script src="../js/hospital.js"></script>
+    <script src="../js/ambulance.js"></script>
+    <script src="../js/emergency.js"></script>
     <script type="module" src="../backend-js/super-admin-admins.js"></script>
 </body>
 

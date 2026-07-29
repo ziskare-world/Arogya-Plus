@@ -7,6 +7,7 @@
     <title>Arogya Plus - Ambulance Desk</title>
     <link rel="stylesheet" href="../css/global.css" />
     <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         .dashboard-grid {
             display: grid;
@@ -83,6 +84,23 @@
                         <div id="stat-unavailable-fleet" class="stat-value">0</div>
                         <div class="stat-label">Unavailable Ambulance</div>
                     </div>
+                </div>
+
+                <!-- Admin Interactive Fleet & Emergency Live Map -->
+                <div class="card" style="margin-bottom:18px">
+                    <div class="card-header flex-between">
+                        <div class="card-title">🌐 Hospital, Fleet & Emergency SOS Live Map</div>
+                        <div style="display:flex;gap:8px">
+                            <input id="admin-map-search" class="form-input" placeholder="Search location..." style="max-width:200px;padding:4px 8px;font-size:12px;" />
+                            <select id="admin-map-filter" class="form-input" style="max-width:140px;padding:4px 8px;font-size:12px;">
+                                <option value="all">Show All</option>
+                                <option value="hospitals">Hospitals</option>
+                                <option value="ambulances">Ambulances</option>
+                                <option value="emergencies">Emergencies</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="admin-live-map" style="width:100%;height:380px;border-radius:8px;background:#f8fafc;"></div>
                 </div>
 
                 <div class="layout-grid">
@@ -175,6 +193,14 @@
         </div>
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="../js/map.js"></script>
+    <script src="../js/routing.js"></script>
+    <script src="../js/geolocation.js"></script>
+    <script src="../js/hospital.js"></script>
+    <script src="../js/ambulance.js"></script>
+    <script src="../js/emergency.js"></script>
     <script type="module" src="../backend-js/admin-ambulance.js"></script>
 </body>
 

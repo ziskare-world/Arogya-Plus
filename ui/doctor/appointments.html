@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -7,6 +7,7 @@
     <title>Arogya Plus - Doctor Appointments</title>
     <link rel="stylesheet" href="../css/global.css" />
     <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 
 <body>
@@ -17,12 +18,21 @@
             <div id="topbar-container"></div>
             <main class="page-content">
                 <div class="page-header">
-                    <h2>Daily Schedule</h2>
+                    <h2>Daily Schedule & Patient Location Navigation</h2>
                     <div style="display:flex;gap:8px">
                         <button class="btn btn-outline btn-sm">Today</button>
                         <button class="btn btn-outline btn-sm">Weekly</button>
                     </div>
                 </div>
+
+                <!-- Patient Navigation & Live Tracking Map -->
+                <div class="card" style="margin-bottom:20px">
+                    <div class="card-header">
+                        <div class="card-title">📍 Assigned Patient Navigation & Live Ambulance Tracker</div>
+                    </div>
+                    <div id="doctor-patient-map" style="width:100%;height:320px;border-radius:8px;background:#f8fafc;"></div>
+                </div>
+
                 <!-- Schedule rendering -->
                 <div class="card" style="margin-top:20px">
                     <div class="table-wrap">
@@ -47,6 +57,14 @@
             </main>
         </div>
     </div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="../js/map.js"></script>
+    <script src="../js/routing.js"></script>
+    <script src="../js/geolocation.js"></script>
+    <script src="../js/hospital.js"></script>
+    <script src="../js/ambulance.js"></script>
+    <script src="../js/emergency.js"></script>
     <script type="module" src="../backend-js/doctor-appointments.js"></script>
 </body>
 

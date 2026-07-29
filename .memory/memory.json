@@ -1,15 +1,16 @@
 {
   "$schema": "ArogyaPlus High-Speed AI Memory Database",
-  "version": "2.0.0",
-  "last_updated": "2026-07-29T11:19:45.938Z",
+  "version": "2.1.0",
+  "last_updated": "2026-07-29T17:05:00+05:30",
   "project": {
     "name": "ArogyaPlus",
     "title": "Smart Health Management System",
-    "description": "Enterprise full-stack clinical platform supporting patient scheduling, real-time emergency ambulance dispatch, doctor digital prescriptions, telemedicine video rooms, and super admin live telemetry.",
+    "description": "Enterprise full-stack clinical platform supporting patient scheduling, real-time emergency ambulance dispatch, doctor digital prescriptions, telemedicine video rooms, super admin live telemetry, and 100% free OpenStreetMap & Leaflet GIS interactive mapping.",
     "tech_stack": {
       "runtime": "Node.js (v18+)",
       "server": "Express.js (^4.19.2)",
       "database": "MongoDB with Mongoose (^8.9.5)",
+      "maps_gis": "Leaflet.js (^1.9.4), Leaflet Routing Machine, OpenRouteService/OSRM, Overpass API, Nominatim API",
       "websockets": "Socket.IO (^4.8.1)",
       "push_notifications": "Web-Push VAPID (^3.6.7)",
       "payments": "Razorpay SDK (^2.9.4) & QR Code (^1.5.4)",
@@ -21,211 +22,86 @@
     "directories": {
       "config": "Database connection wrappers",
       "middleware": "JWT auth, rate limiting, error handling, request validation",
-      "models": "Mongoose schemas (User, Patient, Doctor, Appointment, Emergency, Ambulance, Payment, etc.)",
-      "routes": "Express API endpoints",
+      "models": "Mongoose schemas (User, Patient, Doctor, Appointment, Emergency, Ambulance, Hospital, Payment, etc.)",
+      "routes": "Express API endpoints (auth, appointment, ambulance, emergency, admin, doctor, map, payment, etc.)",
       "scripts": "Utility scripts (VAPID keys, setup)",
       "tests": "Jest integration & unit tests",
       "ui": "Clinical portal pages for patient, doctor, admin, & super-admin",
+      "ui/js": "Reusable JS components: map.js, routing.js, geolocation.js, hospital.js, ambulance.js, emergency.js",
       "utils": "Emergency queueing, WebPush services, symptom checker"
     }
   },
   "architecture": {
     "models": [
       {
+        "name": "Hospital",
+        "file": "models/Hospital.js",
+        "fields": ["name", "latitude", "longitude", "address", "specialty", "phone", "availableBeds", "emergencyServices"]
+      },
+      {
         "name": "User",
         "file": "models/User.js",
-        "roles": [
-          "patient",
-          "doctor",
-          "admin",
-          "superadmin"
-        ],
-        "fields": [
-          "name",
-          "email",
-          "password",
-          "phone",
-          "role",
-          "department",
-          "isAvailable",
-          "fcmToken",
-          "createdAt"
-        ]
+        "roles": ["patient", "doctor", "admin", "superadmin"],
+        "fields": ["name", "email", "password", "phone", "role", "department", "isAvailable", "fcmToken", "createdAt"]
       },
       {
         "name": "Appointment",
         "file": "models/Appointment.js",
-        "statuses": [
-          "pending",
-          "confirmed",
-          "completed",
-          "cancelled"
-        ],
-        "fields": [
-          "patient",
-          "doctor",
-          "date",
-          "timeSlot",
-          "status",
-          "symptoms",
-          "prescription",
-          "meetLink"
-        ]
+        "statuses": ["pending", "confirmed", "completed", "cancelled"],
+        "fields": ["patient", "doctor", "date", "timeSlot", "status", "symptoms", "prescription", "meetLink"]
       },
       {
         "name": "Emergency",
         "file": "models/Emergency.js",
-        "severities": [
-          "low",
-          "medium",
-          "critical"
-        ],
-        "statuses": [
-          "pending",
-          "assigned",
-          "resolved"
-        ],
-        "fields": [
-          "patient",
-          "location",
-          "severity",
-          "status",
-          "assignedAmbulance",
-          "createdAt"
-        ]
+        "severities": ["low", "medium", "critical"],
+        "statuses": ["waiting", "in_progress", "resolved"],
+        "fields": ["patientName", "contact", "location", "latitude", "longitude", "priority", "status", "assignedDoctor", "createdBy"]
       },
       {
         "name": "Ambulance",
         "file": "models/Ambulance.js",
-        "statuses": [
-          "available",
-          "dispatched",
-          "maintenance"
-        ],
-        "fields": [
-          "vehicleNumber",
-          "driverName",
-          "driverPhone",
-          "status",
-          "currentLocation",
-          "hospitalBranch"
-        ]
+        "statuses": ["requested", "dispatched", "arrived", "completed", "cancelled"],
+        "fields": ["requestedBy", "pickupLocation", "pickupCoordinates", "hospitalLocation", "assignedDoctor", "assignedAmbulance", "etaMinutes"]
+      },
+      {
+        "name": "AmbulanceFleet",
+        "file": "models/AmbulanceFleet.js",
+        "statuses": ["available", "dispatched", "maintenance", "inactive"],
+        "fields": ["hospitalName", "hospitalAddress", "vehicleNumber", "driverName", "driverPhone", "status", "speed", "currentCoordinates"]
       },
       {
         "name": "Prescription",
         "file": "models/Prescription.js",
-        "fields": [
-          "patient",
-          "doctor",
-          "medicines",
-          "diagnosis",
-          "notes",
-          "attachments",
-          "date"
-        ]
+        "fields": ["patient", "doctor", "medicines", "diagnosis", "notes", "attachments", "date"]
       },
       {
         "name": "Payment",
         "file": "models/Payment.js",
-        "statuses": [
-          "created",
-          "paid",
-          "failed"
-        ],
-        "fields": [
-          "user",
-          "amount",
-          "currency",
-          "razorpayOrderId",
-          "razorpayPaymentId",
-          "status",
-          "purpose"
-        ]
-      },
-      {
-        "name": "PushSubscription",
-        "file": "models/PushSubscription.js",
-        "fields": [
-          "user",
-          "endpoint",
-          "keys",
-          "createdAt"
-        ]
+        "statuses": ["created", "paid", "failed"],
+        "fields": ["user", "amount", "currency", "razorpayOrderId", "razorpayPaymentId", "status", "purpose"]
       }
     ],
     "routes": [
-      {
-        "path": "/api/auth",
-        "file": "routes/authRoutes.js",
-        "desc": "Login, register, token refresh, profile"
-      },
-      {
-        "path": "/api/users",
-        "file": "routes/userRoutes.js",
-        "desc": "Patient portal metrics & EHR"
-      },
-      {
-        "path": "/api/doctors",
-        "file": "routes/doctorRoutes.js",
-        "desc": "Doctor queues & digital prescriptions"
-      },
-      {
-        "path": "/api/appointments",
-        "file": "routes/appointmentRoutes.js",
-        "desc": "Booking, rescheduling, cancellation"
-      },
-      {
-        "path": "/api/ambulances",
-        "file": "routes/ambulanceRoutes.js",
-        "desc": "Dispatch requests & driver GPS tracking"
-      },
-      {
-        "path": "/api/emergency",
-        "file": "routes/emergencyRoutes.js",
-        "desc": "Urgent SOS creation & queue processing"
-      },
-      {
-        "path": "/api/admin",
-        "file": "routes/adminRoutes.js",
-        "desc": "Super admin system monitoring & broadcast alerts"
-      },
-      {
-        "path": "/api/payments",
-        "file": "routes/paymentRoutes.js",
-        "desc": "Razorpay order creation & webhook verification"
-      },
-      {
-        "path": "/api/notifications",
-        "file": "routes/notificationRoutes.js",
-        "desc": "VAPID key retrieval & web push setup"
-      },
-      {
-        "path": "/api/ai",
-        "file": "routes/aiRoutes.js",
-        "desc": "Symptom checker & automated clinical triage"
-      }
+      { "path": "/api/map/hospitals", "file": "routes/mapRoutes.js", "desc": "GET all hospital location markers" },
+      { "path": "/api/map/ambulances", "file": "routes/mapRoutes.js", "desc": "GET live ambulance fleet marker locations" },
+      { "path": "/api/map/emergencies", "file": "routes/mapRoutes.js", "desc": "GET active emergency SOS incident markers" },
+      { "path": "/api/map/nearby", "file": "routes/mapRoutes.js", "desc": "GET nearby facilities via Overpass API" },
+      { "path": "/api/map/route", "file": "routes/mapRoutes.js", "desc": "POST driving route, distance, ETA, & alternatives via OSRM/OpenRouteService" },
+      { "path": "/api/map/geocode", "file": "routes/mapRoutes.js", "desc": "POST address search via Nominatim API" },
+      { "path": "/api/map/reverse-geocode", "file": "routes/mapRoutes.js", "desc": "POST lat/lng to address string via Nominatim API" },
+      { "path": "/api/auth", "file": "routes/authRoutes.js", "desc": "Login, register, token refresh, profile" },
+      { "path": "/api/users", "file": "routes/userRoutes.js", "desc": "Patient portal metrics & EHR" },
+      { "path": "/api/doctors", "file": "routes/doctorRoutes.js", "desc": "Doctor queues & digital prescriptions" },
+      { "path": "/api/appointments", "file": "routes/appointmentRoutes.js", "desc": "Booking, rescheduling, cancellation" },
+      { "path": "/api/ambulances", "file": "routes/ambulanceRoutes.js", "desc": "Dispatch requests & driver GPS tracking" },
+      { "path": "/api/emergency", "file": "routes/emergencyRoutes.js", "desc": "Urgent SOS creation & queue processing" },
+      { "path": "/api/admin", "file": "routes/adminRoutes.js", "desc": "Super admin system monitoring & broadcast alerts" },
+      { "path": "/api/payments", "file": "routes/paymentRoutes.js", "desc": "Razorpay order creation & webhook verification" }
     ],
     "websocket_channels": [
-      {
-        "room": "room:admin",
-        "desc": "Super admin live telemetry & system alerts"
-      },
-      {
-        "room": "room:doctor:<doctorId>",
-        "desc": "Doctor live appointment queue notifications"
-      },
-      {
-        "room": "room:patient:<patientId>",
-        "desc": "Patient updates & prescription alerts"
-      },
-      {
-        "room": "room:emergency",
-        "desc": "Ambulance driver & SOS operator emergency room"
-      },
-      {
-        "room": "room:telemedicine:<appointmentId>",
-        "desc": "WebRTC peer signaling for video calls"
-      }
+      { "room": "room:admin", "desc": "Super admin live telemetry & system alerts" },
+      { "event": "ambulance:location_update", "desc": "Driver app emits live GPS updates" },
+      { "event": "ambulance:location_changed", "desc": "Server broadcasts smooth position update to all client maps" }
     ]
   },
   "git_history": {
@@ -234,140 +110,36 @@
     "repo_url": "https://github.com/ziskare-world/Arogya-Plus",
     "recent_commits": [
       {
+        "sha": "a13499a",
+        "date": "2026-07-29",
+        "message": "docs: update memory.json git history ledger",
+        "author": "ziskare-world",
+        "files_changed": [".memory/memory.json"]
+      },
+      {
         "sha": "d763a32",
         "date": "2026-07-29",
         "message": "feat: implement high-speed JSON memory system and memory CLI tool in .memory/",
-        "author": "AI-Assistant"
-      },
-      {
-        "sha": "0099718",
-        "date": "2026-07-29",
-        "message": "feat: add Admin live system monitoring, resource tracking, role control, and system alert broadcast",
         "author": "ziskare-world",
-        "files_changed": [
-          "routes/adminRoutes.js",
-          "ui/super-admin/dashboard.html",
-          "ui/backend-js/super-admin-dashboard.js",
-          "index.js"
-        ]
-      },
-      {
-        "sha": "ac161d2",
-        "date": "2026-07-28",
-        "message": "feat: upgrade UI to realistic clinical design, add security middleware, and optimize performance",
-        "author": "ziskare-world",
-        "files_changed": [
-          "ui/css/variables.css",
-          "ui/css/global.css",
-          "middleware/authMiddleware.js",
-          "routes/authRoutes.js",
-          "tests/testUtils.js"
-        ]
-      },
-      {
-        "sha": "27c6bc4",
-        "date": "2026-07-25",
-        "message": "docs: update README with sanitized info and add SECRETS.md to gitignore",
-        "author": "ziskare-world",
-        "files_changed": [
-          ".gitignore",
-          "README.md"
-        ]
-      },
-      {
-        "sha": "6fce761",
-        "date": "2026-07-25",
-        "message": "update readme.md file",
-        "author": "ziskare-world",
-        "files_changed": [
-          "README.md"
-        ]
-      },
-      {
-        "sha": "944798d",
-        "date": "2026-07-25",
-        "message": "first change - initial full-stack implementation",
-        "author": "ziskare-world",
-        "files_changed": [
-          "128 files (+41577 lines)"
-        ]
-      },
-      {
-        "sha": "2288632",
-        "date": "2026-07-25",
-        "message": "first commit",
-        "author": "ziskare-world",
-        "files_changed": [
-          "README.md"
-        ]
+        "files_changed": [".memory/memory.js", ".memory/memory.json"]
       }
     ]
   },
   "backlog": {
     "completed": [
-      {
-        "id": "FEAT-001",
-        "name": "Authentication & JWT Role Authorization Guard",
-        "category": "Security"
-      },
-      {
-        "id": "FEAT-002",
-        "name": "Real-time Ambulance SOS Dispatching",
-        "category": "Emergency"
-      },
-      {
-        "id": "FEAT-003",
-        "name": "Patient Appointment Scheduling & Queue Management",
-        "category": "Appointments"
-      },
-      {
-        "id": "FEAT-004",
-        "name": "WebRTC Video Consultation Room",
-        "category": "Telemedicine"
-      },
-      {
-        "id": "FEAT-005",
-        "name": "Digital Doctor Prescription & EHR Portal",
-        "category": "EHR"
-      },
-      {
-        "id": "FEAT-006",
-        "name": "VAPID Web Push Notifications",
-        "category": "Notifications"
-      },
-      {
-        "id": "FEAT-007",
-        "name": "Razorpay Clinical Billing & Payment Verification",
-        "category": "Payments"
-      },
-      {
-        "id": "FEAT-008",
-        "name": "Super Admin Live Telemetry & System Alert Broadcast",
-        "category": "Monitoring"
-      },
-      {
-        "id": "FEAT-009",
-        "name": "Automated Jest Integration Test Suite",
-        "category": "Testing"
-      },
-      {
-        "id": "FEAT-010",
-        "name": "Fast JSON Memory System (.memory/memory.json)",
-        "category": "AI Memory"
-      }
+      { "id": "FEAT-001", "name": "Authentication & JWT Role Authorization Guard", "category": "Security" },
+      { "id": "FEAT-002", "name": "Real-time Ambulance SOS Dispatching", "category": "Emergency" },
+      { "id": "FEAT-003", "name": "Patient Appointment Scheduling & Queue Management", "category": "Appointments" },
+      { "id": "FEAT-004", "name": "WebRTC Video Consultation Room", "category": "Telemedicine" },
+      { "id": "FEAT-005", "name": "Digital Doctor Prescription & EHR Portal", "category": "EHR" },
+      { "id": "FEAT-006", "name": "VAPID Web Push Notifications", "category": "Notifications" },
+      { "id": "FEAT-007", "name": "Razorpay Clinical Billing & Payment Verification", "category": "Payments" },
+      { "id": "FEAT-008", "name": "Super Admin Live Telemetry & System Alert Broadcast", "category": "Monitoring" },
+      { "id": "FEAT-009", "name": "Automated Jest Integration Test Suite", "category": "Testing" },
+      { "id": "FEAT-010", "name": "Fast JSON Memory System (.memory/memory.json)", "category": "AI Memory" },
+      { "id": "FEAT-011", "name": "OpenStreetMap & Leaflet.js Free GIS Interactive Mapping System", "category": "GIS Mapping" }
     ],
-    "in_progress": [
-      {
-        "id": "TASK-101",
-        "name": "MongoDB latency & socket connection metrics for Super Admin",
-        "category": "Monitoring"
-      },
-      {
-        "id": "TASK-102",
-        "name": "System Audit Trail logger middleware",
-        "category": "Audit"
-      }
-    ],
+    "in_progress": [],
     "pending": [
       {
         "id": "BACKLOG-001",
@@ -396,13 +168,6 @@
         "priority": "Medium",
         "category": "Notifications",
         "description": "Add SMS provider service (Twilio/Msg91) to dispatch SMS when Web Push is offline during critical emergencies."
-      },
-      {
-        "id": "BACKLOG-005",
-        "name": "Automated 24h & 1h Appointment Reminders",
-        "priority": "Low",
-        "category": "Automation",
-        "description": "Background node-cron scheduler to trigger push notifications before appointments."
       }
     ]
   },
@@ -424,6 +189,12 @@
       "title": "Fast High-Speed JSON Memory System",
       "status": "Accepted",
       "summary": "Replaced markdown text files with structured memory.json and executable CLI script memory.js for instant AI parsing and CLI updates."
+    },
+    {
+      "id": "ADR-004",
+      "title": "100% Free OpenStreetMap & Leaflet GIS Ecosystem Replacement",
+      "status": "Accepted",
+      "summary": "Replaced Google Maps with free OpenStreetMap, Leaflet.js, Leaflet Routing Machine, OpenRouteService/OSRM, Overpass API, and Nominatim API."
     }
   ],
   "ai_directives": {

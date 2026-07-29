@@ -357,6 +357,102 @@ const initListeners = () => {
   }
 };
 
+// Admin Live Leaflet Map Initialization
+let adminMap = null;
+let mapMarkers = [];
+
+async function initAdminLiveMap() {
+  if (!window.ArogyaMap || !document.getElementById("admin-live-map")) return;
+
+  adminMap = window.ArogyaMap.initMap("admin-live-map", { lat: 28.6139, lng: 77.2090, zoom: 12 });
+  loadAdminMapMarkers();
+
+  // Socket.IO tracking for live ambulance updates
+  if (window.io && adminMap) {
+    const socket = window.io();
+    window.ArogyaAmbulance.initLiveTracking(adminMap, socket);
+  }
+
+  const searchInput = document.getElementById("admin-map-search");
+  const filterSelect = document.getElementById("admin-map-filter");
+
+  if (filterSelect) {
+    filterSelect.onchange = loadAdminMapMarkers;
+  }
+
+  if (searchInput) {
+    searchInput.oninput = async (e) => {
+      const q = e.target.value.trim();
+      if (q.length > 2) {
+        const results = await window.ArogyaGeo.geocodeAddress(q);
+        if (results.length > 0 && adminMap) {
+          adminMap.setView([results[0].latitude, results[0].longitude], 14);
+        }
+      }
+    };
+  }
+}
+
+async function loadAdminMapMarkers() {
+  if (!adminMap) return;
+
+  // Clear existing markers
+  mapMarkers.forEach(m => adminMap.removeLayer(m));
+  mapMarkers = [];
+
+  const filterVal = document.getElementById("admin-map-filter")?.value || "all";
+
+  // 1. Fetch Hospitals
+  if (filterVal === "all" || filterVal === "hospitals") {
+    const hospitals = await window.ArogyaHospital.getHospitals();
+    hospitals.forEach(h => {
+      const m = window.ArogyaMap.addMarker(
+        adminMap,
+        h.latitude,
+        h.longitude,
+        "hospital",
+        `<b>🏥 ${h.name}</b><br>${h.address}<br><small>${h.specialty}</small>`
+      );
+      if (m) mapMarkers.push(m);
+    });
+  }
+
+  // 2. Fetch Ambulances
+  if (filterVal === "all" || filterVal === "ambulances") {
+    const fleetList = await window.ArogyaAmbulance.getAmbulanceFleet();
+    fleetList.forEach(a => {
+      const m = window.ArogyaMap.addMarker(
+        adminMap,
+        a.latitude,
+        a.longitude,
+        "ambulance",
+        `<b>🚑 Ambulance ${a.vehicleNumber}</b><br>Driver: ${a.driver}<br>Status: ${a.status}`,
+        { status: a.status }
+      );
+      if (m) mapMarkers.push(m);
+    });
+  }
+
+  // 3. Fetch Emergency Incidents
+  if (filterVal === "all" || filterVal === "emergencies") {
+    const emergencies = await window.ArogyaEmergency.getActiveEmergencies();
+    emergencies.forEach(e => {
+      const m = window.ArogyaMap.addMarker(
+        adminMap,
+        e.latitude,
+        e.longitude,
+        "emergency",
+        `<b>🚨 SOS Incident #${e.id.slice(-6)}</b><br>Patient: ${e.patientName}<br>Priority: <strong style="color:red;">${e.priority.toUpperCase()}</strong>`
+      );
+      if (m) mapMarkers.push(m);
+    });
+  }
+
+  if (mapMarkers.length > 0) {
+    window.ArogyaMap.fitBounds(adminMap, mapMarkers);
+  }
+}
+
 const init = async () => {
   const session = ensureSession({
     allowedRoles: ["admin", "super-admin"],

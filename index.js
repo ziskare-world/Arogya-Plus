@@ -22,33 +22,15 @@ const doctorRoutes = require("./routes/doctorRoutes");
 const userRoutes = require("./routes/userRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const authPageRoutes = require("./routes/authPageRoutes");
+const mapRoutes = require("./routes/mapRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const { getEmergencyQueue } = require("./utils/emergencyQueue");
 
 dotenv.config({ path: path.join(__dirname, ".env") });
 
-const resolveGoogleMapsApiKey = (() => {
-  let cachedFallbackKey;
-
-  return () => {
-    const envKey = String(process.env.GOOGLE_MAPS_API_KEY || "").trim();
-    if (envKey) return envKey;
-
-    if (cachedFallbackKey !== undefined) {
-      return cachedFallbackKey;
-    }
-
-    try {
-      const fallbackPath = path.join(__dirname, ".env.example");
-      const parsed = dotenv.parse(fs.readFileSync(fallbackPath));
-      cachedFallbackKey = String(parsed.GOOGLE_MAPS_API_KEY || "").trim();
-    } catch {
-      cachedFallbackKey = "";
-    }
-
-    return cachedFallbackKey;
-  };
-})();
+const resolveOpenRouteServiceApiKey = () => {
+  return String(process.env.OPENROUTESERVICE_API_KEY || "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImMxMTI0MWRiZTg2NTQ0M2ZiZjA3N2Q4NDA3NjQxZDZmIiwiaCI6Im11cm11cjY0In0=").trim();
+};
 
 if (process.env.NODE_ENV !== "test") {
   connectDB();
@@ -215,7 +197,7 @@ app.get("/api/health", (req, res) => {
 app.get("/api/public-config", (req, res) => {
   res.status(200).json({
     success: true,
-    googleMapsApiKey: resolveGoogleMapsApiKey()
+    openRouteServiceApiKey: resolveOpenRouteServiceApiKey()
   });
 });
 
@@ -234,11 +216,18 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/map", mapRoutes);
 
 io.on("connection", async (socket) => {
   console.log(`Socket connected: ${socket.id}`);
   const queue = await getEmergencyQueue();
   socket.emit("emergencyQueue:update", queue);
+
+  // Live ambulance location tracking update
+  socket.on("ambulance:location_update", (data) => {
+    socket.broadcast.emit("ambulance:location_changed", data);
+    io.emit("ambulance:location_changed", data);
+  });
 
   socket.on("video:join-room", (payload = {}, callback) => {
     const respond = typeof callback === "function" ? callback : () => {};

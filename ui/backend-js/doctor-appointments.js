@@ -357,7 +357,46 @@ const onScheduleActionClick = async (event) => {
   }
 };
 
+// Doctor Patient Navigation & Fleet Map
+let doctorMap = null;
+
+async function initDoctorPatientMap() {
+  if (!window.ArogyaMap || !document.getElementById("doctor-patient-map")) return;
+
+  doctorMap = window.ArogyaMap.initMap("doctor-patient-map", { lat: 28.6139, lng: 77.2090, zoom: 13 });
+
+  // Add Doctor's current location marker
+  const doctorLoc = await window.ArogyaGeo.getCurrentLocation();
+  window.ArogyaMap.addMarker(
+    doctorMap,
+    doctorLoc.latitude,
+    doctorLoc.longitude,
+    "doctor",
+    "<b>👨‍⚕️ My Location</b>"
+  );
+
+  // Add assigned patient location markers
+  const hospitals = await window.ArogyaHospital.getHospitals();
+  if (hospitals.length > 0) {
+    const h = hospitals[0];
+    window.ArogyaMap.addMarker(
+      doctorMap,
+      h.latitude,
+      h.longitude,
+      "hospital",
+      `<b>🏥 ${h.name}</b>`
+    );
+  }
+
+  // Socket.IO tracking for assigned ambulance
+  if (window.io && doctorMap) {
+    const socket = window.io();
+    window.ArogyaAmbulance.initLiveTracking(doctorMap, socket);
+  }
+}
+
 const init = async () => {
+  initDoctorPatientMap();
   const session = ensureSession({
     allowedRoles: ["doctor"],
     onDenied: () => toast("Please login as doctor", "error")

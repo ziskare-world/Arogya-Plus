@@ -33,6 +33,14 @@ const emergencySchema = new mongoose.Schema(
       required: [true, "Location is required"],
       trim: true
     },
+    latitude: {
+      type: Number,
+      default: 28.6139
+    },
+    longitude: {
+      type: Number,
+      default: 77.2090
+    },
     assignedDoctor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User"

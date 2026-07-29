@@ -473,45 +473,19 @@ const setCoordsLabel = () => {
 };
 
 const reverseGeocode = async (coords) => {
-  if (!hospitalGeocoder || !window.google?.maps) return "";
-
-  return new Promise((resolve) => {
-    hospitalGeocoder.geocode(
-      { location: new window.google.maps.LatLng(coords.lat, coords.lng) },
-      (results, status) => {
-        if (status === "OK" && results?.[0]?.formatted_address) {
-          resolve(results[0].formatted_address);
-          return;
-        }
-        resolve("");
-      }
-    );
-  });
+  if (!coords) return "";
+  return await window.ArogyaGeo.reverseGeocode(coords.lat, coords.lng);
 };
 
 const geocodeByAddress = async (address) => {
   const query = String(address || "").trim();
-  if (!query || !window.google?.maps) return null;
-  if (!hospitalGeocoder) {
-    hospitalGeocoder = new window.google.maps.Geocoder();
-  }
-
-  return new Promise((resolve) => {
-    hospitalGeocoder.geocode({ address: query }, (results, status) => {
-      if (status !== "OK" || !results?.[0]?.geometry?.location) {
-        resolve(null);
-        return;
-      }
-
-      resolve({
-        coords: {
-          lat: results[0].geometry.location.lat(),
-          lng: results[0].geometry.location.lng()
-        },
-        address: results[0].formatted_address || query
-      });
-    });
-  });
+  if (!query) return null;
+  const results = await window.ArogyaGeo.geocodeAddress(query);
+  if (!results || results.length === 0) return null;
+  return {
+    coords: { lat: results[0].latitude, lng: results[0].longitude },
+    address: results[0].displayName || query
+  };
 };
 
 const setHospitalLocation = (coords, address = "") => {
@@ -525,112 +499,35 @@ const setHospitalLocation = (coords, address = "") => {
     hospitalAddressInputEl.value = address;
   }
 
-  if (!hospitalMap || !window.google?.maps) return;
+  if (!hospitalMap) return;
 
-  const position = new window.google.maps.LatLng(normalized.lat, normalized.lng);
-  if (!hospitalMarker) {
-    hospitalMarker = new window.google.maps.Marker({
-      map: hospitalMap,
-      position,
-      title: "Hospital Location"
-    });
-  } else {
-    hospitalMarker.setPosition(position);
+  if (hospitalMarker) {
+    hospitalMap.removeLayer(hospitalMarker);
   }
 
-  hospitalMap.setCenter(position);
-  hospitalMap.setZoom(15);
+  hospitalMarker = window.ArogyaMap.addMarker(
+    hospitalMap,
+    normalized.lat,
+    normalized.lng,
+    "hospital",
+    `<b>🏥 ${hospitalNameInputEl?.value || 'Hospital Location'}</b>`
+  );
+
+  hospitalMap.setView([normalized.lat, normalized.lng], 15);
 };
 
 const resetHospitalLocation = ({ clearAddress = false } = {}) => {
   hospitalCoordinates = null;
   setCoordsLabel();
 
-  if (hospitalMarker) {
-    hospitalMarker.setMap(null);
+  if (hospitalMarker && hospitalMap) {
+    hospitalMap.removeLayer(hospitalMarker);
     hospitalMarker = null;
   }
 
   if (clearAddress && hospitalAddressInputEl) {
     hospitalAddressInputEl.value = "";
   }
-};
-
-const loadGoogleMapsApi = async () => {
-  if (window.google?.maps) return true;
-  if (mapLoaderPromise) return mapLoaderPromise;
-
-  const key = await getGoogleMapsApiKey();
-  if (!key) return false;
-
-  const settleLoad = (resolve, reject) => {
-    window.setTimeout(() => {
-      if (window.google?.maps) {
-        resolve(true);
-        return;
-      }
-      reject(new Error("Google Maps failed to load"));
-    }, 300);
-  };
-
-  mapLoaderPromise = new Promise((resolve, reject) => {
-    const existingScript = document.getElementById("super-admin-google-maps-script");
-    if (existingScript) {
-      if (window.google?.maps) {
-        resolve(true);
-        return;
-      }
-
-      existingScript.addEventListener("load", () => settleLoad(resolve, reject), { once: true });
-      existingScript.addEventListener("error", () => reject(new Error("Google Maps failed to load")), {
-        once: true
-      });
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.id = "super-admin-google-maps-script";
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
-      key
-    )}&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => settleLoad(resolve, reject);
-    script.onerror = () => reject(new Error("Google Maps failed to load"));
-    document.head.appendChild(script);
-  });
-
-  return mapLoaderPromise;
-};
-
-const setupAddressAutocomplete = () => {
-  if (!hospitalAddressInputEl || !window.google?.maps?.places || mapAutocomplete) return;
-
-  mapAutocomplete = new window.google.maps.places.Autocomplete(hospitalAddressInputEl, {
-    fields: ["formatted_address", "geometry", "name"]
-  });
-
-  mapAutocomplete.addListener("place_changed", () => {
-    const place = mapAutocomplete.getPlace();
-    if (!place?.geometry?.location) {
-      return;
-    }
-
-    const coords = {
-      lat: place.geometry.location.lat(),
-      lng: place.geometry.location.lng()
-    };
-
-    if (hospitalNameInputEl && !hospitalNameInputEl.value.trim()) {
-      hospitalNameInputEl.value = place.name || hospitalNameInputEl.value;
-    }
-
-    setHospitalLocation(coords, place.formatted_address || hospitalAddressInputEl.value.trim());
-    setMapStatus("Ready", "badge-green");
-    if (mapHelpEl) {
-      mapHelpEl.textContent = "Address located. You can click map to adjust exact hospital pin.";
-    }
-  });
 };
 
 const locateAddressOnMap = async () => {
@@ -642,7 +539,7 @@ const locateAddressOnMap = async () => {
   if (!mapInitialized || !hospitalMap) {
     const ready = await initializeHospitalMap();
     if (!ready) {
-      throw new Error("Google Map is not ready");
+      throw new Error("Leaflet Map is not ready");
     }
   }
 
@@ -667,47 +564,36 @@ const initializeHospitalMap = async () => {
   setMapStatus("Loading", "badge-blue");
 
   try {
-    const loaded = await loadGoogleMapsApi();
-    if (!loaded || !window.google?.maps) {
-      setMapStatus("Key Required", "badge-yellow");
-      mapHelpEl.textContent = "Configure GOOGLE_MAPS_API_KEY in .env to enable map selection.";
-      mapEl.innerHTML =
-        '<div style="display:flex;align-items:center;justify-content:center;height:100%;padding:20px;color:var(--text-500);text-align:center">Google Map unavailable. Add API key and reload.</div>';
+    if (!window.ArogyaMap) {
+      setTimeout(initializeHospitalMap, 300);
       return false;
     }
+
+    hospitalMap = window.ArogyaMap.initMap("hospital-map", {
+      lat: DEFAULT_CENTER.lat,
+      lng: DEFAULT_CENTER.lng,
+      zoom: 12
+    });
+
+    hospitalMap.on("click", async (event) => {
+      const coords = { lat: event.latlng.lat, lng: event.latlng.lng };
+      const address = await reverseGeocode(coords);
+      setHospitalLocation(coords, address || hospitalAddressInputEl?.value || "");
+    });
+
+    mapInitialized = true;
+    setMapStatus("OpenStreetMap Ready", "badge-green");
+    if (mapHelpEl) {
+      mapHelpEl.textContent = "100% Free OpenStreetMap & Leaflet active. Click on map to set location.";
+    }
+
+    return true;
   } catch (error) {
     setMapStatus("Map Error", "badge-red");
-    mapHelpEl.textContent = error.message || "Unable to initialize Google Maps";
-    mapEl.innerHTML =
-      '<div style="display:flex;align-items:center;justify-content:center;height:100%;padding:20px;color:var(--text-500);text-align:center">Unable to load Google Map.</div>';
+    mapHelpEl.textContent = error.message || "Unable to initialize Leaflet Map";
     return false;
   }
-
-  hospitalMap = new window.google.maps.Map(mapEl, {
-    center: DEFAULT_CENTER,
-    zoom: 5,
-    mapTypeControl: false,
-    streetViewControl: false,
-    fullscreenControl: false
-  });
-
-  hospitalGeocoder = new window.google.maps.Geocoder();
-  setupAddressAutocomplete();
-
-  hospitalMap.addListener("click", async (event) => {
-    const coords = event.latLng?.toJSON?.();
-    if (!coords) return;
-    const address = await reverseGeocode(coords);
-    setHospitalLocation(coords, address || hospitalAddressInputEl?.value || "");
-  });
-
-  mapInitialized = true;
-  setMapStatus("Ready", "badge-green");
-  if (mapHelpEl) {
-    mapHelpEl.textContent = "Click on the map to pin hospital location, or search the address field.";
-  }
-
-  return true;
+};
 };
 
 window.reloadAdmins = async function reloadAdmins() {
@@ -722,13 +608,12 @@ window.reloadAdmins = async function reloadAdmins() {
 window.openAdminModal = async function openAdminModal() {
   if (modalEl) modalEl.classList.remove("hidden");
   const ready = await initializeHospitalMap();
-  if (!ready || !hospitalMap || !window.google?.maps) return;
+  if (!ready || !hospitalMap) return;
 
   window.setTimeout(() => {
-    window.google.maps.event.trigger(hospitalMap, "resize");
+    hospitalMap.invalidateSize();
     if (hospitalCoordinates) {
-      hospitalMap.setCenter(hospitalCoordinates);
-      hospitalMap.setZoom(15);
+      hospitalMap.setView([hospitalCoordinates.lat, hospitalCoordinates.lng], 15);
     }
   }, 100);
 };

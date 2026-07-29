@@ -1,7 +1,7 @@
 {
   "$schema": "ArogyaPlus High-Speed AI Memory Database",
   "version": "2.1.0",
-  "last_updated": "2026-07-29T17:05:00+05:30",
+  "last_updated": "2026-07-29T11:48:48.744Z",
   "project": {
     "name": "ArogyaPlus",
     "title": "Smart Health Management System",
@@ -36,72 +36,245 @@
       {
         "name": "Hospital",
         "file": "models/Hospital.js",
-        "fields": ["name", "latitude", "longitude", "address", "specialty", "phone", "availableBeds", "emergencyServices"]
+        "fields": [
+          "name",
+          "latitude",
+          "longitude",
+          "address",
+          "specialty",
+          "phone",
+          "availableBeds",
+          "emergencyServices"
+        ]
       },
       {
         "name": "User",
         "file": "models/User.js",
-        "roles": ["patient", "doctor", "admin", "superadmin"],
-        "fields": ["name", "email", "password", "phone", "role", "department", "isAvailable", "fcmToken", "createdAt"]
+        "roles": [
+          "patient",
+          "doctor",
+          "admin",
+          "superadmin"
+        ],
+        "fields": [
+          "name",
+          "email",
+          "password",
+          "phone",
+          "role",
+          "department",
+          "isAvailable",
+          "fcmToken",
+          "createdAt"
+        ]
       },
       {
         "name": "Appointment",
         "file": "models/Appointment.js",
-        "statuses": ["pending", "confirmed", "completed", "cancelled"],
-        "fields": ["patient", "doctor", "date", "timeSlot", "status", "symptoms", "prescription", "meetLink"]
+        "statuses": [
+          "pending",
+          "confirmed",
+          "completed",
+          "cancelled"
+        ],
+        "fields": [
+          "patient",
+          "doctor",
+          "date",
+          "timeSlot",
+          "status",
+          "symptoms",
+          "prescription",
+          "meetLink"
+        ]
       },
       {
         "name": "Emergency",
         "file": "models/Emergency.js",
-        "severities": ["low", "medium", "critical"],
-        "statuses": ["waiting", "in_progress", "resolved"],
-        "fields": ["patientName", "contact", "location", "latitude", "longitude", "priority", "status", "assignedDoctor", "createdBy"]
+        "severities": [
+          "low",
+          "medium",
+          "critical"
+        ],
+        "statuses": [
+          "waiting",
+          "in_progress",
+          "resolved"
+        ],
+        "fields": [
+          "patientName",
+          "contact",
+          "location",
+          "latitude",
+          "longitude",
+          "priority",
+          "status",
+          "assignedDoctor",
+          "createdBy"
+        ]
       },
       {
         "name": "Ambulance",
         "file": "models/Ambulance.js",
-        "statuses": ["requested", "dispatched", "arrived", "completed", "cancelled"],
-        "fields": ["requestedBy", "pickupLocation", "pickupCoordinates", "hospitalLocation", "assignedDoctor", "assignedAmbulance", "etaMinutes"]
+        "statuses": [
+          "requested",
+          "dispatched",
+          "arrived",
+          "completed",
+          "cancelled"
+        ],
+        "fields": [
+          "requestedBy",
+          "pickupLocation",
+          "pickupCoordinates",
+          "hospitalLocation",
+          "assignedDoctor",
+          "assignedAmbulance",
+          "etaMinutes"
+        ]
       },
       {
         "name": "AmbulanceFleet",
         "file": "models/AmbulanceFleet.js",
-        "statuses": ["available", "dispatched", "maintenance", "inactive"],
-        "fields": ["hospitalName", "hospitalAddress", "vehicleNumber", "driverName", "driverPhone", "status", "speed", "currentCoordinates"]
+        "statuses": [
+          "available",
+          "dispatched",
+          "maintenance",
+          "inactive"
+        ],
+        "fields": [
+          "hospitalName",
+          "hospitalAddress",
+          "vehicleNumber",
+          "driverName",
+          "driverPhone",
+          "status",
+          "speed",
+          "currentCoordinates"
+        ]
       },
       {
         "name": "Prescription",
         "file": "models/Prescription.js",
-        "fields": ["patient", "doctor", "medicines", "diagnosis", "notes", "attachments", "date"]
+        "fields": [
+          "patient",
+          "doctor",
+          "medicines",
+          "diagnosis",
+          "notes",
+          "attachments",
+          "date"
+        ]
       },
       {
         "name": "Payment",
         "file": "models/Payment.js",
-        "statuses": ["created", "paid", "failed"],
-        "fields": ["user", "amount", "currency", "razorpayOrderId", "razorpayPaymentId", "status", "purpose"]
+        "statuses": [
+          "created",
+          "paid",
+          "failed"
+        ],
+        "fields": [
+          "user",
+          "amount",
+          "currency",
+          "razorpayOrderId",
+          "razorpayPaymentId",
+          "status",
+          "purpose"
+        ]
       }
     ],
     "routes": [
-      { "path": "/api/map/hospitals", "file": "routes/mapRoutes.js", "desc": "GET all hospital location markers" },
-      { "path": "/api/map/ambulances", "file": "routes/mapRoutes.js", "desc": "GET live ambulance fleet marker locations" },
-      { "path": "/api/map/emergencies", "file": "routes/mapRoutes.js", "desc": "GET active emergency SOS incident markers" },
-      { "path": "/api/map/nearby", "file": "routes/mapRoutes.js", "desc": "GET nearby facilities via Overpass API" },
-      { "path": "/api/map/route", "file": "routes/mapRoutes.js", "desc": "POST driving route, distance, ETA, & alternatives via OSRM/OpenRouteService" },
-      { "path": "/api/map/geocode", "file": "routes/mapRoutes.js", "desc": "POST address search via Nominatim API" },
-      { "path": "/api/map/reverse-geocode", "file": "routes/mapRoutes.js", "desc": "POST lat/lng to address string via Nominatim API" },
-      { "path": "/api/auth", "file": "routes/authRoutes.js", "desc": "Login, register, token refresh, profile" },
-      { "path": "/api/users", "file": "routes/userRoutes.js", "desc": "Patient portal metrics & EHR" },
-      { "path": "/api/doctors", "file": "routes/doctorRoutes.js", "desc": "Doctor queues & digital prescriptions" },
-      { "path": "/api/appointments", "file": "routes/appointmentRoutes.js", "desc": "Booking, rescheduling, cancellation" },
-      { "path": "/api/ambulances", "file": "routes/ambulanceRoutes.js", "desc": "Dispatch requests & driver GPS tracking" },
-      { "path": "/api/emergency", "file": "routes/emergencyRoutes.js", "desc": "Urgent SOS creation & queue processing" },
-      { "path": "/api/admin", "file": "routes/adminRoutes.js", "desc": "Super admin system monitoring & broadcast alerts" },
-      { "path": "/api/payments", "file": "routes/paymentRoutes.js", "desc": "Razorpay order creation & webhook verification" }
+      {
+        "path": "/api/map/hospitals",
+        "file": "routes/mapRoutes.js",
+        "desc": "GET all hospital location markers"
+      },
+      {
+        "path": "/api/map/ambulances",
+        "file": "routes/mapRoutes.js",
+        "desc": "GET live ambulance fleet marker locations"
+      },
+      {
+        "path": "/api/map/emergencies",
+        "file": "routes/mapRoutes.js",
+        "desc": "GET active emergency SOS incident markers"
+      },
+      {
+        "path": "/api/map/nearby",
+        "file": "routes/mapRoutes.js",
+        "desc": "GET nearby facilities via Overpass API"
+      },
+      {
+        "path": "/api/map/route",
+        "file": "routes/mapRoutes.js",
+        "desc": "POST driving route, distance, ETA, & alternatives via OSRM/OpenRouteService"
+      },
+      {
+        "path": "/api/map/geocode",
+        "file": "routes/mapRoutes.js",
+        "desc": "POST address search via Nominatim API"
+      },
+      {
+        "path": "/api/map/reverse-geocode",
+        "file": "routes/mapRoutes.js",
+        "desc": "POST lat/lng to address string via Nominatim API"
+      },
+      {
+        "path": "/api/auth",
+        "file": "routes/authRoutes.js",
+        "desc": "Login, register, token refresh, profile"
+      },
+      {
+        "path": "/api/users",
+        "file": "routes/userRoutes.js",
+        "desc": "Patient portal metrics & EHR"
+      },
+      {
+        "path": "/api/doctors",
+        "file": "routes/doctorRoutes.js",
+        "desc": "Doctor queues & digital prescriptions"
+      },
+      {
+        "path": "/api/appointments",
+        "file": "routes/appointmentRoutes.js",
+        "desc": "Booking, rescheduling, cancellation"
+      },
+      {
+        "path": "/api/ambulances",
+        "file": "routes/ambulanceRoutes.js",
+        "desc": "Dispatch requests & driver GPS tracking"
+      },
+      {
+        "path": "/api/emergency",
+        "file": "routes/emergencyRoutes.js",
+        "desc": "Urgent SOS creation & queue processing"
+      },
+      {
+        "path": "/api/admin",
+        "file": "routes/adminRoutes.js",
+        "desc": "Super admin system monitoring & broadcast alerts"
+      },
+      {
+        "path": "/api/payments",
+        "file": "routes/paymentRoutes.js",
+        "desc": "Razorpay order creation & webhook verification"
+      }
     ],
     "websocket_channels": [
-      { "room": "room:admin", "desc": "Super admin live telemetry & system alerts" },
-      { "event": "ambulance:location_update", "desc": "Driver app emits live GPS updates" },
-      { "event": "ambulance:location_changed", "desc": "Server broadcasts smooth position update to all client maps" }
+      {
+        "room": "room:admin",
+        "desc": "Super admin live telemetry & system alerts"
+      },
+      {
+        "event": "ambulance:location_update",
+        "desc": "Driver app emits live GPS updates"
+      },
+      {
+        "event": "ambulance:location_changed",
+        "desc": "Server broadcasts smooth position update to all client maps"
+      }
     ]
   },
   "git_history": {
@@ -110,34 +283,89 @@
     "repo_url": "https://github.com/ziskare-world/Arogya-Plus",
     "recent_commits": [
       {
+        "sha": "3916120",
+        "date": "2026-07-29",
+        "message": "feat: complete Google Maps replacement with free Leaflet, OpenStreetMap, OpenRouteService, Nominatim, and Overpass GIS stack",
+        "author": "AI-Assistant"
+      },
+      {
         "sha": "a13499a",
         "date": "2026-07-29",
         "message": "docs: update memory.json git history ledger",
         "author": "ziskare-world",
-        "files_changed": [".memory/memory.json"]
+        "files_changed": [
+          ".memory/memory.json"
+        ]
       },
       {
         "sha": "d763a32",
         "date": "2026-07-29",
         "message": "feat: implement high-speed JSON memory system and memory CLI tool in .memory/",
         "author": "ziskare-world",
-        "files_changed": [".memory/memory.js", ".memory/memory.json"]
+        "files_changed": [
+          ".memory/memory.js",
+          ".memory/memory.json"
+        ]
       }
     ]
   },
   "backlog": {
     "completed": [
-      { "id": "FEAT-001", "name": "Authentication & JWT Role Authorization Guard", "category": "Security" },
-      { "id": "FEAT-002", "name": "Real-time Ambulance SOS Dispatching", "category": "Emergency" },
-      { "id": "FEAT-003", "name": "Patient Appointment Scheduling & Queue Management", "category": "Appointments" },
-      { "id": "FEAT-004", "name": "WebRTC Video Consultation Room", "category": "Telemedicine" },
-      { "id": "FEAT-005", "name": "Digital Doctor Prescription & EHR Portal", "category": "EHR" },
-      { "id": "FEAT-006", "name": "VAPID Web Push Notifications", "category": "Notifications" },
-      { "id": "FEAT-007", "name": "Razorpay Clinical Billing & Payment Verification", "category": "Payments" },
-      { "id": "FEAT-008", "name": "Super Admin Live Telemetry & System Alert Broadcast", "category": "Monitoring" },
-      { "id": "FEAT-009", "name": "Automated Jest Integration Test Suite", "category": "Testing" },
-      { "id": "FEAT-010", "name": "Fast JSON Memory System (.memory/memory.json)", "category": "AI Memory" },
-      { "id": "FEAT-011", "name": "OpenStreetMap & Leaflet.js Free GIS Interactive Mapping System", "category": "GIS Mapping" }
+      {
+        "id": "FEAT-001",
+        "name": "Authentication & JWT Role Authorization Guard",
+        "category": "Security"
+      },
+      {
+        "id": "FEAT-002",
+        "name": "Real-time Ambulance SOS Dispatching",
+        "category": "Emergency"
+      },
+      {
+        "id": "FEAT-003",
+        "name": "Patient Appointment Scheduling & Queue Management",
+        "category": "Appointments"
+      },
+      {
+        "id": "FEAT-004",
+        "name": "WebRTC Video Consultation Room",
+        "category": "Telemedicine"
+      },
+      {
+        "id": "FEAT-005",
+        "name": "Digital Doctor Prescription & EHR Portal",
+        "category": "EHR"
+      },
+      {
+        "id": "FEAT-006",
+        "name": "VAPID Web Push Notifications",
+        "category": "Notifications"
+      },
+      {
+        "id": "FEAT-007",
+        "name": "Razorpay Clinical Billing & Payment Verification",
+        "category": "Payments"
+      },
+      {
+        "id": "FEAT-008",
+        "name": "Super Admin Live Telemetry & System Alert Broadcast",
+        "category": "Monitoring"
+      },
+      {
+        "id": "FEAT-009",
+        "name": "Automated Jest Integration Test Suite",
+        "category": "Testing"
+      },
+      {
+        "id": "FEAT-010",
+        "name": "Fast JSON Memory System (.memory/memory.json)",
+        "category": "AI Memory"
+      },
+      {
+        "id": "FEAT-011",
+        "name": "OpenStreetMap & Leaflet.js Free GIS Interactive Mapping System",
+        "category": "GIS Mapping"
+      }
     ],
     "in_progress": [],
     "pending": [

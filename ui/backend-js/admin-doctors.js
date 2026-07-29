@@ -143,13 +143,10 @@ const renderDoctors = () => {
       const id = getDoctorId(doctor);
       const createdAt = new Date(doctor.createdAt);
       const createdText = Number.isNaN(createdAt.getTime()) ? "-" : createdAt.toLocaleString();
-      return `
-        <div class="doctor-card">
-          <div class="doc-avatar">${escapeHtml(initials(doctor.name))}</div>
-          <div style="font-weight:700;font-size:.95rem;color:var(--text-100)">${escapeHtml(doctor.name || "Unknown Doctor")}</div>
       const ratingVal = Number(doctor.rating || 4.8).toFixed(1);
       const reviewsCount = doctor.reviewCount || 12;
       const isTerminated = !!doctor.isTerminated;
+      const avatarText = initials(doctor.name);
 
       let statusBadgeHtml = '<span class="badge badge-green">Active</span>';
       if (isTerminated) {
@@ -160,7 +157,7 @@ const renderDoctors = () => {
 
       return `
         <div class="doctor-card">
-          <div class="doc-avatar">${escapeHtml(avatar)}</div>
+          <div class="doc-avatar">${escapeHtml(avatarText)}</div>
           <div style="font-weight:700;font-size:1rem;color:var(--text-100)">${escapeHtml(doctor.name)}</div>
           <div style="font-size:.82rem;color:var(--blue);font-weight:600;margin-top:2px;">⭐ ${ratingVal} / 5.0 <span style="color:var(--text-500);font-weight:400;">(${reviewsCount} reviews)</span></div>
           <div style="font-size:.8rem;color:var(--text-400);margin-top:4px">${escapeHtml(doctor.specialization || "General Healthcare")} | ${doctor.experienceYears || 8} yrs exp</div>

@@ -205,6 +205,48 @@ app.get("/api/public-config", (req, res) => {
   });
 });
 
+app.get("/api/webrtc/ice-servers", (req, res) => {
+  const customTurnUrl = process.env.TURN_SERVER_URL;
+  const customTurnUser = process.env.TURN_SERVER_USERNAME;
+  const customTurnPass = process.env.TURN_SERVER_CREDENTIAL;
+
+  const iceServers = [
+    {
+      urls: [
+        "stun:stun.l.google.com:19302",
+        "stun:stun1.l.google.com:19302",
+        "stun:stun2.l.google.com:19302",
+        "stun:stun3.l.google.com:19302",
+        "stun:stun4.l.google.com:19302",
+        "stun:global.stun.twilio.com:3478"
+      ]
+    },
+    {
+      urls: [
+        "turn:openrelay.metered.ca:80",
+        "turn:openrelay.metered.ca:443",
+        "turns:openrelay.metered.ca:443?transport=tcp"
+      ],
+      username: "openrelay",
+      credential: "openrelay"
+    }
+  ];
+
+  if (customTurnUrl && customTurnUser && customTurnPass) {
+    iceServers.unshift({
+      urls: customTurnUrl,
+      username: customTurnUser,
+      credential: customTurnPass
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    iceServers,
+    iceTransportPolicy: "all"
+  });
+});
+
 app.use("/api/", apiLimiter);
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/register", authLimiter);

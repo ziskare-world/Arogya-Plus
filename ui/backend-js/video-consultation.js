@@ -60,12 +60,42 @@ const refreshPermissionsBtnEl = document.getElementById("refresh-permissions-btn
 const requestMediaPermissionBtnEl = document.getElementById("request-media-permission-btn");
 const mediaSettingsHintEl = document.getElementById("media-settings-hint");
 
-const TURN_STUN_CONFIG = {
+let TURN_STUN_CONFIG = {
   iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" }
-  ]
+    {
+      urls: [
+        "stun:stun.l.google.com:19302",
+        "stun:stun1.l.google.com:19302",
+        "stun:stun2.l.google.com:19302",
+        "stun:global.stun.twilio.com:3478"
+      ]
+    },
+    {
+      urls: [
+        "turn:openrelay.metered.ca:80",
+        "turn:openrelay.metered.ca:443",
+        "turns:openrelay.metered.ca:443?transport=tcp"
+      ],
+      username: "openrelay",
+      credential: "openrelay"
+    }
+  ],
+  iceTransportPolicy: "all",
+  iceCandidatePoolSize: 10
 };
+
+const fetchNatIceServers = async () => {
+  try {
+    const res = await fetch("/api/webrtc/ice-servers");
+    const json = await res.json();
+    if (json.success && Array.isArray(json.iceServers)) {
+      TURN_STUN_CONFIG.iceServers = json.iceServers;
+    }
+  } catch (err) {
+    console.warn("Using fallback NAT Traversal STUN/TURN servers:", err);
+  }
+};
+fetchNatIceServers();
 
 const normalizeRoomKey = (value = "") =>
   String(value || "")

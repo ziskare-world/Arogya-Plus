@@ -594,7 +594,6 @@ const initializeHospitalMap = async () => {
     return false;
   }
 };
-};
 
 window.reloadAdmins = async function reloadAdmins() {
   try {

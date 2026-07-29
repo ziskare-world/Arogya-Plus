@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - Hospital Storage Explorer</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+    <style>
+        .storage-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 18px;
+        }
+
+        .folder-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .folder-item {
+            padding: 10px 14px;
+            border-radius: 8px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+
+        .folder-item:hover, .folder-item.active {
+            background: var(--blue-light);
+            color: var(--blue-dark);
+            border-color: var(--blue);
+            font-weight: 600;
+        }
+
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 14px;
+            margin-top: 14px;
+        }
+
+        .file-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .file-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--blue-light);
+        }
+
+        .file-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: #e0f2fe;
+            color: #0284c7;
+        }
+
+        .file-name {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-100);
+            word-break: break-all;
+        }
+
+        .file-meta {
+            font-size: 0.76rem;
+            color: var(--text-500);
+        }
+
+        @media (max-width: 900px) {
+            .storage-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="app-layout">
+        <div class="main-area">
+            <div id="topbar-container"></div>
+            <main class="page-content">
+                <div class="page-header flex-between">
+                    <div>
+                        <h2>🏥 Hospital Storage Explorer</h2>
+                        <p>All medical documents, prescriptions, images, and user files organized by hospital subfolders on disk.</p>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                        <button class="btn btn-outline btn-sm" onclick="refreshStorageFiles()">Refresh</button>
+                        <button class="btn btn-primary btn-sm" onclick="document.getElementById('upload-modal').classList.remove('hidden')">+ Upload File</button>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px,1fr));gap:14px;margin-bottom:18px;">
+                    <div class="stat-card blue card-sm">
+                        <div id="stat-total-files" class="stat-value">0</div>
+                        <div class="stat-label">Total Files</div>
+                    </div>
+                    <div class="stat-card green card-sm">
+                        <div id="stat-hospital-folders" class="stat-value">0</div>
+                        <div class="stat-label">Hospital Folders</div>
+                    </div>
+                    <div class="stat-card cyan card-sm">
+                        <div id="stat-total-size" class="stat-value">0 KB</div>
+                        <div class="stat-label">Disk Storage Used</div>
+                    </div>
+                </div>
+
+                <div class="storage-layout">
+                    <!-- Hospital Subfolder Selector -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">📁 Hospital Folders</div>
+                        </div>
+                        <div id="folder-list-container" class="folder-list">
+                            <div class="muted">Loading hospital folders...</div>
+                        </div>
+                    </div>
+
+                    <!-- File Explorer Container -->
+                    <div class="card">
+                        <div class="card-header flex-between">
+                            <div id="current-folder-title" class="card-title">All Hospital Files</div>
+                            <input id="file-search-input" class="form-input" placeholder="Search files..." style="max-width:200px;font-size:12px;padding:4px 8px;" />
+                        </div>
+                        <div id="file-grid-container" class="file-grid">
+                            <div class="muted" style="grid-column:1/-1;text-align:center;padding:20px;">Loading files from storage...</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Upload File Modal -->
+    <div id="upload-modal" class="modal-backdrop hidden" style="position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:120;display:flex;align-items:center;justify-content:center;padding:16px;">
+        <div class="card" style="width:100%;max-width:480px;background:var(--surface);">
+            <div class="card-header flex-between">
+                <div class="card-title">📁 Upload File to Hospital Storage</div>
+                <button class="close-btn" style="border:none;background:none;font-size:1.2rem;cursor:pointer;" onclick="document.getElementById('upload-modal').classList.add('hidden')">✕</button>
+            </div>
+            <form id="storage-upload-form" style="display:grid;gap:12px;margin-top:10px;">
+                <div class="form-group">
+                    <label class="form-label" for="upload-hospital">Select Target Hospital Folder</label>
+                    <input id="upload-hospital" class="form-input" placeholder="e.g. Arogya Central Hospital" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="upload-file-input">Select Document or Image</label>
+                    <input id="upload-file-input" class="form-input" type="file" required />
+                </div>
+                <button class="btn btn-primary btn-full" type="submit">Upload File to Disk</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="../backend-js/admin-storage.js"></script>
+</body>
+
+</html>

@@ -183,8 +183,12 @@ app.get("/super-admin/emergency", sendUiPage("super-admin", "emergency.html"));
 app.get("/super-admin/patients", sendUiPage("super-admin", "patients.html"));
 app.get("/super-admin/payments", sendUiPage("super-admin", "payments.html"));
 app.get("/super-admin/reports", sendUiPage("super-admin", "reports.html"));
-app.get("/super-admin/system-logs", sendUiPage("super-admin", "system-logs.html"));
+// Admin storage page
+app.get("/admin/storage", sendUiPage("admin", "storage.html"));
+app.get("/super-admin/storage", sendUiPage("admin", "storage.html"));
 
+const storageDirectory = path.join(__dirname, "storage");
+app.use("/storage", express.static(storageDirectory));
 app.use(express.static(uiDirectory, { maxAge: process.env.NODE_ENV === "production" ? "1d" : 0 }));
 
 app.get("/api/health", (req, res) => {

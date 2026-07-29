@@ -86,6 +86,31 @@ const userSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true
+    },
+    isTerminated: {
+      type: Boolean,
+      default: false
+    },
+    rating: {
+      type: Number,
+      default: 4.8,
+      min: 1.0,
+      max: 5.0
+    },
+    reviewCount: {
+      type: Number,
+      default: 12,
+      min: 0
+    },
+    qualification: {
+      type: String,
+      default: "MBBS, MD",
+      trim: true
+    },
+    experienceYears: {
+      type: Number,
+      default: 8,
+      min: 0
     }
   },
   { timestamps: true }

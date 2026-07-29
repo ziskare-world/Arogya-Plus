@@ -1,3 +1,5 @@
+const fs = require("fs");
+const path = require("path");
 const express = require("express");
 const asyncHandler = require("express-async-handler");
 const { body, param, query } = require("express-validator");
@@ -920,6 +922,189 @@ router.post(
       success: true,
       message: "System alert broadcasted to all connected users",
       alert: alertPayload
+    });
+  })
+);
+
+/**
+ * 📁 Storage Management APIs
+ */
+const STORAGE_ROOT = path.join(__dirname, "..", "storage");
+
+const sanitizeFolderName = (name = "Default_Hospital") => {
+  return String(name).trim().replace(/[^a-zA-Z0-9_-]/g, "_") || "General_Hospital";
+};
+
+// GET /api/admin/storage/files - List files grouped by hospital folder
+router.get(
+  "/storage/files",
+  protect,
+  authorize("admin", "super-admin"),
+  asyncHandler(async (req, res) => {
+    if (!fs.existsSync(STORAGE_ROOT)) {
+      fs.mkdirSync(STORAGE_ROOT, { recursive: true });
+    }
+
+    const hospitalFolders = fs.readdirSync(STORAGE_ROOT, { withFileTypes: true })
+      .filter(dirent => dirent.isDirectory())
+      .map(dirent => dirent.name);
+
+    let allFiles = [];
+
+    hospitalFolders.forEach(folder => {
+      const folderPath = path.join(STORAGE_ROOT, folder);
+      const files = fs.readdirSync(folderPath, { withFileTypes: true })
+        .filter(dirent => dirent.isFile())
+        .map(dirent => {
+          const filePath = path.join(folderPath, dirent.name);
+          const stat = fs.statSync(filePath);
+          const ext = path.extname(dirent.name).toLowerCase();
+
+          let fileType = "document";
+          if ([".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(ext)) fileType = "image";
+          if ([".pdf"].includes(ext)) fileType = "pdf";
+
+          return {
+            filename: dirent.name,
+            hospitalFolder: folder,
+            fileType: fileType,
+            sizeBytes: stat.size,
+            sizeKb: (stat.size / 1024).toFixed(1) + " KB",
+            updatedAt: stat.mtime,
+            url: `/storage/${folder}/${dirent.name}`
+          };
+        });
+      allFiles = allFiles.concat(files);
+    });
+
+    res.json({
+      success: true,
+      count: allFiles.length,
+      hospitalCount: hospitalFolders.length,
+      data: allFiles
+    });
+  })
+);
+
+// POST /api/admin/storage/upload - Upload file into storage/<Hospital_Name>/
+router.post(
+  "/storage/upload",
+  protect,
+  authorize("admin", "super-admin"),
+  asyncHandler(async (req, res) => {
+    const { hospitalName = "Arogya_Central_Hospital", fileName, fileData, category = "General" } = req.body;
+
+    if (!fileName || !fileData) {
+      return res.status(400).json({ success: false, message: "fileName and fileData (base64 or text) are required" });
+    }
+
+    const folderName = sanitizeFolderName(hospitalName);
+    const targetFolder = path.join(STORAGE_ROOT, folderName);
+
+    if (!fs.existsSync(targetFolder)) {
+      fs.mkdirSync(targetFolder, { recursive: true });
+    }
+
+    const cleanFileName = String(fileName).replace(/[^a-zA-Z0-9._-]/g, "_");
+    const targetFilePath = path.join(targetFolder, cleanFileName);
+
+    // Save base64 or raw string file content
+    let buffer;
+    if (fileData.includes(";base64,")) {
+      buffer = Buffer.from(fileData.split(";base64,")[1], "base64");
+    } else {
+      buffer = Buffer.from(fileData, "utf8");
+    }
+
+    fs.writeFileSync(targetFilePath, buffer);
+
+    const stat = fs.statSync(targetFilePath);
+
+    res.status(201).json({
+      success: true,
+      message: `File saved cleanly into storage/${folderName}/`,
+      file: {
+        filename: cleanFileName,
+        hospitalFolder: folderName,
+        sizeBytes: stat.size,
+        url: `/storage/${folderName}/${cleanFileName}`
+      }
+    });
+  })
+);
+
+// DELETE /api/admin/storage/files/:folder/:filename - Delete file from hospital folder
+router.delete(
+  "/storage/files/:folder/:filename",
+  protect,
+  authorize("admin", "super-admin"),
+  asyncHandler(async (req, res) => {
+    const { folder, filename } = req.params;
+    const targetPath = path.join(STORAGE_ROOT, sanitizeFolderName(folder), String(filename).replace(/[^a-zA-Z0-9._-]/g, "_"));
+
+    if (fs.existsSync(targetPath)) {
+      fs.unlinkSync(targetPath);
+      return res.json({ success: true, message: `File ${filename} deleted from storage/${folder}` });
+    }
+
+    res.status(404).json({ success: false, message: "File not found" });
+  })
+);
+
+/**
+ * 👨‍⚕️ Doctor Termination & Status APIs
+ */
+router.patch(
+  "/doctors/:id/terminate",
+  protect,
+  authorize("admin", "super-admin"),
+  asyncHandler(async (req, res) => {
+    const doctor = await User.findById(req.params.id);
+    if (!doctor || doctor.role !== "doctor") {
+      return res.status(404).json({ success: false, message: "Doctor not found" });
+    }
+
+    doctor.isTerminated = true;
+    doctor.isActive = false;
+    doctor.isAvailable = false;
+    await doctor.save();
+
+    res.json({
+      success: true,
+      message: `Doctor ${doctor.name} has been terminated and deactivated`,
+      doctor
+    });
+  })
+);
+
+router.post(
+  "/doctors/:id/rate",
+  protect,
+  asyncHandler(async (req, res) => {
+    const { rating } = req.body;
+    const numRating = parseFloat(rating);
+    if (!numRating || numRating < 1 || numRating > 5) {
+      return res.status(400).json({ success: false, message: "Rating must be between 1.0 and 5.0" });
+    }
+
+    const doctor = await User.findById(req.params.id);
+    if (!doctor || doctor.role !== "doctor") {
+      return res.status(404).json({ success: false, message: "Doctor not found" });
+    }
+
+    const currentTotal = (doctor.rating || 4.8) * (doctor.reviewCount || 12);
+    const newCount = (doctor.reviewCount || 12) + 1;
+    const newRating = parseFloat(((currentTotal + numRating) / newCount).toFixed(1));
+
+    doctor.rating = newRating;
+    doctor.reviewCount = newCount;
+    await doctor.save();
+
+    res.json({
+      success: true,
+      message: "Doctor rating submitted",
+      rating: doctor.rating,
+      reviewCount: doctor.reviewCount
     });
   })
 );

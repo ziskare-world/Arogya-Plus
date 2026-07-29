@@ -47,6 +47,7 @@ export function injectSidebar(activePage) {
     nav = [
       { href: "dashboard.html", icon: "chart", label: "Overview" },
       { href: "admins.html", icon: "users", label: "Admins" },
+      { href: "../admin/storage.html", icon: "records", label: "Hospital Storage" },
       { href: "system-logs.html", icon: "logs", label: "System Logs" }
     ];
   } else if (path.includes("/admin/")) {
@@ -55,6 +56,7 @@ export function injectSidebar(activePage) {
       { href: "appointments.html", icon: "calendar", label: "Appointments" },
       { href: "doctors.html", icon: "doctor", label: "Doctors" },
       { href: "patients.html", icon: "users", label: "Patients" },
+      { href: "storage.html", icon: "records", label: "Hospital Storage" },
       { href: "emergency.html", icon: "alert", label: "Emergency" },
       { href: "ambulance.html", icon: "ambulance", label: "Ambulance" },
       { href: "payments.html", icon: "card", label: "Payments" },

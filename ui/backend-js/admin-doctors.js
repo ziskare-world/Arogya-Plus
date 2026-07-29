@@ -147,13 +147,30 @@ const renderDoctors = () => {
         <div class="doctor-card">
           <div class="doc-avatar">${escapeHtml(initials(doctor.name))}</div>
           <div style="font-weight:700;font-size:.95rem;color:var(--text-100)">${escapeHtml(doctor.name || "Unknown Doctor")}</div>
-          <div style="font-size:.8rem;color:var(--text-400);margin-top:4px">${escapeHtml(doctor.specialization || "General")}</div>
-          <div style="font-size:.78rem;color:var(--text-500);margin-top:8px">${escapeHtml(doctor.email || "-")}</div>
-          <div style="font-size:.76rem;color:var(--text-500);margin-top:4px">${escapeHtml(doctor.phone || "-")}</div>
-          <div style="margin-top:10px">${doctor.isActive ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-red">Inactive</span>'}</div>
-          <div style="margin-top:12px;font-size:.72rem;color:var(--text-500)">Created: ${escapeHtml(createdText)}</div>
-          <div style="margin-top:12px;display:flex;justify-content:flex-end">
+      const ratingVal = Number(doctor.rating || 4.8).toFixed(1);
+      const reviewsCount = doctor.reviewCount || 12;
+      const isTerminated = !!doctor.isTerminated;
+
+      let statusBadgeHtml = '<span class="badge badge-green">Active</span>';
+      if (isTerminated) {
+        statusBadgeHtml = '<span class="badge badge-red">Terminated</span>';
+      } else if (!doctor.isActive) {
+        statusBadgeHtml = '<span class="badge badge-yellow">Inactive</span>';
+      }
+
+      return `
+        <div class="doctor-card">
+          <div class="doc-avatar">${escapeHtml(avatar)}</div>
+          <div style="font-weight:700;font-size:1rem;color:var(--text-100)">${escapeHtml(doctor.name)}</div>
+          <div style="font-size:.82rem;color:var(--blue);font-weight:600;margin-top:2px;">⭐ ${ratingVal} / 5.0 <span style="color:var(--text-500);font-weight:400;">(${reviewsCount} reviews)</span></div>
+          <div style="font-size:.8rem;color:var(--text-400);margin-top:4px">${escapeHtml(doctor.specialization || "General Healthcare")} | ${doctor.experienceYears || 8} yrs exp</div>
+          <div style="font-size:.78rem;color:var(--text-500);margin-top:6px">📧 ${escapeHtml(doctor.email || "-")}</div>
+          <div style="font-size:.76rem;color:var(--text-500);margin-top:2px">📞 ${escapeHtml(doctor.phone || "-")}</div>
+          <div style="margin-top:10px">${statusBadgeHtml}</div>
+          <div style="margin-top:12px;font-size:.72rem;color:var(--text-500)">Joined: ${escapeHtml(createdText)}</div>
+          <div style="margin-top:12px;display:flex;gap:6px;justify-content:flex-end">
             <button class="btn btn-outline btn-sm" type="button" data-action="edit" data-id="${escapeHtml(id)}">Edit</button>
+            ${!isTerminated ? `<button class="btn btn-danger btn-sm" type="button" onclick="terminateDoctor('${escapeHtml(id)}', '${escapeHtml(doctor.name)}')">Terminate</button>` : ''}
           </div>
         </div>`;
     })
@@ -402,6 +419,20 @@ const init = async () => {
     await loadDoctors();
   } catch (error) {
     toast(error.message, "error");
+  }
+};
+
+window.terminateDoctor = async function (doctorId, doctorName) {
+  if (!confirm(`Are you sure you want to terminate & deactivate Dr. ${doctorName}?`)) return;
+
+  try {
+    const res = await apiRequest(`/api/admin/doctors/${doctorId}/terminate`, "PATCH");
+    if (res.success) {
+      toast(`Dr. ${doctorName} terminated successfully`, "success");
+      await loadDoctors();
+    }
+  } catch (err) {
+    toast(err.message || "Failed to terminate doctor", "error");
   }
 };
 

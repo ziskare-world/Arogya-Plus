@@ -213,7 +213,7 @@ router.post("/route", async (req, res) => {
       return res.status(400).json({ success: false, error: "startLat, startLng, endLat, endLng are required" });
     }
 
-    const orsApiKey = process.env.OPENROUTESERVICE_API_KEY || "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImMxMTI0MWRiZTg2NTQ0M2ZiZjA3N2Q4NDA3NjQxZDZmIiwiaCI6Im11cm11cjY0In0=";
+    const orsApiKey = String(process.env.OPENROUTESERVICE_API_KEY || "").trim();
 
     // Try OpenRouteService API first if key available
     if (orsApiKey) {

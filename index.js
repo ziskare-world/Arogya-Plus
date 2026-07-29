@@ -29,7 +29,7 @@ const { getEmergencyQueue } = require("./utils/emergencyQueue");
 dotenv.config({ path: path.join(__dirname, ".env") });
 
 const resolveOpenRouteServiceApiKey = () => {
-  return String(process.env.OPENROUTESERVICE_API_KEY || "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImMxMTI0MWRiZTg2NTQ0M2ZiZjA3N2Q4NDA3NjQxZDZmIiwiaCI6Im11cm11cjY0In0=").trim();
+  return String(process.env.OPENROUTESERVICE_API_KEY || "").trim();
 };
 
 if (process.env.NODE_ENV !== "test") {

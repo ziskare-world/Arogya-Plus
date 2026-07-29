@@ -628,44 +628,27 @@ window.closeAdminModal = function closeAdminModal() {
   resetHospitalLocation({ clearAddress: true });
 };
 
-const createAdminPair = async () => {
+const createHospitalAdmin = async () => {
   const payload = {
-    baseName: String(document.getElementById("admin-name")?.value || "").trim(),
+    name: String(document.getElementById("admin-name")?.value || "").trim(),
     phone: String(document.getElementById("admin-phone")?.value || "").trim(),
     hospitalName: String(document.getElementById("admin-hospital")?.value || "").trim(),
     hospitalAddress: String(document.getElementById("admin-hospital-address")?.value || "").trim(),
     hospitalCoordinates,
-    operational: {
-      email: String(document.getElementById("admin-ops-email")?.value || "").trim(),
-      password: String(document.getElementById("admin-ops-password")?.value || "")
-    },
-    receptionist: {
-      email: String(document.getElementById("admin-rec-email")?.value || "").trim(),
-      password: String(document.getElementById("admin-rec-password")?.value || "")
-    }
+    email: String(document.getElementById("admin-email")?.value || "").trim(),
+    password: String(document.getElementById("admin-password")?.value || ""),
+    accessLevel: "full"
   };
 
-  if (!payload.baseName || !payload.hospitalName || !payload.hospitalAddress) {
+  if (!payload.name || !payload.hospitalName || !payload.hospitalAddress) {
     throw new Error("Base name, hospital name and hospital address are required");
   }
 
-  if (!payload.hospitalCoordinates) {
-    throw new Error("Please select hospital location on map");
+  if (!payload.email || !payload.password) {
+    throw new Error("Admin login email and password are required");
   }
 
-  if (!payload.operational.email || !payload.operational.password) {
-    throw new Error("Operations email and password are required");
-  }
-
-  if (!payload.receptionist.email || !payload.receptionist.password) {
-    throw new Error("Receptionist email and password are required");
-  }
-
-  if (payload.operational.email.toLowerCase() === payload.receptionist.email.toLowerCase()) {
-    throw new Error("Operations and receptionist email must be different");
-  }
-
-  await apiRequest("/api/admin/admins/pair", {
+  await apiRequest("/api/admin/admins", {
     method: "POST",
     body: JSON.stringify(payload)
   });
@@ -726,8 +709,8 @@ const init = async () => {
       }
 
       try {
-        await createAdminPair();
-        toast("Hospital created with operations and receptionist IDs", "success");
+        await createHospitalAdmin();
+        toast("Hospital Admin ID created successfully", "success");
         window.closeAdminModal();
         await loadAdmins();
       } catch (error) {
@@ -735,7 +718,7 @@ const init = async () => {
       } finally {
         if (submitBtnEl) {
           submitBtnEl.disabled = false;
-          submitBtnEl.textContent = "Create Hospital + 2 IDs";
+          submitBtnEl.textContent = "Create Hospital Admin ID";
         }
       }
     });

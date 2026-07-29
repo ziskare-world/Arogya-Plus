@@ -569,11 +569,16 @@ const initializeHospitalMap = async () => {
       return false;
     }
 
-    hospitalMap = window.ArogyaMap.initMap("hospital-map", {
+    hospitalMap = window.ArogyaMap.initMap(mapEl.id || "admin-hospital-map", {
       lat: DEFAULT_CENTER.lat,
       lng: DEFAULT_CENTER.lng,
       zoom: 12
     });
+
+    if (!hospitalMap) {
+      setMapStatus("Map Error", "badge-red");
+      return false;
+    }
 
     hospitalMap.on("click", async (event) => {
       const coords = { lat: event.latlng.lat, lng: event.latlng.lng };

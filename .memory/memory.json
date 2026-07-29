@@ -1,7 +1,7 @@
 {
   "$schema": "ArogyaPlus High-Speed AI Memory Database",
   "version": "2.1.0",
-  "last_updated": "2026-07-29T12:39:49.927Z",
+  "last_updated": "2026-07-29T12:48:24.069Z",
   "project": {
     "name": "ArogyaPlus",
     "title": "Smart Health Management System",
@@ -282,6 +282,12 @@
     "remote": "origin/main",
     "repo_url": "https://github.com/ziskare-world/Arogya-Plus",
     "recent_commits": [
+      {
+        "sha": "f7a0b9e",
+        "date": "2026-07-29",
+        "message": "security: sanitize secret API keys and replace with placeholder tokens in .env.example",
+        "author": "AI-Assistant"
+      },
       {
         "sha": "a170c9f",
         "date": "2026-07-29",

@@ -54,13 +54,15 @@ export function injectSidebar(activePage) {
 
   if (
     path.includes("super") ||
+    path.includes("super_admin") ||
     path.includes("super-admin") ||
     (user && user.role && String(user.role).toLowerCase().includes("super"))
   ) {
     nav = [
-      { href: "dashboard.html", icon: "chart", label: "O" },
+      { href: "dashboard.html", icon: "chart", label: "Overview" },
       { href: "admins.html", icon: "users", label: "Admins" },
       { href: "storage.html", icon: "folder", label: "Storage Drive" },
+      { href: "settings.html", icon: "settings", label: "Settings" },
       { href: "system-logs.html", icon: "logs", label: "System Logs" }
     ];
   } else if (path.includes("/admin/")) {
@@ -99,6 +101,7 @@ export function injectSidebar(activePage) {
       { href: "dashboard.html", icon: "chart", label: "Overview" },
       { href: "admins.html", icon: "users", label: "Admins" },
       { href: "storage.html", icon: "folder", label: "Storage Drive" },
+      { href: "settings.html", icon: "settings", label: "Settings" },
       { href: "system-logs.html", icon: "logs", label: "System Logs" }
     ];
   }

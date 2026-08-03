@@ -4,18 +4,128 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>Arogya Plus - Settings Removed</title>
+    <title>Arogya Plus - Settings | Super Admin</title>
     <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
 </head>
 
 <body>
-    <main style="min-height:100vh;display:grid;place-items:center;padding:24px;background:#f8fafc">
-        <div class="card" style="max-width:560px;width:100%;text-align:center">
-            <h2 style="margin-bottom:10px">Settings Feature Removed</h2>
-            <p class="muted" style="margin-bottom:16px">System settings is no longer available in the panel.</p>
-            <button class="btn btn-primary" onclick="location.href='dashboard.html'">Go To Dashboard</button>
+    <div id="toast-container"></div>
+    <div class="app-layout">
+        <div class="main-area">
+            <div id="topbar-container"></div>
+
+            <main class="page-content" style="padding:24px">
+                <div class="page-header" style="margin-bottom:20px">
+                    <div>
+                        <h2>⚙️ Super Admin Platform Settings</h2>
+                        <p>Configure hospital network preferences, security policies, and storage quotas.</p>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:20px">
+                    
+                    <!-- Network & Approval Settings -->
+                    <div class="card" style="padding:20px">
+                        <h3 style="margin-bottom:12px;font-size:1.05rem">🏥 Hospital Network Preferences</h3>
+                        <form id="settings-network-form" style="display:flex;flex-direction:column;gap:14px">
+                            <div class="form-group">
+                                <label class="form-label" for="setting-default-currency">Default Currency</label>
+                                <select id="setting-default-currency" class="form-input">
+                                    <option value="INR">INR (₹)</option>
+                                    <option value="USD">USD ($)</option>
+                                    <option value="EUR">EUR (€)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="setting-auto-approval">Hospital Admin Registration</label>
+                                <select id="setting-auto-approval" class="form-input">
+                                    <option value="manual">Require Super Admin Manual Verification</option>
+                                    <option value="auto">Automatic Account Provisioning</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="setting-platform-title">Hospital Platform Title</label>
+                                <input id="setting-platform-title" class="form-input" type="text" value="Arogya Plus Healthcare Platform" />
+                            </div>
+
+                            <button class="btn btn-primary btn-sm" type="submit" style="align-self:flex-end">Save Network Settings</button>
+                        </form>
+                    </div>
+
+                    <!-- Security & Session Policies -->
+                    <div class="card" style="padding:20px">
+                        <h3 style="margin-bottom:12px;font-size:1.05rem">🔒 Security & Authentication</h3>
+                        <form id="settings-security-form" style="display:flex;flex-direction:column;gap:14px">
+                            <div class="form-group">
+                                <label class="form-label" for="setting-session-timeout">Admin Session Timeout</label>
+                                <select id="setting-session-timeout" class="form-input">
+                                    <option value="24h">24 Hours (Default)</option>
+                                    <option value="12h">12 Hours</option>
+                                    <option value="8h">8 Hours</option>
+                                    <option value="1h">1 Hour (Strict)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="setting-rate-limit">API Rate Limiting</label>
+                                <select id="setting-rate-limit" class="form-input">
+                                    <option value="strict">Enabled - 100 requests / 15 mins</option>
+                                    <option value="relaxed">Relaxed - 300 requests / 15 mins</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="setting-2fa">Two-Factor Authentication (2FA)</label>
+                                <select id="setting-2fa" class="form-input">
+                                    <option value="optional">Optional for Hospital Admins</option>
+                                    <option value="mandatory">Mandatory for All Admins</option>
+                                </select>
+                            </div>
+
+                            <button class="btn btn-primary btn-sm" type="submit" style="align-self:flex-end">Save Security Settings</button>
+                        </form>
+                    </div>
+
+                    <!-- Storage & Backup Settings -->
+                    <div class="card" style="padding:20px">
+                        <h3 style="margin-bottom:12px;font-size:1.05rem">📁 Storage & Media Backup</h3>
+                        <form id="settings-storage-form" style="display:flex;flex-direction:column;gap:14px">
+                            <div class="form-group">
+                                <label class="form-label" for="setting-storage-quota">Default Storage Quota per Hospital</label>
+                                <select id="setting-storage-quota" class="form-input">
+                                    <option value="5GB">5 GB per Hospital (Standard)</option>
+                                    <option value="10GB">10 GB per Hospital</option>
+                                    <option value="50GB">50 GB Enterprise Quota</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="setting-auto-clean">Storage Temp File Cleanup</label>
+                                <select id="setting-auto-clean" class="form-input">
+                                    <option value="daily">Clean Temp Files Daily</option>
+                                    <option value="weekly">Clean Temp Files Weekly</option>
+                                    <option value="never">Manual Cleanup Only</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="setting-media-formats">Allowed Media Formats</label>
+                                <input id="setting-media-formats" class="form-input" type="text" value="JPG, PNG, WEBP, SVG, PDF, DOCX" readonly />
+                            </div>
+
+                            <button class="btn btn-primary btn-sm" type="submit" style="align-self:flex-end">Save Storage Settings</button>
+                        </form>
+                    </div>
+
+                </div>
+            </main>
         </div>
-    </main>
+    </div>
+
+    <script type="module" src="../backend-js/super-admin-settings.js"></script>
 </body>
 
 </html>

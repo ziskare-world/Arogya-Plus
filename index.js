@@ -183,6 +183,7 @@ app.get(["/super-admin/emergency", "/super_admin/emergency"], sendUiPage("super-
 app.get(["/super-admin/patients", "/super_admin/patients"], sendUiPage("super-admin", "patients.html"));
 app.get(["/super-admin/payments", "/super_admin/payments"], sendUiPage("super-admin", "payments.html"));
 app.get(["/super-admin/reports", "/super_admin/reports"], sendUiPage("super-admin", "reports.html"));
+app.get(["/super-admin/settings", "/super_admin/settings"], sendUiPage("super-admin", "settings.html"));
 // Admin and Super-Admin Storage Drive pages
 app.get(["/admin/storage", "/super-admin/storage", "/super_admin/storage"], sendUiPage("super-admin", "storage.html"));
 

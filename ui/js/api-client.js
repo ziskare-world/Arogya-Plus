@@ -85,6 +85,11 @@ export const getAuthState = () => {
   return { token, user };
 };
 
+export const getStoredUser = () => {
+  const { user } = getAuthState();
+  return user;
+};
+
 export const clearAuthState = () => {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);

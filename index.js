@@ -188,7 +188,18 @@ app.get(["/admin/storage", "/super-admin/storage", "/super_admin/storage"], send
 
 const storageDirectory = path.join(__dirname, "storage");
 app.use("/storage", express.static(storageDirectory));
-app.use(express.static(uiDirectory, { maxAge: process.env.NODE_ENV === "production" ? "1d" : 0 }));
+app.use(
+  express.static(uiDirectory, {
+    maxAge: process.env.NODE_ENV === "production" ? "1d" : 0,
+    setHeaders: (res) => {
+      if (process.env.NODE_ENV !== "production") {
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
+      }
+    }
+  })
+);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({

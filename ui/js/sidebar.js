@@ -34,18 +34,25 @@ const iconSvg = (name, className = "icon-svg") => {
 };
 
 export function injectSidebar(activePage) {
+  const existingSidebar = document.getElementById("sidebar");
+  if (existingSidebar) {
+    existingSidebar.remove();
+  }
+
   const isInSubfolder =
     location.pathname.includes("/admin/") ||
     location.pathname.includes("/doctor/") ||
     location.pathname.includes("/user/") ||
     location.pathname.includes("/super-admin/") ||
-    location.pathname.includes("/super_admin/");
+    location.pathname.includes("/super_admin/") ||
+    location.pathname.toLowerCase().includes("super");
   const prefix = isInSubfolder ? "../" : "";
 
   let nav = [];
   const path = location.pathname.toLowerCase();
+  const user = getStoredUser();
 
-  if (path.includes("super-admin") || path.includes("super_admin")) {
+  if (path.includes("super") || (user && user.role && String(user.role).toLowerCase().includes("super"))) {
     nav = [
       { href: "dashboard.html", icon: "chart", label: "Overview" },
       { href: "admins.html", icon: "users", label: "Admins" },

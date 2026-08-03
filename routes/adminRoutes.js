@@ -10,6 +10,7 @@ const Emergency = require("../models/Emergency");
 const Ambulance = require("../models/Ambulance");
 const AmbulanceFleet = require("../models/AmbulanceFleet");
 const Insurance = require("../models/Insurance");
+const SystemSettings = require("../models/SystemSettings");
 const { protect, authorize } = require("../middleware/authMiddleware");
 const validateRequest = require("../middleware/validateMiddleware");
 
@@ -1385,6 +1386,63 @@ router.post(
     res.setHeader("Content-Disposition", `attachment; filename="selected_storage_files.zip"`);
     res.setHeader("Content-Length", zipBuffer.length);
     return res.send(zipBuffer);
+  })
+);
+
+router.get(
+  "/settings",
+  protect,
+  authorize("super-admin", "admin"),
+  asyncHandler(async (req, res) => {
+    let settings = await SystemSettings.findOne({ key: "global_settings" });
+    if (!settings) {
+      settings = await SystemSettings.create({ key: "global_settings" });
+    }
+    return res.status(200).json({ success: true, settings });
+  })
+);
+
+router.put(
+  "/settings",
+  protect,
+  authorize("super-admin"),
+  asyncHandler(async (req, res) => {
+    let settings = await SystemSettings.findOne({ key: "global_settings" });
+    if (!settings) {
+      settings = new SystemSettings({ key: "global_settings" });
+    }
+
+    const allowedFields = [
+      "highContrastMode",
+      "fontSizeScale",
+      "reducedMotion",
+      "screenReaderOptimized",
+      "sessionTimeout",
+      "rateLimitPolicy",
+      "require2FA",
+      "maxLoginAttempts",
+      "ipRestrictedAccess",
+      "whitelistedIPs",
+      "defaultCurrency",
+      "hospitalAutoApproval",
+      "platformTitle",
+      "defaultStorageQuota",
+      "tempFileCleanup"
+    ];
+
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        settings[field] = req.body[field];
+      }
+    });
+
+    await settings.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Security and accessibility settings saved successfully",
+      settings
+    });
   })
 );
 

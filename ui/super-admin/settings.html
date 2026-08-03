@@ -18,16 +18,109 @@
             <main class="page-content" style="padding:24px">
                 <div class="page-header" style="margin-bottom:20px">
                     <div>
-                        <h2>⚙️ Super Admin Platform Settings</h2>
-                        <p>Configure hospital network preferences, security policies, and storage quotas.</p>
+                        <h2>⚙️ Security & Accessibility Settings</h2>
+                        <p>Global oversight controls for system security, accessibility preferences, and hospital network parameters.</p>
                     </div>
                 </div>
 
                 <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:20px">
                     
-                    <!-- Network & Approval Settings -->
+                    <!-- Security & Access Control Settings -->
                     <div class="card" style="padding:20px">
-                        <h3 style="margin-bottom:12px;font-size:1.05rem">🏥 Hospital Network Preferences</h3>
+                        <h3 style="margin-bottom:12px;font-size:1.05rem">🔒 Security & Access Policies</h3>
+                        <form id="settings-security-form" style="display:flex;flex-direction:column;gap:14px">
+                            <div class="form-group">
+                                <label class="form-label" for="setting-session-timeout">Admin Session Timeout</label>
+                                <select id="setting-session-timeout" class="form-input">
+                                    <option value="24h">24 Hours (Default)</option>
+                                    <option value="12h">12 Hours</option>
+                                    <option value="8h">8 Hours</option>
+                                    <option value="1h">1 Hour (Strict Security)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="setting-rate-limit">API Rate Limiting Policy</label>
+                                <select id="setting-rate-limit" class="form-input">
+                                    <option value="strict">Strict - 100 requests / 15 mins</option>
+                                    <option value="relaxed">Relaxed - 300 requests / 15 mins</option>
+                                    <option value="disabled">Disabled (Development Mode)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="setting-2fa">Two-Factor Authentication (2FA)</label>
+                                <select id="setting-2fa" class="form-input">
+                                    <option value="false">Optional for Hospital Admins</option>
+                                    <option value="true">Mandatory for All Admins & Doctors</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="setting-max-login-attempts">Account Lockout Threshold</label>
+                                <select id="setting-max-login-attempts" class="form-input">
+                                    <option value="3">3 Failed Attempts (High Security)</option>
+                                    <option value="5" selected>5 Failed Attempts (Standard)</option>
+                                    <option value="10">10 Failed Attempts</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="setting-ip-restriction">Restricted IP Access Control</label>
+                                <select id="setting-ip-restriction" class="form-input">
+                                    <option value="false">Allow Access from Any Location</option>
+                                    <option value="true">Restrict to Whitelisted IP Ranges Only</option>
+                                </select>
+                            </div>
+
+                            <button class="btn btn-primary btn-sm" type="submit" style="align-self:flex-end">Save Security Policies</button>
+                        </form>
+                    </div>
+
+                    <!-- Accessibility Controls -->
+                    <div class="card" style="padding:20px">
+                        <h3 style="margin-bottom:12px;font-size:1.05rem">♿ Accessibility & UI Preferences</h3>
+                        <form id="settings-accessibility-form" style="display:flex;flex-direction:column;gap:14px">
+                            <div class="form-group">
+                                <label class="form-label" for="setting-high-contrast">High Contrast UI Mode</label>
+                                <select id="setting-high-contrast" class="form-input">
+                                    <option value="false">Disabled (Standard Dark Mode)</option>
+                                    <option value="true">Enabled (High Contrast Colors)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="setting-font-scale">Font Size Scaling</label>
+                                <select id="setting-font-scale" class="form-input">
+                                    <option value="standard">Standard (100%)</option>
+                                    <option value="medium">Medium (115%)</option>
+                                    <option value="large">Large (130% High Legibility)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="setting-reduced-motion">Animation & UI Motion Control</label>
+                                <select id="setting-reduced-motion" class="form-input">
+                                    <option value="false">Enable Micro-Animations</option>
+                                    <option value="true">Disable Animations (Reduced Motion)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="setting-screen-reader">Screen Reader Optimization</label>
+                                <select id="setting-screen-reader" class="form-input">
+                                    <option value="true">Enabled (ARIA Standards)</option>
+                                    <option value="false">Standard</option>
+                                </select>
+                            </div>
+
+                            <button class="btn btn-primary btn-sm" type="submit" style="align-self:flex-end">Save Accessibility Settings</button>
+                        </form>
+                    </div>
+
+                    <!-- Network & Storage Preferences -->
+                    <div class="card" style="padding:20px">
+                        <h3 style="margin-bottom:12px;font-size:1.05rem">🏥 Hospital Network & Storage</h3>
                         <form id="settings-network-form" style="display:flex;flex-direction:column;gap:14px">
                             <div class="form-group">
                                 <label class="form-label" for="setting-default-currency">Default Currency</label>
@@ -39,7 +132,7 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label" for="setting-auto-approval">Hospital Admin Registration</label>
+                                <label class="form-label" for="setting-auto-approval">Hospital Admin Registration Mode</label>
                                 <select id="setting-auto-approval" class="form-input">
                                     <option value="manual">Require Super Admin Manual Verification</option>
                                     <option value="auto">Automatic Account Provisioning</option>
@@ -51,50 +144,8 @@
                                 <input id="setting-platform-title" class="form-input" type="text" value="Arogya Plus Healthcare Platform" />
                             </div>
 
-                            <button class="btn btn-primary btn-sm" type="submit" style="align-self:flex-end">Save Network Settings</button>
-                        </form>
-                    </div>
-
-                    <!-- Security & Session Policies -->
-                    <div class="card" style="padding:20px">
-                        <h3 style="margin-bottom:12px;font-size:1.05rem">🔒 Security & Authentication</h3>
-                        <form id="settings-security-form" style="display:flex;flex-direction:column;gap:14px">
                             <div class="form-group">
-                                <label class="form-label" for="setting-session-timeout">Admin Session Timeout</label>
-                                <select id="setting-session-timeout" class="form-input">
-                                    <option value="24h">24 Hours (Default)</option>
-                                    <option value="12h">12 Hours</option>
-                                    <option value="8h">8 Hours</option>
-                                    <option value="1h">1 Hour (Strict)</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label" for="setting-rate-limit">API Rate Limiting</label>
-                                <select id="setting-rate-limit" class="form-input">
-                                    <option value="strict">Enabled - 100 requests / 15 mins</option>
-                                    <option value="relaxed">Relaxed - 300 requests / 15 mins</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label" for="setting-2fa">Two-Factor Authentication (2FA)</label>
-                                <select id="setting-2fa" class="form-input">
-                                    <option value="optional">Optional for Hospital Admins</option>
-                                    <option value="mandatory">Mandatory for All Admins</option>
-                                </select>
-                            </div>
-
-                            <button class="btn btn-primary btn-sm" type="submit" style="align-self:flex-end">Save Security Settings</button>
-                        </form>
-                    </div>
-
-                    <!-- Storage & Backup Settings -->
-                    <div class="card" style="padding:20px">
-                        <h3 style="margin-bottom:12px;font-size:1.05rem">📁 Storage & Media Backup</h3>
-                        <form id="settings-storage-form" style="display:flex;flex-direction:column;gap:14px">
-                            <div class="form-group">
-                                <label class="form-label" for="setting-storage-quota">Default Storage Quota per Hospital</label>
+                                <label class="form-label" for="setting-storage-quota">Default Hospital Storage Quota</label>
                                 <select id="setting-storage-quota" class="form-input">
                                     <option value="5GB">5 GB per Hospital (Standard)</option>
                                     <option value="10GB">10 GB per Hospital</option>
@@ -102,21 +153,7 @@
                                 </select>
                             </div>
 
-                            <div class="form-group">
-                                <label class="form-label" for="setting-auto-clean">Storage Temp File Cleanup</label>
-                                <select id="setting-auto-clean" class="form-input">
-                                    <option value="daily">Clean Temp Files Daily</option>
-                                    <option value="weekly">Clean Temp Files Weekly</option>
-                                    <option value="never">Manual Cleanup Only</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label" for="setting-media-formats">Allowed Media Formats</label>
-                                <input id="setting-media-formats" class="form-input" type="text" value="JPG, PNG, WEBP, SVG, PDF, DOCX" readonly />
-                            </div>
-
-                            <button class="btn btn-primary btn-sm" type="submit" style="align-self:flex-end">Save Storage Settings</button>
+                            <button class="btn btn-primary btn-sm" type="submit" style="align-self:flex-end">Save Network Settings</button>
                         </form>
                     </div>
 

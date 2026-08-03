@@ -62,6 +62,12 @@ export function injectSidebar(activePage) {
       { href: "dashboard.html", icon: "chart", label: "Overview" },
       { href: "admins.html", icon: "users", label: "Admins" },
       { href: "storage.html", icon: "folder", label: "Storage Drive" },
+      { href: "appointments.html", icon: "calendar", label: "Appointments" },
+      { href: "doctors.html", icon: "doctor", label: "Doctors" },
+      { href: "patients.html", icon: "users", label: "Patients" },
+      { href: "emergency.html", icon: "alert", label: "Emergency" },
+      { href: "payments.html", icon: "card", label: "Payments" },
+      { href: "reports.html", icon: "report", label: "Reports" },
       { href: "settings.html", icon: "settings", label: "Settings" },
       { href: "system-logs.html", icon: "logs", label: "System Logs" }
     ];
@@ -101,6 +107,12 @@ export function injectSidebar(activePage) {
       { href: "dashboard.html", icon: "chart", label: "Overview" },
       { href: "admins.html", icon: "users", label: "Admins" },
       { href: "storage.html", icon: "folder", label: "Storage Drive" },
+      { href: "appointments.html", icon: "calendar", label: "Appointments" },
+      { href: "doctors.html", icon: "doctor", label: "Doctors" },
+      { href: "patients.html", icon: "users", label: "Patients" },
+      { href: "emergency.html", icon: "alert", label: "Emergency" },
+      { href: "payments.html", icon: "card", label: "Payments" },
+      { href: "reports.html", icon: "report", label: "Reports" },
       { href: "settings.html", icon: "settings", label: "Settings" },
       { href: "system-logs.html", icon: "logs", label: "System Logs" }
     ];

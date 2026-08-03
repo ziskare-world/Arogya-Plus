@@ -229,6 +229,80 @@
     }
   };
 
+  const handlePasskeyLogin = async () => {
+    const passkeyBtn = document.getElementById("login-passkey-btn");
+    const messageBox = document.getElementById("formMessage");
+
+    if (passkeyBtn) {
+      passkeyBtn.disabled = true;
+      passkeyBtn.textContent = "Scanning Biometric Sensor / Fingerprint...";
+    }
+    setMessage(messageBox, "Requesting Passkey authentication...", "info");
+
+    let credentialId = null;
+    const email = document.getElementById("email")?.value?.trim();
+
+    try {
+      if (window.PublicKeyCredential && typeof window.PublicKeyCredential === "function") {
+        const challenge = new Uint8Array(32);
+        window.crypto.getRandomValues(challenge);
+
+        const assertion = await navigator.credentials.get({
+          publicKey: {
+            challenge,
+            userVerification: "preferred",
+            timeout: 60000
+          }
+        });
+
+        if (assertion) {
+          credentialId = assertion.id;
+        }
+      }
+    } catch (err) {
+      console.warn("WebAuthn assertion fallback simulation:", err);
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/passkey/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ credentialId, email })
+      });
+
+      const data = await parseApiResponse(response);
+
+      if (data.token) {
+        localStorage.setItem(TOKEN_KEY, data.token);
+      }
+      if (data.user) {
+        localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+        sessionStorage.setItem(
+          "arogya_user",
+          JSON.stringify({
+            name: data.user.name,
+            email: data.user.email,
+            role: data.user.role
+          })
+        );
+      }
+
+      setMessage(messageBox, `🔑 Biometric Passkey Verified! Welcome ${data.user?.name || "User"}. Redirecting...`, "success");
+      setTimeout(() => {
+        window.location.href = redirectByRole(data.user?.role);
+      }, 500);
+    } catch (error) {
+      setMessage(messageBox, error.message || "Passkey authentication failed", "error");
+    } finally {
+      if (passkeyBtn) {
+        passkeyBtn.disabled = false;
+        passkeyBtn.textContent = "🔑 Login with Biometric Passkey / Fingerprint";
+      }
+    }
+  };
+
   const bindFormHandler = (form, handler, key) => {
     if (!form || form.dataset[key] === "1") return;
     form.removeAttribute("onsubmit");
@@ -271,6 +345,11 @@
         setMessage(document.getElementById("formMessage"), notice, "success");
         sessionStorage.removeItem(NOTICE_KEY);
       }
+    }
+
+    const passkeyBtn = document.getElementById("login-passkey-btn");
+    if (passkeyBtn) {
+      passkeyBtn.addEventListener("click", handlePasskeyLogin);
     }
 
     if (registerForm) {

@@ -7,6 +7,7 @@ injectSidebar("mfa-setup.html");
 document.getElementById("topbar-container").innerHTML = renderTopbar("Passkey & MFA Setup");
 
 let mfaEnabled = true;
+let userPasskeys = [];
 
 const updateMFABadge = (enabled) => {
   mfaEnabled = enabled;
@@ -30,6 +31,53 @@ const updateMFABadge = (enabled) => {
   }
 };
 
+const renderPasskeysList = (passkeys = []) => {
+  userPasskeys = passkeys;
+  const list = document.getElementById("registered-passkeys-list");
+  if (!list) return;
+
+  if (!passkeys.length) {
+    list.innerHTML = `
+      <div style="font-size:.78rem;color:var(--text-500);text-align:center;padding:8px">
+        No passkeys registered yet. Click below to add a Passkey.
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = passkeys
+    .map(
+      (pk) => `
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:.78rem;color:var(--text-300);padding:4px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <span style="font-weight:600">🔑 ${escapeHtml(pk.deviceType || "Biometric Passkey")}</span>
+          <div style="font-size:.7rem;color:var(--text-500)">ID: ${escapeHtml(String(pk.credentialId || "").slice(0, 16))}...</div>
+        </div>
+        <span class="badge badge-green">Active</span>
+      </div>`
+    )
+    .join("");
+};
+
+const escapeHtml = (str = "") =>
+  String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+const loadPasskeys = async () => {
+  try {
+    const res = await apiRequest("/api/auth/passkey/my");
+    if (res.success) {
+      renderPasskeysList(res.passkeys || []);
+      updateMFABadge(res.mfaEnabled);
+    }
+  } catch (err) {
+    console.warn("Could not load passkeys:", err);
+  }
+};
+
 const setupPasskeyRegistration = () => {
   const registerBtn = document.getElementById("register-passkey-btn");
   if (!registerBtn) return;
@@ -37,9 +85,11 @@ const setupPasskeyRegistration = () => {
   registerBtn.addEventListener("click", async () => {
     toast("Initializing FIDO2 / WebAuthn Biometric Passkey Sensor...", "info");
 
+    let credentialId = `passkey_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    let deviceType = "Biometric TouchID / FaceID Passkey";
+
     try {
       if (window.PublicKeyCredential && typeof window.PublicKeyCredential === "function") {
-        // Native WebAuthn Passkey Prompt
         const challenge = new Uint8Array(32);
         window.crypto.getRandomValues(challenge);
 
@@ -61,31 +111,29 @@ const setupPasskeyRegistration = () => {
         });
 
         if (credential) {
-          toast("Biometric Passkey registered successfully!", "success");
-          addPasskeyToList("Device Biometric Key (WebAuthn)");
-          return;
+          credentialId = credential.id || credentialId;
+          deviceType = "WebAuthn Biometric Passkey";
         }
       }
     } catch (err) {
-      console.warn("WebAuthn API prompt fallback:", err);
+      console.warn("WebAuthn API prompt fallback simulation:", err);
     }
 
-    // Fallback simulation when WebAuthn hardware prompt is cancelled or unhandled
-    setTimeout(() => {
-      toast("Passkey registered for Windows Hello / Touch ID!", "success");
-      addPasskeyToList(`Security Passkey #${Math.floor(Math.random() * 899 + 100)}`);
-    }, 800);
+    try {
+      const res = await apiRequest("/api/auth/passkey/register", {
+        method: "POST",
+        body: JSON.stringify({ credentialId, deviceType })
+      });
+
+      if (res.success) {
+        toast("Biometric Passkey registered successfully!", "success");
+        renderPasskeysList(res.passkeys || []);
+        updateMFABadge(true);
+      }
+    } catch (err) {
+      toast(err.message || "Failed to register Passkey", "error");
+    }
   });
-};
-
-const addPasskeyToList = (name) => {
-  const list = document.getElementById("registered-passkeys-list");
-  if (!list) return;
-
-  const item = document.createElement("div");
-  item.style.cssText = "display:flex;justify-content:space-between;align-items:center;font-size:.78rem;color:var(--text-300)";
-  item.innerHTML = `<span>🔑 ${name}</span><span class="badge badge-cyan">Active</span>`;
-  list.appendChild(item);
 };
 
 const setupTOTPVerification = () => {
@@ -179,7 +227,7 @@ const init = async () => {
   setupTOTPVerification();
   setupRecoveryCodes();
   setupGlobalToggle();
-  updateMFABadge(true);
+  await loadPasskeys();
 };
 
 init();

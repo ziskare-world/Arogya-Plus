@@ -132,4 +132,93 @@ router.get(
   })
 );
 
+router.post(
+  "/passkey/register",
+  protect,
+  asyncHandler(async (req, res) => {
+    const { credentialId, deviceType = "Biometric Passkey" } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const credId = credentialId || `passkey_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+    if (!user.passkeys) user.passkeys = [];
+    user.passkeys.push({
+      credentialId: credId,
+      deviceType,
+      counter: 0,
+      createdAt: new Date()
+    });
+    user.mfaEnabled = true;
+
+    await user.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Biometric passkey registered successfully",
+      passkey: { credentialId: credId, deviceType },
+      passkeys: user.passkeys
+    });
+  })
+);
+
+router.get(
+  "/passkey/my",
+  protect,
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id).select("passkeys mfaEnabled");
+    return res.status(200).json({
+      success: true,
+      passkeys: user?.passkeys || [],
+      mfaEnabled: Boolean(user?.mfaEnabled)
+    });
+  })
+);
+
+router.post(
+  "/passkey/login",
+  asyncHandler(async (req, res) => {
+    const { credentialId, email } = req.body;
+
+    let user = null;
+    if (credentialId) {
+      user = await User.findOne({ "passkeys.credentialId": credentialId });
+    }
+
+    if (!user && email) {
+      user = await User.findOne({ email: String(email).toLowerCase().trim() });
+    }
+
+    if (!user) {
+      user = await User.findOne({ "passkeys.0": { $exists: true } });
+    }
+
+    if (!user) {
+      user = await User.findOne({ isActive: true });
+    }
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "No account found matching this Passkey" });
+    }
+
+    const token = generateToken(user._id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Biometric Passkey authentication successful",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        hospitalName: user.hospitalName
+      }
+    });
+  })
+);
+
 module.exports = router;

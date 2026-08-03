@@ -512,10 +512,25 @@ router.post(
   ],
   validateRequest,
   asyncHandler(async (req, res) => {
-    const { name, email, password, phone, specialization, clinicAddress, clinicCoordinates } =
+    const { name, email, password, phone, specialization, clinicAddress, clinicCoordinates, hospitalName } =
       req.body;
     const normalizedCoordinates = normalizeCoordinates(clinicCoordinates);
-    const hospitalCoordinates = normalizeCoordinates(req.user.hospitalCoordinates);
+    
+    let targetHospitalName = hospitalName || req.user.hospitalName || undefined;
+    let targetHospitalAddress = req.user.hospitalAddress || undefined;
+    let targetHospitalCoordinates = normalizeCoordinates(req.user.hospitalCoordinates);
+
+    if (hospitalName) {
+      const hospitalAdmin = await User.findOne({
+        role: "admin",
+        hospitalName: new RegExp(`^${escapeRegex(hospitalName)}$`, "i")
+      });
+      if (hospitalAdmin) {
+        targetHospitalName = hospitalAdmin.hospitalName;
+        targetHospitalAddress = hospitalAdmin.hospitalAddress || targetHospitalAddress;
+        targetHospitalCoordinates = hospitalAdmin.hospitalCoordinates || targetHospitalCoordinates;
+      }
+    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -528,10 +543,11 @@ router.post(
       password,
       phone,
       specialization,
-      clinicAddress,
+      clinicAddress: clinicAddress || targetHospitalAddress || undefined,
       clinicCoordinates: normalizedCoordinates,
-      hospitalName: req.user.hospitalName || undefined,
-      hospitalCoordinates: hospitalCoordinates || undefined,
+      hospitalName: targetHospitalName,
+      hospitalAddress: targetHospitalAddress,
+      hospitalCoordinates: targetHospitalCoordinates,
       role: "doctor",
       createdByAdmin: req.user._id
     });

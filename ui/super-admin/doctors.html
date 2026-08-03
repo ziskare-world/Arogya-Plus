@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -78,25 +78,24 @@
                         <h2>Medical Staff</h2>
                         <p>36 doctors registered - 12 currently online</p>
                     </div>
-                    <button class="btn btn-primary" onclick="toast('Add doctor form coming soon','info')">+ Add
-                        Doctor</button>
+                    <button class="btn btn-primary" id="open-add-doctor-modal-btn">+ Add Doctor</button>
                 </div>
 
                 <div class="stat-grid" style="margin-bottom:24px">
                     <div class="stat-card blue card-sm">
-                        <div class="stat-value">36</div>
+                        <div class="stat-value">0</div>
                         <div class="stat-label">Total Doctors</div>
                     </div>
                     <div class="stat-card green card-sm">
-                        <div class="stat-value">12</div>
+                        <div class="stat-value">0</div>
                         <div class="stat-label">Online Now</div>
                     </div>
                     <div class="stat-card cyan card-sm">
-                        <div class="stat-value">4.8</div>
+                        <div class="stat-value">0.0</div>
                         <div class="stat-label">Avg. Rating</div>
                     </div>
                     <div class="stat-card purple card-sm">
-                        <div class="stat-value">8</div>
+                        <div class="stat-value">0</div>
                         <div class="stat-label">Specializations</div>
                     </div>
                 </div>
@@ -118,6 +117,72 @@
 
                 <div class="grid-auto" id="doc-grid"></div>
             </main>
+        </div>
+    </div>
+
+    <!-- ADD DOCTOR POPUP MODAL -->
+    <div id="add-doctor-modal" class="lightbox-modal">
+        <div class="lightbox-content" style="width:480px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                <h3 style="margin:0">👨‍⚕️ Add New Doctor</h3>
+                <button class="btn btn-ghost btn-sm" id="close-doctor-modal-btn">✕</button>
+            </div>
+
+            <form id="add-doctor-form" style="display:flex;flex-direction:column;gap:12px">
+                <div class="form-group">
+                    <label class="form-label" for="doc-name">Doctor Full Name *</label>
+                    <input type="text" id="doc-name" class="form-input" placeholder="e.g. Dr. Rajesh Kumar" required>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                    <div class="form-group">
+                        <label class="form-label" for="doc-email">Email Address *</label>
+                        <input type="email" id="doc-email" class="form-input" placeholder="doctor@hospital.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="doc-password">Account Password *</label>
+                        <input type="password" id="doc-password" class="form-input" minlength="6" placeholder="Min 6 chars" required>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                    <div class="form-group">
+                        <label class="form-label" for="doc-spec">Specialization *</label>
+                        <select id="doc-spec" class="form-input" required>
+                            <option value="">Select Specialization</option>
+                            <option value="Cardiologist">Cardiology</option>
+                            <option value="Neurologist">Neurology</option>
+                            <option value="Pediatrician">Pediatrician</option>
+                            <option value="Orthopedist">Orthopedics</option>
+                            <option value="Dermatologist">Dermatology</option>
+                            <option value="General Physician">General Physician</option>
+                            <option value="Surgeon">General Surgeon</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="doc-hospital">Assigned Hospital *</label>
+                        <select id="doc-hospital" class="form-input" required>
+                            <option value="">Loading Hospitals...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                    <div class="form-group">
+                        <label class="form-label" for="doc-phone">Phone Number</label>
+                        <input type="text" id="doc-phone" class="form-input" placeholder="+91 9876543210">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="doc-clinic">Clinic / Dept Address</label>
+                        <input type="text" id="doc-clinic" class="form-input" placeholder="e.g. OPD Room 204">
+                    </div>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
+                    <button type="button" class="btn btn-ghost btn-sm" id="cancel-doctor-modal-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="submit-doctor-btn">Create Doctor Account</button>
+                </div>
+            </form>
         </div>
     </div>
 

@@ -60,7 +60,7 @@ export function injectSidebar(activePage) {
   ) {
     nav = [
       { href: "dashboard.html", icon: "chart", label: "Overview" },
-      { href: "admins.html", icon: "users", label: "Admins" },
+      { href: "admins.html", icon: "users", label: "Hospitals" },
       { href: "storage.html", icon: "folder", label: "Storage Drive" },
       { href: "appointments.html", icon: "calendar", label: "Appointments" },
       { href: "doctors.html", icon: "doctor", label: "Doctors" },
@@ -105,7 +105,7 @@ export function injectSidebar(activePage) {
     // Universal fallback for Super Admin / Admin
     nav = [
       { href: "dashboard.html", icon: "chart", label: "Overview" },
-      { href: "admins.html", icon: "users", label: "Admins" },
+      { href: "admins.html", icon: "users", label: "Hospitals" },
       { href: "storage.html", icon: "folder", label: "Storage Drive" },
       { href: "appointments.html", icon: "calendar", label: "Appointments" },
       { href: "doctors.html", icon: "doctor", label: "Doctors" },

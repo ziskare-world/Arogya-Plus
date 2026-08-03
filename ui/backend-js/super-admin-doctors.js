@@ -1,4 +1,4 @@
-﻿import { toast } from "../js/utils.js";
+import { toast } from "../js/utils.js";
 import { injectSidebar, renderTopbar } from "../js/sidebar.js";
 import { apiRequest, ensureSession } from "../js/api-client.js";
 
@@ -9,6 +9,7 @@ document.getElementById("topbar-container").innerHTML = renderTopbar("Medical St
 const gridEl = document.getElementById("doc-grid");
 
 let allDoctors = [];
+let registeredHospitals = [];
 let specFilter = "";
 let searchFilter = "";
 
@@ -17,7 +18,7 @@ const escapeHtml = (value = "") =>
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
+    .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 
 const initials = (name = "Doctor") =>
@@ -63,37 +64,37 @@ const renderDoctors = () => {
 
   const data = allDoctors.filter((doctor) => {
     const specialization = String(doctor.specialization || "General");
-    const matchesSpec = !specFilter || specialization === specFilter;
-    const blob = `${doctor.name || ""} ${doctor.email || ""} ${specialization}`.toLowerCase();
+    const matchesSpec = !specFilter || specialization.toLowerCase().includes(specFilter.toLowerCase());
+    const blob = `${doctor.name || ""} ${doctor.email || ""} ${specialization} ${doctor.hospitalName || ""}`.toLowerCase();
     const matchesSearch = !searchFilter || blob.includes(searchFilter);
     return matchesSpec && matchesSearch;
   });
 
   if (!data.length) {
-    gridEl.innerHTML = '<div class="card"><div class="muted">No doctors found for current filters.</div></div>';
+    gridEl.innerHTML = '<div class="card" style="padding:24px;text-align:center"><div class="muted">No doctors found for current filters.</div></div>';
     return;
   }
 
   gridEl.innerHTML = data
     .map((doctor) => {
       const specialization = doctor.specialization || "General";
+      const hospital = doctor.hospitalName || "General Healthcare";
       const expYears = Math.max(1, new Date().getFullYear() - new Date(doctor.createdAt || Date.now()).getFullYear());
       const patientCount = Number(doctor.totalPatients || 0) || Math.floor(Math.random() * 70 + 40);
       const rating = 4.2 + Math.min(0.8, patientCount / 150);
-      const stars = `${"*".repeat(Math.floor(rating))}${"-".repeat(5 - Math.floor(rating))}`;
 
       return `
         <div class="doctor-card" data-doctor-id="${escapeHtml(doctor._id || doctor.id || "")}">
           <div class="doc-avatar" style="background:${doctor.isActive ? "rgba(37,99,235,0.15)" : "rgba(148,163,184,0.15)"};border-color:${doctor.isActive ? "var(--green)" : "var(--border)"}">${escapeHtml(initials(doctor.name))}</div>
           <div style="font-weight:700;font-size:.95rem;color:var(--text-100)">${escapeHtml(doctor.name || "Unknown Doctor")}</div>
-          <div style="font-size:.8rem;color:var(--text-400);margin-top:3px">${escapeHtml(specialization)}</div>
-          <div class="doc-stars">${stars} ${rating.toFixed(1)}</div>
-          <div style="margin-top:4px">${doctor.isActive ? '<span class="badge badge-green">Online</span>' : '<span class="badge badge-red">Offline</span>'}</div>
+          <div style="font-size:.8rem;color:var(--cyan);font-weight:600;margin-top:2px">${escapeHtml(specialization)}</div>
+          <div style="font-size:.76rem;color:var(--text-400);margin-top:2px">🏥 ${escapeHtml(hospital)}</div>
+          <div style="margin-top:6px">${doctor.isActive ? '<span class="badge badge-green">Online</span>' : '<span class="badge badge-red">Offline</span>'}</div>
           <div class="doc-stat">
             <div><div class="ds-val">${expYears} yrs</div><div class="ds-lbl">Experience</div></div>
             <div><div class="ds-val">${patientCount}</div><div class="ds-lbl">Patients</div></div>
           </div>
-          <button class="btn btn-outline btn-full btn-sm" style="margin-top:14px" data-action="profile" data-name="${escapeHtml(doctor.name || "Doctor")}">View Profile</button>
+          <button class="btn btn-outline btn-full btn-sm" style="margin-top:14px" data-action="profile" data-name="${escapeHtml(doctor.name || "Doctor")}">View Details</button>
         </div>`;
     })
     .join("");
@@ -111,11 +112,104 @@ window.filterSpec = function filterSpec(spec, button) {
   renderDoctors();
 };
 
+const loadHospitals = async () => {
+  try {
+    const res = await apiRequest("/api/admin/admins");
+    const admins = res.admins || [];
+    const hospitalSet = new Map();
+
+    admins.forEach((admin) => {
+      const name = String(admin.hospitalName || "").trim();
+      if (name && !hospitalSet.has(name.toLowerCase())) {
+        hospitalSet.set(name.toLowerCase(), name);
+      }
+    });
+
+    registeredHospitals = Array.from(hospitalSet.values());
+
+    const selectEl = document.getElementById("doc-hospital");
+    if (selectEl) {
+      if (registeredHospitals.length > 0) {
+        selectEl.innerHTML = registeredHospitals
+          .map((h) => `<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`)
+          .join("");
+      } else {
+        selectEl.innerHTML = `<option value="Arogya Plus General Hospital">Arogya Plus General Hospital</option>`;
+      }
+    }
+  } catch (err) {
+    console.warn("Failed to load hospitals for dropdown:", err);
+  }
+};
+
 const loadDoctors = async () => {
   const data = await apiRequest("/api/admin/users");
   allDoctors = (data.users || []).filter((user) => user.role === "doctor");
   renderStats(allDoctors);
   renderDoctors();
+};
+
+const setupModalEvents = () => {
+  const openBtn = document.getElementById("open-add-doctor-modal-btn");
+  const modal = document.getElementById("add-doctor-modal");
+  const closeBtn = document.getElementById("close-doctor-modal-btn");
+  const cancelBtn = document.getElementById("cancel-doctor-modal-btn");
+  const form = document.getElementById("add-doctor-form");
+
+  if (openBtn && modal) {
+    openBtn.addEventListener("click", () => {
+      loadHospitals();
+      modal.style.display = "flex";
+    });
+  }
+
+  const closeModal = () => {
+    if (modal) modal.style.display = "none";
+  };
+
+  if (closeBtn) closeBtn.addEventListener("click", closeModal);
+  if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById("submit-doctor-btn");
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Creating...";
+      }
+
+      const payload = {
+        name: document.getElementById("doc-name").value.trim(),
+        email: document.getElementById("doc-email").value.trim(),
+        password: document.getElementById("doc-password").value,
+        specialization: document.getElementById("doc-spec").value,
+        hospitalName: document.getElementById("doc-hospital").value,
+        phone: document.getElementById("doc-phone").value.trim(),
+        clinicAddress: document.getElementById("doc-clinic").value.trim()
+      };
+
+      try {
+        await apiRequest("/api/admin/doctors", {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+
+        toast("Doctor account created successfully and assigned to hospital", "success");
+        closeModal();
+        form.reset();
+        await loadDoctors();
+      } catch (err) {
+        toast(err.message || "Failed to create doctor account", "error");
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Create Doctor Account";
+        }
+      }
+    });
+  }
 };
 
 const init = async () => {
@@ -124,6 +218,8 @@ const init = async () => {
     onDenied: () => toast("Please login as super admin", "error")
   });
   if (!session.allowed) return;
+
+  setupModalEvents();
 
   if (gridEl) {
     gridEl.addEventListener("click", (event) => {
@@ -136,6 +232,7 @@ const init = async () => {
 
   try {
     await loadDoctors();
+    await loadHospitals();
   } catch (error) {
     toast(error.message, "error");
     allDoctors = [];

@@ -54,12 +54,11 @@ export function injectSidebar(activePage) {
 
   if (
     path.includes("super") ||
-    path.includes("super_admin") ||
     path.includes("super-admin") ||
     (user && user.role && String(user.role).toLowerCase().includes("super"))
   ) {
     nav = [
-      { href: "dashboard.html", icon: "chart", label: "Overview" },
+      { href: "dashboard.html", icon: "chart", label: "O" },
       { href: "admins.html", icon: "users", label: "Admins" },
       { href: "storage.html", icon: "folder", label: "Storage Drive" },
       { href: "system-logs.html", icon: "logs", label: "System Logs" }

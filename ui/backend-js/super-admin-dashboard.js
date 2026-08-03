@@ -1,4 +1,4 @@
-﻿import { toast } from "../js/utils.js";
+import { toast } from "../js/utils.js";
 import { injectSidebar, renderTopbar } from "../js/sidebar.js";
 import { apiRequest, ensureSession } from "../js/api-client.js";
 
@@ -155,7 +155,6 @@ const loadDashboard = async () => {
   if (statEls[3]) statEls[3].textContent = formatMoneyCompact(verifiedRevenue);
 
   renderLogs(buildLogs({ admins, appointments, emergencies, payments }));
-  setInfrastructureHealth({ emergencies, appointments });
 };
 
 const init = async () => {

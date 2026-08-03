@@ -149,6 +149,19 @@ const loadDoctors = async () => {
   renderDoctors();
 };
 
+window.openAddDoctorModal = function openAddDoctorModal() {
+  const modal = document.getElementById("add-doctor-modal");
+  if (modal) {
+    loadHospitals();
+    modal.style.display = "flex";
+  }
+};
+
+window.closeAddDoctorModal = function closeAddDoctorModal() {
+  const modal = document.getElementById("add-doctor-modal");
+  if (modal) modal.style.display = "none";
+};
+
 const setupModalEvents = () => {
   const openBtn = document.getElementById("open-add-doctor-modal-btn");
   const modal = document.getElementById("add-doctor-modal");
@@ -156,19 +169,12 @@ const setupModalEvents = () => {
   const cancelBtn = document.getElementById("cancel-doctor-modal-btn");
   const form = document.getElementById("add-doctor-form");
 
-  if (openBtn && modal) {
-    openBtn.addEventListener("click", () => {
-      loadHospitals();
-      modal.style.display = "flex";
-    });
+  if (openBtn) {
+    openBtn.addEventListener("click", window.openAddDoctorModal);
   }
 
-  const closeModal = () => {
-    if (modal) modal.style.display = "none";
-  };
-
-  if (closeBtn) closeBtn.addEventListener("click", closeModal);
-  if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+  if (closeBtn) closeBtn.addEventListener("click", window.closeAddDoctorModal);
+  if (cancelBtn) cancelBtn.addEventListener("click", window.closeAddDoctorModal);
 
   if (form) {
     form.addEventListener("submit", async (e) => {

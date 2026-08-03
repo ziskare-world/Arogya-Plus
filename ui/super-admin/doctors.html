@@ -61,6 +61,30 @@
             font-size: .65rem;
             color: var(--text-500);
         }
+
+        .lightbox-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .lightbox-content {
+            width: 100%;
+            max-width: 520px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 24px;
+        }
     </style>
 </head>
 
@@ -78,7 +102,7 @@
                         <h2>Medical Staff</h2>
                         <p>36 doctors registered - 12 currently online</p>
                     </div>
-                    <button class="btn btn-primary" id="open-add-doctor-modal-btn">+ Add Doctor</button>
+                    <button class="btn btn-primary" id="open-add-doctor-modal-btn" onclick="openAddDoctorModal()">+ Add Doctor</button>
                 </div>
 
                 <div class="stat-grid" style="margin-bottom:24px">

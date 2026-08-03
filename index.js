@@ -184,6 +184,7 @@ app.get(["/super-admin/patients", "/super_admin/patients"], sendUiPage("super-ad
 app.get(["/super-admin/payments", "/super_admin/payments"], sendUiPage("super-admin", "payments.html"));
 app.get(["/super-admin/reports", "/super_admin/reports"], sendUiPage("super-admin", "reports.html"));
 app.get(["/super-admin/settings", "/super_admin/settings"], sendUiPage("super-admin", "settings.html"));
+app.get(["/super-admin/mfa-setup", "/super_admin/mfa-setup"], sendUiPage("super-admin", "mfa-setup.html"));
 // Admin and Super-Admin Storage Drive pages
 app.get(["/admin/storage", "/super-admin/storage", "/super_admin/storage"], sendUiPage("super-admin", "storage.html"));
 

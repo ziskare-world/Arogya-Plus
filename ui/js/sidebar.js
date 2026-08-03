@@ -26,6 +26,7 @@ const iconSvg = (name, className = "icon-svg") => {
     folder: `<svg ${base}><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`,
     records: `<svg ${base}><rect x="5" y="3" width="14" height="18" rx="2"></rect><path d="M8 7h8"></path><path d="M8 11h8"></path><path d="M8 15h5"></path></svg>`,
     billing: `<svg ${base}><rect x="4" y="5" width="16" height="14" rx="2"></rect><path d="M4 10h16"></path><path d="M8 15h4"></path></svg>`,
+    shield: `<svg ${base}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`,
     profile: `<svg ${base}><circle cx="12" cy="8" r="3"></circle><path d="M6 20a6 6 0 0 1 12 0"></path></svg>`,
     logout: `<svg ${base}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg>`
   };
@@ -62,6 +63,7 @@ export function injectSidebar(activePage) {
       { href: "dashboard.html", icon: "chart", label: "Overview" },
       { href: "admins.html", icon: "users", label: "Hospitals" },
       { href: "storage.html", icon: "folder", label: "Storage Drive" },
+      { href: "mfa-setup.html", icon: "shield", label: "Passkey MFA" },
       { href: "appointments.html", icon: "calendar", label: "Appointments" },
       { href: "doctors.html", icon: "doctor", label: "Doctors" },
       { href: "patients.html", icon: "users", label: "Patients" },
@@ -78,6 +80,7 @@ export function injectSidebar(activePage) {
       { href: "doctors.html", icon: "doctor", label: "Doctors" },
       { href: "patients.html", icon: "users", label: "Patients" },
       { href: "storage.html", icon: "folder", label: "Storage Drive" },
+      { href: "mfa-setup.html", icon: "shield", label: "Passkey MFA" },
       { href: "emergency.html", icon: "alert", label: "Emergency" },
       { href: "ambulance.html", icon: "ambulance", label: "Ambulance" },
       { href: "payments.html", icon: "card", label: "Payments" },
@@ -107,6 +110,7 @@ export function injectSidebar(activePage) {
       { href: "dashboard.html", icon: "chart", label: "Overview" },
       { href: "admins.html", icon: "users", label: "Hospitals" },
       { href: "storage.html", icon: "folder", label: "Storage Drive" },
+      { href: "mfa-setup.html", icon: "shield", label: "Passkey MFA" },
       { href: "appointments.html", icon: "calendar", label: "Appointments" },
       { href: "doctors.html", icon: "doctor", label: "Doctors" },
       { href: "patients.html", icon: "users", label: "Patients" },

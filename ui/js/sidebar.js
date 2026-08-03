@@ -38,13 +38,14 @@ export function injectSidebar(activePage) {
     location.pathname.includes("/admin/") ||
     location.pathname.includes("/doctor/") ||
     location.pathname.includes("/user/") ||
-    location.pathname.includes("/super-admin/");
+    location.pathname.includes("/super-admin/") ||
+    location.pathname.includes("/super_admin/");
   const prefix = isInSubfolder ? "../" : "";
 
   let nav = [];
-  const path = location.pathname;
+  const path = location.pathname.toLowerCase();
 
-  if (path.includes("/super-admin/")) {
+  if (path.includes("super-admin") || path.includes("super_admin")) {
     nav = [
       { href: "dashboard.html", icon: "chart", label: "Overview" },
       { href: "admins.html", icon: "users", label: "Admins" },

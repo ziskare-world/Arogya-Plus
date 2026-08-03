@@ -174,18 +174,17 @@ app.get("/doctor/video-consultation", sendUiPage("shared", "video-consultation.h
 app.get("/user/video-consultation", sendUiPage("shared", "video-consultation.html"));
 
 // Super admin pages
-app.get("/super-admin", sendUiPage("super-admin", "dashboard.html"));
-app.get("/super-admin/dashboard", sendUiPage("super-admin", "dashboard.html"));
-app.get("/super-admin/admins", sendUiPage("super-admin", "admins.html"));
-app.get("/super-admin/appointments", sendUiPage("super-admin", "appointments.html"));
-app.get("/super-admin/doctors", sendUiPage("super-admin", "doctors.html"));
-app.get("/super-admin/emergency", sendUiPage("super-admin", "emergency.html"));
-app.get("/super-admin/patients", sendUiPage("super-admin", "patients.html"));
-app.get("/super-admin/payments", sendUiPage("super-admin", "payments.html"));
-app.get("/super-admin/reports", sendUiPage("super-admin", "reports.html"));
+app.get(["/super-admin", "/super_admin"], sendUiPage("super-admin", "dashboard.html"));
+app.get(["/super-admin/dashboard", "/super_admin/dashboard"], sendUiPage("super-admin", "dashboard.html"));
+app.get(["/super-admin/admins", "/super_admin/admins"], sendUiPage("super-admin", "admins.html"));
+app.get(["/super-admin/appointments", "/super_admin/appointments"], sendUiPage("super-admin", "appointments.html"));
+app.get(["/super-admin/doctors", "/super_admin/doctors"], sendUiPage("super-admin", "doctors.html"));
+app.get(["/super-admin/emergency", "/super_admin/emergency"], sendUiPage("super-admin", "emergency.html"));
+app.get(["/super-admin/patients", "/super_admin/patients"], sendUiPage("super-admin", "patients.html"));
+app.get(["/super-admin/payments", "/super_admin/payments"], sendUiPage("super-admin", "payments.html"));
+app.get(["/super-admin/reports", "/super_admin/reports"], sendUiPage("super-admin", "reports.html"));
 // Admin and Super-Admin Storage Drive pages
-app.get("/admin/storage", sendUiPage("super-admin", "storage.html"));
-app.get("/super-admin/storage", sendUiPage("super-admin", "storage.html"));
+app.get(["/admin/storage", "/super-admin/storage", "/super_admin/storage"], sendUiPage("super-admin", "storage.html"));
 
 const storageDirectory = path.join(__dirname, "storage");
 app.use("/storage", express.static(storageDirectory));

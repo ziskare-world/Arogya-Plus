@@ -461,6 +461,31 @@
         </div>
     </div>
 
+    <!-- DELETE CONFIRMATION MODAL -->
+    <div id="delete-confirm-modal" class="lightbox-modal">
+        <div class="lightbox-content" style="width:400px;border-top:4px solid var(--red)">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <div style="font-size:1.8rem;color:var(--red)">🗑️</div>
+                <div>
+                    <h3 style="margin:0;color:var(--red-light)">Confirm Deletion</h3>
+                    <p style="font-size:.78rem;color:var(--text-400);margin-top:2px">Permanently remove item from storage</p>
+                </div>
+            </div>
+
+            <div style="background:var(--bg-800);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;margin:10px 0">
+                <div style="font-size:.84rem;font-weight:600;color:var(--text-100)" id="delete-item-name">Filename.png</div>
+                <div style="font-size:.74rem;color:var(--text-400);margin-top:2px" id="delete-item-path">Path: storage/Filename.png</div>
+            </div>
+
+            <p style="font-size:.8rem;color:var(--text-300);margin-bottom:14px">Are you sure you want to delete this item? This operation cannot be reversed.</p>
+
+            <div style="display:flex;justify-content:flex-end;gap:8px">
+                <button class="btn btn-ghost btn-sm" id="cancel-delete-btn">Cancel</button>
+                <button class="btn btn-danger btn-sm" id="confirm-delete-submit-btn">🗑️ Delete Permanently</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="../backend-js/super-admin-storage.js"></script>
 </body>
 </html>

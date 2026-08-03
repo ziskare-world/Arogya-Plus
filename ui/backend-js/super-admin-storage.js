@@ -14,7 +14,7 @@ const state = {
   activeCategory: "all",
   searchQuery: "",
   viewMode: "grid",
-  selectedFile: null,
+  itemToDelete: null,
   selectedPaths: new Set()
 };
 
@@ -318,21 +318,9 @@ const attachItemEvents = (container) => {
   });
 
   container.querySelectorAll(".delete-btn").forEach((btn) => {
-    btn.addEventListener("click", async (e) => {
+    btn.addEventListener("click", (e) => {
       const path = e.currentTarget.dataset.path;
-      if (!confirm(`Are you sure you want to delete "${path}"?`)) return;
-
-      try {
-        await apiRequest("/api/admin/storage/item", {
-          method: "DELETE",
-          body: JSON.stringify({ relativePath: path })
-        });
-        toast("Item deleted successfully", "success");
-        state.selectedPaths.delete(path);
-        loadStorageData(state.currentFolder);
-      } catch (err) {
-        toast(err.message || "Failed to delete item", "error");
-      }
+      openDeleteConfirmModal(path);
     });
   });
 };
@@ -388,7 +376,60 @@ const openLightbox = (url, name, meta) => {
   modal.style.display = "flex";
 };
 
+const openDeleteConfirmModal = (relativePath) => {
+  state.itemToDelete = relativePath;
+  const modal = document.getElementById("delete-confirm-modal");
+  const nameEl = document.getElementById("delete-item-name");
+  const pathEl = document.getElementById("delete-item-path");
+
+  if (!modal) return;
+
+  const fileName = relativePath ? relativePath.split("/").pop() : "";
+  if (nameEl) nameEl.textContent = fileName || relativePath;
+  if (pathEl) pathEl.textContent = `Path: storage/${relativePath}`;
+
+  modal.style.display = "flex";
+};
+
 const setupEventHandlers = () => {
+  // Delete Modal Cancel & Confirm
+  const cancelDeleteBtn = document.getElementById("cancel-delete-btn");
+  const confirmDeleteBtn = document.getElementById("confirm-delete-submit-btn");
+  const deleteModal = document.getElementById("delete-confirm-modal");
+
+  if (cancelDeleteBtn && deleteModal) {
+    cancelDeleteBtn.addEventListener("click", () => {
+      deleteModal.style.display = "none";
+      state.itemToDelete = null;
+    });
+  }
+
+  if (confirmDeleteBtn && deleteModal) {
+    confirmDeleteBtn.addEventListener("click", async () => {
+      if (!state.itemToDelete) return;
+
+      const path = state.itemToDelete;
+      confirmDeleteBtn.disabled = true;
+      confirmDeleteBtn.textContent = "Deleting...";
+
+      try {
+        await apiRequest("/api/admin/storage/item", {
+          method: "DELETE",
+          body: JSON.stringify({ relativePath: path })
+        });
+        toast("Item deleted from Storage", "success");
+        state.selectedPaths.delete(path);
+        deleteModal.style.display = "none";
+        state.itemToDelete = null;
+        loadStorageData(state.currentFolder);
+      } catch (err) {
+        toast(err.message || "Failed to delete item", "error");
+      } finally {
+        confirmDeleteBtn.disabled = false;
+        confirmDeleteBtn.textContent = "🗑️ Delete Permanently";
+      }
+    });
+  }
   // Back button
   const backBtn = document.getElementById("back-folder-btn");
   if (backBtn) {

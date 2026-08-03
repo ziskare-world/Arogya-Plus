@@ -1,4 +1,4 @@
-﻿const request = require("supertest");
+const request = require("supertest");
 const { app } = require("../index");
 const { registerAndLogin, createAdminAndLogin } = require("./testUtils");
 
@@ -154,5 +154,48 @@ describe("Additional Modules API", () => {
 
     expect(adminDashboard.statusCode).toBe(200);
     expect(adminDashboard.body.stats.users).toBeGreaterThanOrEqual(3);
+  });
+
+  test("storage API list, upload, folder creation and delete work", async () => {
+    const admin = await createAdminAndLogin();
+    const testFolderName = `Test_Folder_${Date.now()}`;
+
+    const listRes = await request(app)
+      .get("/api/admin/storage")
+      .set("Authorization", `Bearer ${admin.token}`);
+    expect(listRes.statusCode).toBe(200);
+    expect(listRes.body.success).toBe(true);
+    expect(Array.isArray(listRes.body.items)).toBe(true);
+
+    const folderRes = await request(app)
+      .post("/api/admin/storage/folder")
+      .set("Authorization", `Bearer ${admin.token}`)
+      .send({ folderName: testFolderName });
+    expect(folderRes.statusCode).toBe(201);
+
+    const uploadRes = await request(app)
+      .post("/api/admin/storage/upload")
+      .set("Authorization", `Bearer ${admin.token}`)
+      .send({
+        folder: testFolderName,
+        filename: "test_doc.txt",
+        contentBase64: Buffer.from("Test Storage Content").toString("base64")
+      });
+    if (uploadRes.statusCode !== 201) {
+      console.log("UPLOAD RES FAILED:", uploadRes.statusCode, uploadRes.body);
+    }
+    expect(uploadRes.statusCode).toBe(201);
+
+    const deleteFileRes = await request(app)
+      .delete("/api/admin/storage/item")
+      .set("Authorization", `Bearer ${admin.token}`)
+      .send({ relativePath: `${testFolderName}/test_doc.txt` });
+    expect(deleteFileRes.statusCode).toBe(200);
+
+    const deleteFolderRes = await request(app)
+      .delete("/api/admin/storage/item")
+      .set("Authorization", `Bearer ${admin.token}`)
+      .send({ relativePath: testFolderName });
+    expect(deleteFolderRes.statusCode).toBe(200);
   });
 });

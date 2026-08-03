@@ -992,14 +992,16 @@ router.post(
   protect,
   authorize("admin", "super-admin"),
   asyncHandler(async (req, res) => {
-    const { hospitalName = "Arogya_Central_Hospital", fileName, fileData, category = "General" } = req.body;
+    const { hospitalName = "Arogya_Central_Hospital", folder = "", category = "General" } = req.body;
+    const fileName = req.body.filename || req.body.fileName;
+    const fileData = req.body.contentBase64 || req.body.fileData;
 
     if (!fileName || !fileData) {
-      return res.status(400).json({ success: false, message: "fileName and fileData (base64 or text) are required" });
+      return res.status(400).json({ success: false, message: "filename and fileData (base64 or text) are required" });
     }
 
-    const folderName = sanitizeFolderName(hospitalName);
-    const targetFolder = path.join(STORAGE_ROOT, folderName);
+    const subDir = folder ? String(folder).trim() : sanitizeFolderName(hospitalName);
+    const targetFolder = path.join(STORAGE_ROOT, subDir);
 
     if (!fs.existsSync(targetFolder)) {
       fs.mkdirSync(targetFolder, { recursive: true });
@@ -1008,26 +1010,29 @@ router.post(
     const cleanFileName = String(fileName).replace(/[^a-zA-Z0-9._-]/g, "_");
     const targetFilePath = path.join(targetFolder, cleanFileName);
 
-    // Save base64 or raw string file content
     let buffer;
-    if (fileData.includes(";base64,")) {
-      buffer = Buffer.from(fileData.split(";base64,")[1], "base64");
+    if (String(fileData).includes(";base64,")) {
+      buffer = Buffer.from(String(fileData).split(";base64,")[1], "base64");
     } else {
-      buffer = Buffer.from(fileData, "utf8");
+      buffer = Buffer.from(String(fileData).replace(/^data:.*?;base64,/, ""), "base64");
     }
 
     fs.writeFileSync(targetFilePath, buffer);
 
     const stat = fs.statSync(targetFilePath);
+    const relativePath = path.relative(STORAGE_ROOT, targetFilePath).replace(/\\/g, "/");
 
     res.status(201).json({
       success: true,
-      message: `File saved cleanly into storage/${folderName}/`,
+      message: `File saved cleanly into storage/${relativePath}`,
       file: {
+        name: cleanFileName,
         filename: cleanFileName,
-        hospitalFolder: folderName,
+        relativePath,
+        hospitalFolder: subDir,
         sizeBytes: stat.size,
-        url: `/storage/${folderName}/${cleanFileName}`
+        formattedSize: `${(stat.size / 1024).toFixed(1)} KB`,
+        url: `/storage/${relativePath}`
       }
     });
   })
@@ -1105,6 +1110,194 @@ router.post(
       message: "Doctor rating submitted",
       rating: doctor.rating,
       reviewCount: doctor.reviewCount
+    });
+  })
+);
+
+// =========================================================================
+// STORAGE MANAGEMENT ROUTES (Google Drive backend for Super Admin & Admin)
+// =========================================================================
+const STORAGE_BASE_DIR = path.join(__dirname, "..", "storage");
+
+const ensureStorageBaseDir = () => {
+  if (!fs.existsSync(STORAGE_BASE_DIR)) {
+    fs.mkdirSync(STORAGE_BASE_DIR, { recursive: true });
+  }
+};
+
+const resolveSafeStoragePath = (requestedRelativePath = "") => {
+  ensureStorageBaseDir();
+  const normalized = path.normalize(requestedRelativePath).replace(/^(\.\.[\/\\])+/, "");
+  const targetPath = path.join(STORAGE_BASE_DIR, normalized);
+  if (!targetPath.startsWith(STORAGE_BASE_DIR)) {
+    return STORAGE_BASE_DIR;
+  }
+  return targetPath;
+};
+
+const formatBytes = (bytes) => {
+  if (!bytes || bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+};
+
+const getFileCategory = (ext = "", isFolder = false) => {
+  if (isFolder) return "folder";
+  const e = ext.toLowerCase();
+  if ([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".bmp", ".tiff", ".ico"].includes(e)) return "photo";
+  if ([".pdf", ".doc", ".docx", ".txt", ".rtf", ".odt", ".csv", ".xls", ".xlsx", ".ppt", ".pptx", ".md"].includes(e)) return "document";
+  if ([".mp3", ".wav", ".ogg", ".m4a", ".flac", ".aac"].includes(e)) return "audio";
+  if ([".mp4", ".webm", ".avi", ".mkv", ".mov", ".flv"].includes(e)) return "video";
+  if ([".zip", ".rar", ".7z", ".tar", ".gz"].includes(e)) return "archive";
+  if ([".js", ".json", ".html", ".css", ".py", ".java", ".cpp", ".c", ".h"].includes(e)) return "code";
+  return "other";
+};
+
+router.get(
+  "/storage",
+  protect,
+  authorize("admin", "super-admin"),
+  asyncHandler(async (req, res) => {
+    ensureStorageBaseDir();
+    const subFolder = String(req.query.folder || "").trim();
+    const targetDir = resolveSafeStoragePath(subFolder);
+
+    if (!fs.existsSync(targetDir) || !fs.statSync(targetDir).isDirectory()) {
+      return res.status(404).json({ success: false, message: "Storage directory not found" });
+    }
+
+    const currentRelative = path.relative(STORAGE_BASE_DIR, targetDir).replace(/\\/g, "/");
+    const parentRelative = currentRelative ? path.dirname(currentRelative).replace(/\\/g, "/") : "";
+
+    const entries = fs.readdirSync(targetDir, { withFileTypes: true });
+
+    let photoCount = 0;
+    let documentCount = 0;
+    let folderCount = 0;
+    let totalSizeBytes = 0;
+
+    const items = entries.map((entry) => {
+      const fullPath = path.join(targetDir, entry.name);
+      const itemRelativePath = path.relative(STORAGE_BASE_DIR, fullPath).replace(/\\/g, "/");
+      const isFolder = entry.isDirectory();
+      let sizeBytes = 0;
+      let modifiedAt = new Date().toISOString();
+
+      try {
+        const stats = fs.statSync(fullPath);
+        sizeBytes = isFolder ? 0 : stats.size;
+        modifiedAt = stats.mtime.toISOString();
+      } catch {
+        // file stat fallback
+      }
+
+      const ext = isFolder ? "" : path.extname(entry.name);
+      const category = getFileCategory(ext, isFolder);
+
+      if (category === "photo") photoCount += 1;
+      else if (category === "document") documentCount += 1;
+      else if (isFolder) folderCount += 1;
+
+      totalSizeBytes += sizeBytes;
+
+      return {
+        name: entry.name,
+        relativePath: itemRelativePath,
+        isFolder,
+        sizeBytes,
+        formattedSize: isFolder ? "-" : formatBytes(sizeBytes),
+        category,
+        extension: ext,
+        modifiedAt,
+        url: isFolder ? "" : `/storage/${itemRelativePath}`
+      };
+    });
+
+    items.sort((a, b) => {
+      if (a.isFolder && !b.isFolder) return -1;
+      if (!a.isFolder && b.isFolder) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    return res.status(200).json({
+      success: true,
+      currentFolder: currentRelative,
+      parentFolder: parentRelative === "." ? "" : parentRelative,
+      items,
+      stats: {
+        totalItems: items.length,
+        totalSizeBytes,
+        formattedTotalSize: formatBytes(totalSizeBytes),
+        photoCount,
+        documentCount,
+        folderCount
+      }
+    });
+  })
+);
+
+router.post(
+  "/storage/folder",
+  protect,
+  authorize("admin", "super-admin"),
+  [body("folderName").trim().notEmpty().withMessage("Folder name is required")],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    ensureStorageBaseDir();
+    const parentFolder = String(req.body.folder || "").trim();
+    const folderName = String(req.body.folderName || "").trim().replace(/[^a-zA-Z0-9_-]/g, "_");
+
+    const parentDir = resolveSafeStoragePath(parentFolder);
+    const newDir = path.join(parentDir, folderName);
+
+    if (fs.existsSync(newDir)) {
+      return res.status(409).json({ success: false, message: "Folder already exists" });
+    }
+
+    fs.mkdirSync(newDir, { recursive: true });
+
+    return res.status(201).json({
+      success: true,
+      message: "Folder created successfully",
+      folderName
+    });
+  })
+);
+
+router.delete(
+  "/storage/item",
+  protect,
+  authorize("admin", "super-admin"),
+  [body("relativePath").trim().notEmpty().withMessage("Relative path is required")],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    ensureStorageBaseDir();
+    const targetPath = resolveSafeStoragePath(req.body.relativePath);
+
+    if (targetPath === STORAGE_BASE_DIR) {
+      return res.status(400).json({ success: false, message: "Cannot delete root storage directory" });
+    }
+
+    if (!fs.existsSync(targetPath)) {
+      return res.status(404).json({ success: false, message: "Storage item not found" });
+    }
+
+    const stat = fs.statSync(targetPath);
+    if (stat.isDirectory()) {
+      const contents = fs.readdirSync(targetPath);
+      if (contents.length > 0) {
+        return res.status(400).json({ success: false, message: "Directory is not empty" });
+      }
+      fs.rmdirSync(targetPath);
+    } else {
+      fs.unlinkSync(targetPath);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Item deleted from Storage"
     });
   })
 );

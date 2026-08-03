@@ -183,9 +183,9 @@ app.get("/super-admin/emergency", sendUiPage("super-admin", "emergency.html"));
 app.get("/super-admin/patients", sendUiPage("super-admin", "patients.html"));
 app.get("/super-admin/payments", sendUiPage("super-admin", "payments.html"));
 app.get("/super-admin/reports", sendUiPage("super-admin", "reports.html"));
-// Admin storage page
-app.get("/admin/storage", sendUiPage("admin", "storage.html"));
-app.get("/super-admin/storage", sendUiPage("admin", "storage.html"));
+// Admin and Super-Admin Storage Drive pages
+app.get("/admin/storage", sendUiPage("super-admin", "storage.html"));
+app.get("/super-admin/storage", sendUiPage("super-admin", "storage.html"));
 
 const storageDirectory = path.join(__dirname, "storage");
 app.use("/storage", express.static(storageDirectory));

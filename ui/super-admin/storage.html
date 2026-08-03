@@ -362,6 +362,7 @@
                     </div>
 
                     <div style="display:flex;align-items:center;gap:10px">
+                        <button class="btn btn-outline btn-sm" id="download-selected-btn" style="display:none;background:var(--bg-750);color:var(--cyan)">📦 Download Selected (ZIP)</button>
                         <button class="btn btn-outline btn-sm" id="new-folder-btn">📁 New Folder</button>
                         <button class="btn btn-primary btn-sm" id="upload-file-btn">📤 Upload File</button>
 
@@ -372,9 +373,14 @@
                     </div>
                 </div>
 
-                <!-- Breadcrumbs -->
-                <div class="drive-breadcrumbs" id="drive-breadcrumbs">
-                    <span class="crumb-link" data-folder="">Storage Root</span>
+                <!-- Breadcrumbs & Back Button -->
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+                    <button class="btn btn-outline btn-sm" id="back-folder-btn" disabled style="display:inline-flex;align-items:center;gap:4px">
+                        ⬅️ Back
+                    </button>
+                    <div class="drive-breadcrumbs" id="drive-breadcrumbs" style="margin-bottom:0">
+                        <span class="crumb-link" data-folder="">Storage Root</span>
+                    </div>
                 </div>
 
                 <!-- Storage Contents (Grid View) -->
@@ -385,6 +391,9 @@
                     <table>
                         <thead>
                             <tr>
+                                <th style="width:40px;text-align:center">
+                                    <input type="checkbox" id="select-all-checkbox" style="cursor:pointer">
+                                </th>
                                 <th>Name</th>
                                 <th>Category</th>
                                 <th>Size</th>

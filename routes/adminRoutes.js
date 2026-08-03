@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const express = require("express");
+const AdmZip = require("adm-zip");
 const asyncHandler = require("express-async-handler");
 const { body, param, query } = require("express-validator");
 const User = require("../models/User");
@@ -1299,6 +1300,75 @@ router.delete(
       success: true,
       message: "Item deleted from Storage"
     });
+  })
+);
+
+router.get(
+  "/storage/download-zip",
+  protect,
+  authorize("admin", "super-admin"),
+  asyncHandler(async (req, res) => {
+    ensureStorageBaseDir();
+    const folderRelative = String(req.query.folder || "").trim();
+    const targetPath = resolveSafeStoragePath(folderRelative);
+
+    if (!fs.existsSync(targetPath)) {
+      return res.status(404).json({ success: false, message: "Folder not found" });
+    }
+
+    const stat = fs.statSync(targetPath);
+    const zip = new AdmZip();
+    const zipName = (folderRelative ? path.basename(targetPath) : "storage_root") + ".zip";
+
+    if (stat.isDirectory()) {
+      zip.addLocalFolder(targetPath);
+    } else {
+      zip.addLocalFile(targetPath);
+    }
+
+    const zipBuffer = zip.toBuffer();
+
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader("Content-Disposition", `attachment; filename="${zipName}"`);
+    res.setHeader("Content-Length", zipBuffer.length);
+    return res.send(zipBuffer);
+  })
+);
+
+router.post(
+  "/storage/download-selected-zip",
+  protect,
+  authorize("admin", "super-admin"),
+  [body("relativePaths").isArray().withMessage("relativePaths must be an array")],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    ensureStorageBaseDir();
+    const relativePaths = req.body.relativePaths || [];
+
+    if (!relativePaths.length) {
+      return res.status(400).json({ success: false, message: "No items selected" });
+    }
+
+    const zip = new AdmZip();
+
+    relativePaths.forEach((relPath) => {
+      const targetPath = resolveSafeStoragePath(relPath);
+      if (fs.existsSync(targetPath)) {
+        const stat = fs.statSync(targetPath);
+        if (stat.isDirectory()) {
+          zip.addLocalFolder(targetPath, path.basename(targetPath));
+        } else {
+          zip.addLocalFile(targetPath);
+        }
+      }
+    });
+
+    const zipBuffer = zip.toBuffer();
+
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader("Content-Disposition", `attachment; filename="selected_storage_files.zip"`);
+    res.setHeader("Content-Length", zipBuffer.length);
+    return res.send(zipBuffer);
   })
 );
 

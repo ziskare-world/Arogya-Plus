@@ -14,7 +14,8 @@ const state = {
   activeCategory: "all",
   searchQuery: "",
   viewMode: "grid",
-  selectedFile: null
+  selectedFile: null,
+  selectedPaths: new Set()
 };
 
 const escapeHtml = (str = "") =>
@@ -44,6 +45,18 @@ const formatDateTime = (isoStr) => {
 
 const renderBreadcrumbs = () => {
   const container = document.getElementById("drive-breadcrumbs");
+  const backBtn = document.getElementById("back-folder-btn");
+
+  if (backBtn) {
+    if (state.currentFolder) {
+      backBtn.disabled = false;
+      backBtn.title = `Go back to ${state.parentFolder || "Storage Root"}`;
+    } else {
+      backBtn.disabled = true;
+      backBtn.title = "At Storage Root";
+    }
+  }
+
   if (!container) return;
 
   const parts = state.currentFolder ? state.currentFolder.split("/") : [];
@@ -78,7 +91,7 @@ const renderStats = () => {
   const countFoldersEl = document.getElementById("count-folders");
 
   const totalBytes = state.stats.totalSizeBytes || 0;
-  const maxQuotaBytes = 5 * 1024 * 1024 * 1024; // 5 GB default visual threshold
+  const maxQuotaBytes = 5 * 1024 * 1024 * 1024;
   const pct = Math.min(100, Math.max(1, Math.round((totalBytes / maxQuotaBytes) * 100)));
 
   if (quotaUsedEl) quotaUsedEl.textContent = `${state.stats.formattedTotalSize || "0 B"} Used`;
@@ -106,6 +119,25 @@ const getFilteredItems = () => {
   });
 };
 
+const updateSelectionUI = () => {
+  const btn = document.getElementById("download-selected-btn");
+  const count = state.selectedPaths.size;
+  if (!btn) return;
+
+  if (count > 0) {
+    btn.style.display = "inline-flex";
+    btn.textContent = `📦 Download ${count} Selected (ZIP)`;
+  } else {
+    btn.style.display = "none";
+  }
+
+  const selectAllCb = document.getElementById("select-all-checkbox");
+  if (selectAllCb) {
+    const filtered = getFilteredItems();
+    selectAllCb.checked = filtered.length > 0 && filtered.every((item) => state.selectedPaths.has(item.relativePath));
+  }
+};
+
 const renderGridView = (filtered) => {
   const container = document.getElementById("drive-grid-container");
   if (!container) return;
@@ -124,6 +156,7 @@ const renderGridView = (filtered) => {
     .map((item) => {
       const isPhoto = item.category === "photo";
       const icon = getCategoryIcon(item.category, item.isFolder);
+      const isChecked = state.selectedPaths.has(item.relativePath);
 
       let thumbHtml = `<div class="file-icon-placeholder">${icon}</div>`;
       if (isPhoto && item.url) {
@@ -134,6 +167,9 @@ const renderGridView = (filtered) => {
 
       return `
         <div class="file-card" data-path="${escapeHtml(item.relativePath)}" data-is-folder="${item.isFolder}">
+          <div style="position:absolute;top:8px;left:8px;z-index:10">
+            <input type="checkbox" class="item-checkbox" data-path="${escapeHtml(item.relativePath)}" ${isChecked ? "checked" : ""} style="cursor:pointer;width:16px;height:16px">
+          </div>
           <div class="file-thumb-box" ${item.isFolder ? `style="cursor:pointer"` : ""}>
             ${thumbHtml}
           </div>
@@ -147,7 +183,10 @@ const renderGridView = (filtered) => {
               item.isFolder
                 ? `<button class="file-action-btn open-folder-btn" data-path="${escapeHtml(
                     item.relativePath
-                  )}">📂 Open</button>`
+                  )}">📂 Open</button>
+                  <a class="file-action-btn" href="/api/admin/storage/download-zip?folder=${encodeURIComponent(
+                    item.relativePath
+                  )}" download target="_blank" title="Download folder content as ZIP">📦 ZIP</a>`
                 : `${
                     isPhoto
                       ? `<button class="file-action-btn preview-btn" data-url="${escapeHtml(
@@ -179,7 +218,7 @@ const renderListView = (filtered) => {
   if (!filtered.length) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="5" style="text-align:center;padding:32px;color:var(--text-500)">No items in this folder.</td>
+        <td colspan="6" style="text-align:center;padding:32px;color:var(--text-500)">No items in this folder.</td>
       </tr>`;
     return;
   }
@@ -188,9 +227,13 @@ const renderListView = (filtered) => {
     .map((item) => {
       const icon = getCategoryIcon(item.category, item.isFolder);
       const isPhoto = item.category === "photo";
+      const isChecked = state.selectedPaths.has(item.relativePath);
 
       return `
         <tr>
+          <td style="text-align:center">
+            <input type="checkbox" class="item-checkbox" data-path="${escapeHtml(item.relativePath)}" ${isChecked ? "checked" : ""} style="cursor:pointer;width:16px;height:16px">
+          </td>
           <td>
             <div style="display:flex;align-items:center;gap:10px">
               <span style="font-size:1.2rem">${icon}</span>
@@ -216,7 +259,10 @@ const renderListView = (filtered) => {
                 item.isFolder
                   ? `<button class="btn btn-outline btn-sm open-folder-btn" data-path="${escapeHtml(
                       item.relativePath
-                    )}">Open</button>`
+                    )}">Open</button>
+                    <a class="btn btn-outline btn-sm" href="/api/admin/storage/download-zip?folder=${encodeURIComponent(
+                      item.relativePath
+                    )}" download target="_blank">📦 ZIP</a>`
                   : `${
                       isPhoto
                         ? `<button class="btn btn-outline btn-sm preview-btn" data-url="${escapeHtml(
@@ -243,6 +289,18 @@ const renderListView = (filtered) => {
 };
 
 const attachItemEvents = (container) => {
+  container.querySelectorAll(".item-checkbox").forEach((cb) => {
+    cb.addEventListener("change", (e) => {
+      const path = e.target.dataset.path;
+      if (e.target.checked) {
+        state.selectedPaths.add(path);
+      } else {
+        state.selectedPaths.delete(path);
+      }
+      updateSelectionUI();
+    });
+  });
+
   container.querySelectorAll(".open-folder-btn").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       const folderPath = e.currentTarget.dataset.path || "";
@@ -270,6 +328,7 @@ const attachItemEvents = (container) => {
           body: JSON.stringify({ relativePath: path })
         });
         toast("Item deleted successfully", "success");
+        state.selectedPaths.delete(path);
         loadStorageData(state.currentFolder);
       } catch (err) {
         toast(err.message || "Failed to delete item", "error");
@@ -292,6 +351,8 @@ const renderDrive = () => {
     document.getElementById("drive-list-container").style.display = "block";
     renderListView(filtered);
   }
+
+  updateSelectionUI();
 };
 
 const loadStorageData = async (folderPath = "") => {
@@ -302,6 +363,7 @@ const loadStorageData = async (folderPath = "") => {
       state.parentFolder = res.parentFolder || "";
       state.items = res.items || [];
       state.stats = res.stats || {};
+      state.selectedPaths.clear();
       renderDrive();
     }
   } catch (err) {
@@ -327,6 +389,74 @@ const openLightbox = (url, name, meta) => {
 };
 
 const setupEventHandlers = () => {
+  // Back button
+  const backBtn = document.getElementById("back-folder-btn");
+  if (backBtn) {
+    backBtn.addEventListener("click", () => {
+      if (state.currentFolder) {
+        loadStorageData(state.parentFolder);
+      }
+    });
+  }
+
+  // Select All Checkbox
+  const selectAllCb = document.getElementById("select-all-checkbox");
+  if (selectAllCb) {
+    selectAllCb.addEventListener("change", (e) => {
+      const filtered = getFilteredItems();
+      const isChecked = e.target.checked;
+
+      filtered.forEach((item) => {
+        if (isChecked) {
+          state.selectedPaths.add(item.relativePath);
+        } else {
+          state.selectedPaths.delete(item.relativePath);
+        }
+      });
+
+      renderDrive();
+    });
+  }
+
+  // Download Selected Batch ZIP Button
+  const downloadSelectedBtn = document.getElementById("download-selected-btn");
+  if (downloadSelectedBtn) {
+    downloadSelectedBtn.addEventListener("click", async () => {
+      const selected = Array.from(state.selectedPaths);
+      if (!selected.length) return;
+
+      toast("Preparing ZIP download...", "info");
+
+      try {
+        const token = localStorage.getItem("smart_hospital_token") || sessionStorage.getItem("smart_hospital_token");
+        const res = await fetch("/api/admin/storage/download-selected-zip", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ relativePaths: selected })
+        });
+
+        if (!res.ok) throw new Error("Failed to generate ZIP");
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "selected_storage_files.zip";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+
+        toast("ZIP archive downloaded successfully", "success");
+      } catch (err) {
+        toast(err.message || "Failed to download selected items", "error");
+      }
+    });
+  }
+
   // Filter Chips
   document.querySelectorAll(".filter-chip").forEach((chip) => {
     chip.addEventListener("click", (e) => {

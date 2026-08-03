@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v1.0.0";
+const CACHE_VERSION = "v1.0.1";
 const STATIC_CACHE = `arogya-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `arogya-runtime-${CACHE_VERSION}`;
 
@@ -132,17 +132,15 @@ self.addEventListener("fetch", (event) => {
 
   if (isStaticAsset(url)) {
     event.respondWith(
-      caches.match(request).then((cached) => {
-        const networkFetch = fetch(request)
-          .then((response) => {
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200) {
             const copy = response.clone();
             caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy));
-            return response;
-          })
-          .catch(() => cached);
-
-        return cached || networkFetch;
-      })
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
     );
     return;
   }

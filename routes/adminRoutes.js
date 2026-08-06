@@ -1450,7 +1450,18 @@ router.put(
       "totalBeds",
       "occupiedBeds",
       "icuBedsTotal",
-      "icuBedsOccupied"
+      "icuBedsOccupied",
+      "hospitalName",
+      "registrationNumber",
+      "emergencyContact",
+      "hospitalEmail",
+      "hospitalAddress",
+      "ventilatorBeds",
+      "operationTheatres",
+      "activeOTs",
+      "ambulanceCount",
+      "bloodBankUnits",
+      "pharmacyStatus"
     ];
 
     allowedFields.forEach((field) => {

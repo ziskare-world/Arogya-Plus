@@ -29,7 +29,20 @@ const systemSettingsSchema = new mongoose.Schema(
     totalBeds: { type: Number, default: 0 },
     occupiedBeds: { type: Number, default: 0 },
     icuBedsTotal: { type: Number, default: 0 },
-    icuBedsOccupied: { type: Number, default: 0 }
+    icuBedsOccupied: { type: Number, default: 0 },
+
+    // Hospital Profile & Infrastructure Facilities
+    hospitalName: { type: String, default: "Arogya Central Hospital" },
+    registrationNumber: { type: String, default: "REG-HOSP-2026-001" },
+    emergencyContact: { type: String, default: "1800-112-999" },
+    hospitalEmail: { type: String, default: "contact@arogyaplus.org" },
+    hospitalAddress: { type: String, default: "Healthcare Avenue, Medical Enclave" },
+    ventilatorBeds: { type: Number, default: 0 },
+    operationTheatres: { type: Number, default: 0 },
+    activeOTs: { type: Number, default: 0 },
+    ambulanceCount: { type: Number, default: 0 },
+    bloodBankUnits: { type: Number, default: 0 },
+    pharmacyStatus: { type: String, default: "24/7 Active" }
   },
   { timestamps: true }
 );

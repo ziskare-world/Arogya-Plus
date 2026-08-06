@@ -61,6 +61,7 @@ export function injectSidebar(activePage) {
   ) {
     nav = [
       { href: "dashboard.html", icon: "chart", label: "Overview" },
+      { href: "hospital-info.html", icon: "hospital", label: "Hospital Info & Beds" },
       { href: "admins.html", icon: "users", label: "Hospitals" },
       { href: "storage.html", icon: "folder", label: "Storage Drive" },
       { href: "mfa-setup.html", icon: "shield", label: "Passkey MFA" },
@@ -76,6 +77,7 @@ export function injectSidebar(activePage) {
   } else if (path.includes("/admin/")) {
     nav = [
       { href: "dashboard.html", icon: "dashboard", label: "Dashboard" },
+      { href: "hospital-info.html", icon: "hospital", label: "Hospital Info & Beds" },
       { href: "appointments.html", icon: "calendar", label: "Appointments" },
       { href: "doctors.html", icon: "doctor", label: "Doctors" },
       { href: "patients.html", icon: "users", label: "Patients" },
@@ -108,6 +110,7 @@ export function injectSidebar(activePage) {
     // Universal fallback for Super Admin / Admin
     nav = [
       { href: "dashboard.html", icon: "chart", label: "Overview" },
+      { href: "hospital-info.html", icon: "hospital", label: "Hospital Info & Beds" },
       { href: "admins.html", icon: "users", label: "Hospitals" },
       { href: "storage.html", icon: "folder", label: "Storage Drive" },
       { href: "mfa-setup.html", icon: "shield", label: "Passkey MFA" },

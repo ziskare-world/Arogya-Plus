@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arogya Plus - Hospital Information & Capacity</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+    <style>
+        .capacity-badge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .capacity-card {
+            background: var(--surface-card, rgba(15, 23, 42, 0.6));
+            border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+            border-radius: var(--r-md, 12px);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .capacity-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .capacity-val {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-100, #f8fafc);
+            line-height: 1.2;
+        }
+
+        .capacity-lbl {
+            font-size: 0.78rem;
+            color: var(--text-400, #94a3b8);
+            font-weight: 500;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="app-layout">
+        <div class="main-area">
+            <div id="topbar-container"></div>
+
+            <main class="page-content" style="padding:24px">
+                <div class="page-header" style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+                    <div>
+                        <h2>🏥 Hospital Information & Capacity Management</h2>
+                        <p>Configure hospital profile, emergency contact numbers, bed capacity, ICU availability, and surgical facility parameters.</p>
+                    </div>
+                    <div style="display:flex;gap:10px">
+                        <a href="dashboard.html" class="btn btn-outline btn-sm">📊 Go to Dashboard</a>
+                        <button id="refresh-hosp-info-btn" class="btn btn-primary btn-sm">🔄 Refresh Data</button>
+                    </div>
+                </div>
+
+                <!-- Live Capacity Overview Badges -->
+                <div class="capacity-badge-grid">
+                    <div class="capacity-card">
+                        <div class="capacity-icon" style="background:rgba(37,99,235,0.15);color:#3b82f6">🛏️</div>
+                        <div>
+                            <div class="capacity-val" id="badge-total-beds">0</div>
+                            <div class="capacity-lbl">Total General Beds</div>
+                        </div>
+                    </div>
+                    <div class="capacity-card">
+                        <div class="capacity-icon" style="background:rgba(239,68,68,0.15);color:#ef4444">🔴</div>
+                        <div>
+                            <div class="capacity-val" id="badge-occupied-beds">0</div>
+                            <div class="capacity-lbl">Occupied Beds (<span id="badge-occupancy-pct">0%</span>)</div>
+                        </div>
+                    </div>
+                    <div class="capacity-card">
+                        <div class="capacity-icon" style="background:rgba(34,197,94,0.15);color:#22c55e">🟢</div>
+                        <div>
+                            <div class="capacity-val" id="badge-available-beds">0</div>
+                            <div class="capacity-lbl">Available Beds</div>
+                        </div>
+                    </div>
+                    <div class="capacity-card">
+                        <div class="capacity-icon" style="background:rgba(234,179,8,0.15);color:#eab308">🏥</div>
+                        <div>
+                            <div class="capacity-val" id="badge-icu-beds">0/0</div>
+                            <div class="capacity-lbl">ICU Capacity (Occupied/Total)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Section -->
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(340px, 1fr));gap:24px">
+
+                    <!-- Hospital Profile & Details Form -->
+                    <div class="card" style="padding:24px">
+                        <h3 style="margin-bottom:16px;font-size:1.1rem">🏥 General Profile & Contact Information</h3>
+                        <form id="hospital-info-form" style="display:flex;flex-direction:column;gap:16px">
+                            <div class="form-group">
+                                <label class="form-label" for="hosp-name">Hospital Name</label>
+                                <input id="hosp-name" class="form-input" type="text" placeholder="e.g. Arogya Central Hospital" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="hosp-reg-no">Registration / License Number</label>
+                                <input id="hosp-reg-no" class="form-input" type="text" placeholder="e.g. REG-HOSP-2026-001" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="hosp-phone">Emergency Contact / Helpline Phone</label>
+                                <input id="hosp-phone" class="form-input" type="text" placeholder="e.g. 1800-112-999 or +91 9876543210" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="hosp-email">Official Email Address</label>
+                                <input id="hosp-email" class="form-input" type="email" placeholder="contact@hospital.org" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="hosp-address">Physical Hospital Address</label>
+                                <textarea id="hosp-address" class="form-input" rows="2" placeholder="Street, Medical Enclave, City, Pincode" required style="resize:vertical"></textarea>
+                            </div>
+
+                            <button class="btn btn-primary btn-sm" type="submit" style="align-self:flex-end">💾 Save Profile Details</button>
+                        </form>
+                    </div>
+
+                    <!-- Inpatient Beds & ICU Capacity Form -->
+                    <div class="card" style="padding:24px">
+                        <h3 style="margin-bottom:16px;font-size:1.1rem">🛏️ Inpatient Bed & ICU Infrastructure</h3>
+                        <form id="hospital-beds-form" style="display:flex;flex-direction:column;gap:16px">
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                                <div class="form-group">
+                                    <label class="form-label" for="hosp-total-beds">Total General Beds</label>
+                                    <input id="hosp-total-beds" class="form-input" type="number" min="0" value="0" required />
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="hosp-occupied-beds">Currently Occupied</label>
+                                    <input id="hosp-occupied-beds" class="form-input" type="number" min="0" value="0" required />
+                                </div>
+                            </div>
+
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                                <div class="form-group">
+                                    <label class="form-label" for="hosp-icu-total">Total ICU Beds</label>
+                                    <input id="hosp-icu-total" class="form-input" type="number" min="0" value="0" required />
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="hosp-icu-occupied">Occupied ICU Beds</label>
+                                    <input id="hosp-icu-occupied" class="form-input" type="number" min="0" value="0" required />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="hosp-ventilators">Ventilator-Equipped Beds</label>
+                                <input id="hosp-ventilators" class="form-input" type="number" min="0" value="0" placeholder="0" required />
+                            </div>
+
+                            <button class="btn btn-primary btn-sm" type="submit" style="align-self:flex-end">💾 Save Bed Capacity</button>
+                        </form>
+                    </div>
+
+                    <!-- Surgical & Emergency Facilities Form -->
+                    <div class="card" style="padding:24px">
+                        <h3 style="margin-bottom:16px;font-size:1.1rem">🚑 Emergency & Medical Facilities</h3>
+                        <form id="hospital-facilities-form" style="display:flex;flex-direction:column;gap:16px">
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                                <div class="form-group">
+                                    <label class="form-label" for="hosp-ots-total">Operation Theatres (Total)</label>
+                                    <input id="hosp-ots-total" class="form-input" type="number" min="0" value="0" required />
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="hosp-ots-active">Active OTs Right Now</label>
+                                    <input id="hosp-ots-active" class="form-input" type="number" min="0" value="0" required />
+                                </div>
+                            </div>
+
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                                <div class="form-group">
+                                    <label class="form-label" for="hosp-ambulances">Ambulance Fleet Count</label>
+                                    <input id="hosp-ambulances" class="form-input" type="number" min="0" value="0" required />
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="hosp-blood-units">Blood Bank Units Available</label>
+                                    <input id="hosp-blood-units" class="form-input" type="number" min="0" value="0" required />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="hosp-pharmacy">In-House Pharmacy Status</label>
+                                <select id="hosp-pharmacy" class="form-input">
+                                    <option value="24/7 Active">24/7 Active Emergency Pharmacy</option>
+                                    <option value="Daytime Service">Daytime Service Only (8 AM - 8 PM)</option>
+                                    <option value="Closed / Maintenance">Closed / Maintenance</option>
+                                </select>
+                            </div>
+
+                            <button class="btn btn-primary btn-sm" type="submit" style="align-self:flex-end">💾 Save Emergency Facilities</button>
+                        </form>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="../backend-js/admin-hospital-info.js"></script>
+</body>
+
+</html>

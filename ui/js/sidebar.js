@@ -53,13 +53,10 @@ export function injectSidebar(activePage) {
   let nav = [];
   const path = location.pathname.toLowerCase();
   const user = getStoredUser();
+  const isSuperPath = path.includes("/super-admin/") || path.includes("/super_admin/") || path.includes("/super/");
+  const isAdminPath = path.includes("/admin/");
 
-  if (
-    path.includes("super") ||
-    path.includes("super_admin") ||
-    path.includes("super-admin") ||
-    (user && user.role && String(user.role).toLowerCase().includes("super"))
-  ) {
+  if (isSuperPath) {
     nav = [
       { href: "dashboard.html", icon: "chart", label: "Overview" },
       { href: "hospital-info.html", icon: "hospital", label: "Hospital Info & Beds" },
@@ -75,7 +72,7 @@ export function injectSidebar(activePage) {
       { href: "settings.html", icon: "settings", label: "Settings" },
       { href: "system-logs.html", icon: "logs", label: "System Logs" }
     ];
-  } else if (path.includes("/admin/")) {
+  } else if (isAdminPath) {
     nav = [
       { href: "dashboard.html", icon: "dashboard", label: "Dashboard" },
       { href: "hospital-info.html", icon: "hospital", label: "Hospital Info & Beds" },

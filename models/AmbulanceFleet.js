@@ -29,6 +29,16 @@ const ambulanceFleetSchema = new mongoose.Schema(
       type: String,
       trim: true
     },
+    driverEmail: {
+      type: String,
+      trim: true,
+      lowercase: true
+    },
+    equipmentLevel: {
+      type: String,
+      enum: ["ALS", "BLS", "Patient Transport", "ICU Ambulance"],
+      default: "BLS"
+    },
     status: {
       type: String,
       enum: ["available", "dispatched", "maintenance", "inactive"],

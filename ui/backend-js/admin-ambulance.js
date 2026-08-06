@@ -156,7 +156,7 @@ const renderFleet = () => {
   if (!fleet.length) {
     fleetBodyEl.innerHTML = `
       <tr>
-        <td colspan="4" class="muted" style="text-align:center">No ambulance inventory found.</td>
+        <td colspan="4" class="muted" style="text-align:center">No ambulance inventory registered yet. Add one above.</td>
       </tr>`;
     return;
   }
@@ -164,18 +164,31 @@ const renderFleet = () => {
   fleetBodyEl.innerHTML = fleet
     .map((item) => {
       const isDisabled = canManageFleet ? "" : "disabled";
+      const eqLevel = item.equipmentLevel || "BLS";
+      const eqBadgeClass = eqLevel === "ALS" || eqLevel === "ICU Ambulance" ? "badge badge-red" : "badge badge-cyan";
+
       return `
         <tr>
-          <td><code style="color:var(--blue)">${escapeHtml(item.vehicleNumber || "-")}</code></td>
-          <td>${escapeHtml(item.driverName || "-")}</td>
+          <td>
+            <div><code style="color:var(--blue);font-weight:700;font-size:.9rem">${escapeHtml(item.vehicleNumber || "-")}</code></div>
+            <div style="margin-top:4px"><span class="${eqBadgeClass}">${escapeHtml(eqLevel)}</span></div>
+          </td>
+          <td>
+            <div style="font-weight:600">${escapeHtml(item.driverName || "Driver Unassigned")}</div>
+            <div class="mini-note">📞 ${escapeHtml(item.driverPhone || "No Phone")}</div>
+            <div class="mini-note">✉️ ${escapeHtml(item.driverEmail || "No Email")}</div>
+          </td>
           <td>${fleetStatusBadge(item.status)}</td>
           <td>
             <div class="inline-actions">
-              <select class="form-input" style="min-width:130px" data-role="fleet-status" data-id="${item._id}" ${isDisabled}>
+              <select class="form-input" style="min-width:120px;font-size:.78rem;padding:4px" data-role="fleet-status" data-id="${item._id}" ${isDisabled}>
                 ${buildFleetStatusOptions(item.status)}
               </select>
               <button class="btn btn-outline btn-sm" type="button" data-action="update-fleet" data-id="${item._id}" ${isDisabled}>
                 Save
+              </button>
+              <button class="btn btn-danger btn-sm" type="button" data-action="delete-fleet" data-id="${item._id}" ${isDisabled}>
+                🗑️
               </button>
             </div>
           </td>
@@ -188,7 +201,7 @@ const renderPermissionNote = () => {
   if (!fleetPermissionNoteEl) return;
   if (canManageFleet) {
     fleetPermissionNoteEl.textContent =
-      "You can add and update ambulance inventory for your hospital.";
+      "You can manually add and manage ambulance fleet inventory for your hospital.";
   } else {
     fleetPermissionNoteEl.textContent =
       "Inventory can be entered by operations/full admin only. You can still monitor requests.";
@@ -250,6 +263,13 @@ const updateFleetStatus = async (fleetId) => {
   });
 };
 
+const deleteFleetVehicle = async (fleetId) => {
+  if (!confirm("Are you sure you want to delete this ambulance vehicle from your fleet?")) return;
+  await apiRequest(`/api/ambulance/fleet/${fleetId}`, {
+    method: "DELETE"
+  });
+};
+
 const onFleetSubmit = async (event) => {
   event.preventDefault();
   if (!canManageFleet) {
@@ -260,32 +280,53 @@ const onFleetSubmit = async (event) => {
   const vehicleNumber = String(document.getElementById("fleet-vehicle-number")?.value || "").trim();
   const driverName = String(document.getElementById("fleet-driver-name")?.value || "").trim();
   const driverPhone = String(document.getElementById("fleet-driver-phone")?.value || "").trim();
+  const driverEmail = String(document.getElementById("fleet-driver-email")?.value || "").trim();
+  const equipmentLevel = String(document.getElementById("fleet-equipment-level")?.value || "BLS").trim();
   const status = String(document.getElementById("fleet-status")?.value || "available").trim();
 
   if (!vehicleNumber) {
-    toast("Vehicle number is required", "error");
+    toast("Ambulance Vehicle number is required", "error");
+    return;
+  }
+  if (!driverName) {
+    toast("Driver full name is required", "error");
+    return;
+  }
+  if (!driverPhone) {
+    toast("Driver contact phone is required", "error");
+    return;
+  }
+  if (!driverEmail) {
+    toast("Driver email address is required", "error");
     return;
   }
 
   if (fleetSubmitBtnEl) {
     fleetSubmitBtnEl.disabled = true;
-    fleetSubmitBtnEl.textContent = "Adding...";
+    fleetSubmitBtnEl.textContent = "Adding Ambulance...";
   }
 
   try {
     await apiRequest("/api/ambulance/fleet", {
       method: "POST",
-      body: JSON.stringify({ vehicleNumber, driverName, driverPhone, status })
+      body: JSON.stringify({
+        vehicleNumber,
+        driverName,
+        driverPhone,
+        driverEmail,
+        equipmentLevel,
+        status
+      })
     });
-    toast("Ambulance inventory added", "success");
+    toast("New ambulance vehicle added manually to fleet", "success");
     fleetFormEl?.reset();
     await loadDashboard();
   } catch (error) {
-    toast(error.message, "error");
+    toast(error.message || "Failed to add ambulance", "error");
   } finally {
     if (fleetSubmitBtnEl) {
       fleetSubmitBtnEl.disabled = !canManageFleet;
-      fleetSubmitBtnEl.textContent = "Add Ambulance";
+      fleetSubmitBtnEl.textContent = "➕ Add Ambulance Manually";
     }
   }
 };
@@ -331,18 +372,37 @@ const initListeners = () => {
 
   if (fleetBodyEl) {
     fleetBodyEl.addEventListener("click", async (event) => {
-      const button = event.target.closest('button[data-action="update-fleet"]');
-      if (!button) return;
+      const updateBtn = event.target.closest('button[data-action="update-fleet"]');
+      const deleteBtn = event.target.closest('button[data-action="delete-fleet"]');
+
+      if (deleteBtn) {
+        if (!canManageFleet) {
+          toast("Only operations/full admin can manage inventory", "error");
+          return;
+        }
+        const fleetId = deleteBtn.getAttribute("data-id");
+        if (!fleetId) return;
+        try {
+          await deleteFleetVehicle(fleetId);
+          toast("Ambulance deleted from fleet", "success");
+          await loadDashboard();
+        } catch (err) {
+          toast(err.message || "Failed to delete ambulance", "error");
+        }
+        return;
+      }
+
+      if (!updateBtn) return;
       if (!canManageFleet) {
         toast("Only operations/full admin can update inventory", "error");
         return;
       }
 
-      const fleetId = button.getAttribute("data-id");
+      const fleetId = updateBtn.getAttribute("data-id");
       if (!fleetId) return;
-      const originalText = button.textContent;
-      button.disabled = true;
-      button.textContent = "Saving...";
+      const originalText = updateBtn.textContent;
+      updateBtn.disabled = true;
+      updateBtn.textContent = "Saving...";
       try {
         await updateFleetStatus(fleetId);
         toast("Ambulance inventory updated", "success");
@@ -350,8 +410,8 @@ const initListeners = () => {
       } catch (error) {
         toast(error.message, "error");
       } finally {
-        button.disabled = false;
-        button.textContent = originalText;
+        updateBtn.disabled = false;
+        updateBtn.textContent = originalText;
       }
     });
   }

@@ -49,7 +49,7 @@ const haversineDistanceMeters = (from, to) => {
 };
 
 const canManageAmbulanceFleet = (user = {}) => {
-  if (user?.role === "super-admin") return true;
+  if (user?.role === "super-admin" || user?.role === "admin") return true;
   const level = String(user?.accessLevel || "").trim().toLowerCase();
   return level === "operations" || level === "full";
 };
@@ -523,6 +523,8 @@ router.post(
       vehicleNumber: normalizedVehicleNumber,
       driverName: String(req.body.driverName || "").trim(),
       driverPhone: String(req.body.driverPhone || "").trim(),
+      driverEmail: String(req.body.driverEmail || "").trim().toLowerCase(),
+      equipmentLevel: req.body.equipmentLevel || "BLS",
       status: req.body.status || "available",
       currentCoordinates,
       notes: String(req.body.notes || "").trim(),
@@ -532,7 +534,7 @@ router.post(
 
     return res.status(201).json({
       success: true,
-      message: "Ambulance inventory added",
+      message: "Ambulance inventory added successfully",
       ambulance
     });
   })
@@ -546,6 +548,8 @@ router.patch(
     param("fleetId").isMongoId().withMessage("Valid fleet id is required"),
     body("driverName").optional().isString(),
     body("driverPhone").optional().isString(),
+    body("driverEmail").optional().isString(),
+    body("equipmentLevel").optional().isString(),
     body("notes").optional().isString(),
     body("status")
       .optional()
@@ -585,6 +589,12 @@ router.patch(
     if (req.body.driverPhone !== undefined) {
       ambulance.driverPhone = String(req.body.driverPhone || "").trim();
     }
+    if (req.body.driverEmail !== undefined) {
+      ambulance.driverEmail = String(req.body.driverEmail || "").trim().toLowerCase();
+    }
+    if (req.body.equipmentLevel !== undefined) {
+      ambulance.equipmentLevel = req.body.equipmentLevel;
+    }
     if (req.body.notes !== undefined) {
       ambulance.notes = String(req.body.notes || "").trim();
     }
@@ -603,6 +613,37 @@ router.patch(
       success: true,
       message: "Ambulance inventory updated",
       ambulance
+    });
+  })
+);
+
+router.delete(
+  "/fleet/:fleetId",
+  protect,
+  authorize("admin", "super-admin"),
+  [param("fleetId").isMongoId().withMessage("Valid fleet id is required")],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const ambulance = await AmbulanceFleet.findById(req.params.fleetId);
+    if (!ambulance) {
+      return res.status(404).json({ success: false, message: "Ambulance inventory not found" });
+    }
+
+    if (req.user.role !== "super-admin") {
+      const hospitalRegex = requesterHospitalRegex(req.user);
+      if (hospitalRegex && !hospitalRegex.test(String(ambulance.hospitalName || ""))) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied for this hospital ambulance inventory"
+        });
+      }
+    }
+
+    await AmbulanceFleet.findByIdAndDelete(req.params.fleetId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Ambulance fleet vehicle deleted successfully"
     });
   })
 );

@@ -58,13 +58,13 @@
     <div class="app-layout">
         <div class="main-area">
             <div id="topbar-container"></div>
-            <main class="page-content">
-                <div class="page-header flex-between">
+            <main class="page-content" style="padding:24px">
+                <div class="page-header flex-between" style="margin-bottom:20px">
                     <div>
-                        <h2>Ambulance Reception Desk</h2>
-                        <p>Incoming ambulance bookings, nearest-hospital assignments, and available ambulance inventory.</p>
+                        <h2>🚑 Ambulance Reception Desk & Fleet Management</h2>
+                        <p>Manage incoming emergency bookings, dispatch ambulances, and add driver/vehicle fleet inventory manually.</p>
                     </div>
-                    <button id="refresh-ambulance-dashboard-btn" class="btn btn-outline btn-sm" type="button">Refresh</button>
+                    <button id="refresh-ambulance-dashboard-btn" class="btn btn-outline btn-sm" type="button">🔄 Refresh Desk</button>
                 </div>
 
                 <div class="dashboard-grid">
@@ -87,7 +87,7 @@
                 </div>
 
                 <!-- Admin Interactive Fleet & Emergency Live Map -->
-                <div class="card" style="margin-bottom:18px">
+                <div class="card" style="margin-bottom:24px">
                     <div class="card-header flex-between">
                         <div class="card-title">🌐 Hospital, Fleet & Emergency SOS Live Map</div>
                         <div style="display:flex;gap:8px">
@@ -100,7 +100,7 @@
                             </select>
                         </div>
                     </div>
-                    <div id="admin-live-map" style="width:100%;height:380px;border-radius:8px;background:#f8fafc;"></div>
+                    <div id="admin-live-map" style="width:100%;height:380px;border-radius:8px;background:#1e293b;position:relative;z-index:1"></div>
                 </div>
 
                 <div class="layout-grid">
@@ -132,49 +132,66 @@
                         </div>
                     </div>
 
-                    <div style="display:flex;flex-direction:column;gap:16px">
+                    <div style="display:flex;flex-direction:column;gap:20px">
+                        <!-- Add Ambulance Inventory Card -->
                         <div class="card">
                             <div class="card-header">
-                                <div class="card-title">Add Ambulance Inventory</div>
+                                <div class="card-title">➕ Add New Ambulance Fleet</div>
                             </div>
-                            <div id="fleet-permission-note" class="mini-note"></div>
-                            <form id="fleet-form" style="display:grid;gap:10px;margin-top:8px">
+                            <div id="fleet-permission-note" class="mini-note" style="margin-bottom:8px"></div>
+                            <form id="fleet-form" style="display:grid;gap:12px">
                                 <div class="form-group">
-                                    <label class="form-label" for="fleet-vehicle-number">Vehicle Number</label>
-                                    <input id="fleet-vehicle-number" class="form-input" placeholder="OD-02-AB-1234" required />
-                                </div>
-                                <div class="grid-2" style="gap:10px">
-                                    <div class="form-group">
-                                        <label class="form-label" for="fleet-driver-name">Driver Name</label>
-                                        <input id="fleet-driver-name" class="form-input" placeholder="Driver name" />
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label" for="fleet-driver-phone">Driver Phone</label>
-                                        <input id="fleet-driver-phone" class="form-input" placeholder="Phone" />
-                                    </div>
+                                    <label class="form-label" for="fleet-vehicle-number">Ambulance Vehicle Number</label>
+                                    <input id="fleet-vehicle-number" class="form-input" placeholder="e.g. OD-05-AX-9912 or MH-12-AB-1234" required />
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" for="fleet-status">Initial Status</label>
-                                    <select id="fleet-status" class="form-input">
-                                        <option value="available">Available</option>
-                                        <option value="maintenance">Maintenance</option>
-                                        <option value="inactive">Inactive</option>
-                                    </select>
+                                    <label class="form-label" for="fleet-driver-name">Driver Full Name</label>
+                                    <input id="fleet-driver-name" class="form-input" placeholder="e.g. Ramesh Kumar" required />
                                 </div>
-                                <button id="fleet-submit-btn" class="btn btn-primary btn-full" type="submit">Add Ambulance</button>
+                                <div class="grid-2" style="gap:10px;display:grid;grid-template-columns:1fr 1fr">
+                                    <div class="form-group">
+                                        <label class="form-label" for="fleet-driver-phone">Driver Contact Phone</label>
+                                        <input id="fleet-driver-phone" class="form-input" placeholder="+91 9876543210" required />
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="fleet-driver-email">Driver Email ID</label>
+                                        <input id="fleet-driver-email" class="form-input" type="email" placeholder="driver@hospital.com" required />
+                                    </div>
+                                </div>
+                                <div class="grid-2" style="gap:10px;display:grid;grid-template-columns:1fr 1fr">
+                                    <div class="form-group">
+                                        <label class="form-label" for="fleet-equipment-level">Equipment Level</label>
+                                        <select id="fleet-equipment-level" class="form-input">
+                                            <option value="BLS">BLS (Basic Life Support)</option>
+                                            <option value="ALS">ALS (Advanced Life Support)</option>
+                                            <option value="ICU Ambulance">ICU Ambulance</option>
+                                            <option value="Patient Transport">Patient Transport</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="fleet-status">Initial Status</label>
+                                        <select id="fleet-status" class="form-input">
+                                            <option value="available">Available</option>
+                                            <option value="maintenance">Maintenance</option>
+                                            <option value="inactive">Inactive</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button id="fleet-submit-btn" class="btn btn-primary btn-full" type="submit">➕ Add Ambulance Manually</button>
                             </form>
                         </div>
 
+                        <!-- Fleet Availability Table Card -->
                         <div class="card">
                             <div class="card-header">
-                                <div class="card-title">Ambulance Availability</div>
+                                <div class="card-title">🚑 Registered Ambulance Fleet</div>
                             </div>
                             <div class="table-wrap">
                                 <table>
                                     <thead>
                                         <tr>
-                                            <th>Vehicle</th>
-                                            <th>Driver</th>
+                                            <th>Vehicle & Type</th>
+                                            <th>Driver Details</th>
                                             <th>Status</th>
                                             <th>Action</th>
                                         </tr>

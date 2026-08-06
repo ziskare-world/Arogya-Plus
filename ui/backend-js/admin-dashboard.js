@@ -318,10 +318,19 @@ const renderDoctorReviews = () => {
 };
 
 const renderSummary = () => {
+  const activeDoctorsCount = state.doctors.filter((item) => item.isActive).length;
+  const activeEmergenciesCount = state.queue.length;
+
   if (apptStatEl) apptStatEl.textContent = String(state.appointments.length);
-  if (doctorStatEl) doctorStatEl.textContent = String(state.doctors.filter((item) => item.isActive).length);
+  if (doctorStatEl) doctorStatEl.textContent = String(activeDoctorsCount);
   if (patientStatEl) patientStatEl.textContent = String(state.patients.length);
-  if (emergencyStatEl) emergencyStatEl.textContent = String(state.queue.length);
+  if (emergencyStatEl) emergencyStatEl.textContent = String(activeEmergenciesCount);
+
+  const welcomeDocsEl = document.getElementById("welcome-doctors-online");
+  if (welcomeDocsEl) welcomeDocsEl.textContent = String(activeDoctorsCount);
+
+  const welcomeEmrEl = document.getElementById("welcome-emergencies");
+  if (welcomeEmrEl) welcomeEmrEl.textContent = String(activeEmergenciesCount);
 
   const revenue = state.payments
     .filter((payment) => payment.status !== "failed")

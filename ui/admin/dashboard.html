@@ -126,7 +126,7 @@
                                 id="welcome-name">Admin</span>!</h2>
                         <p style="color:var(--text-400);font-size:.88rem">Today is <span id="today-date"></span>.
                             You
-                            have <strong style="color:var(--yellow-light)">5 appointments</strong> scheduled today.
+                            have <strong id="welcome-summary-strong" style="color:var(--yellow-light)">0 appointments</strong> scheduled today.
                         </p>
                     </div>
                     <div style="display:flex;gap:24px;position:relative">
@@ -135,11 +135,11 @@
                             <div style="font-size:.72rem;color:var(--text-400)">Bed Occupancy</div>
                         </div>
                         <div style="text-align:center">
-                            <div style="font-size:2rem;font-weight:800;color:var(--green-light)">12</div>
+                            <div id="welcome-doctors-online" style="font-size:2rem;font-weight:800;color:var(--green-light)">0</div>
                             <div style="font-size:.72rem;color:var(--text-400)">Doctors Online</div>
                         </div>
                         <div style="text-align:center">
-                            <div style="font-size:2rem;font-weight:800;color:var(--yellow-light)">3</div>
+                            <div id="welcome-emergencies" style="font-size:2rem;font-weight:800;color:var(--yellow-light)">0</div>
                             <div style="font-size:.72rem;color:var(--text-400)">Emergencies</div>
                         </div>
                     </div>
@@ -149,31 +149,31 @@
                 <div class="stat-grid">
                     <div class="stat-card blue">
                         <div class="stat-icon blue">Appointments</div>
-                        <div class="stat-value" id="s-appt">248</div>
+                        <div class="stat-value" id="s-appt">0</div>
                         <div class="stat-label">Total Appointments</div>
                         <div class="stat-change up">Up 12% from last month</div>
                     </div>
                     <div class="stat-card cyan">
                         <div class="stat-icon cyan">Doctors</div>
-                        <div class="stat-value" id="s-docs">36</div>
+                        <div class="stat-value" id="s-docs">0</div>
                         <div class="stat-label">Active Doctors</div>
                         <div class="stat-change up">Up 3 new this week</div>
                     </div>
                     <div class="stat-card green">
                         <div class="stat-icon green">Patients</div>
-                        <div class="stat-value" id="s-patients">1,842</div>
+                        <div class="stat-value" id="s-patients">0</div>
                         <div class="stat-label">Total Patients</div>
                         <div class="stat-change up">Up 8% from last month</div>
                     </div>
                     <div class="stat-card red">
                         <div class="stat-icon red">Emergency</div>
-                        <div class="stat-value" id="s-emr">3</div>
+                        <div class="stat-value" id="s-emr">0</div>
                         <div class="stat-label">Active Emergencies</div>
                         <div class="stat-change down">Down 2 resolved today</div>
                     </div>
                     <div class="stat-card purple">
                         <div class="stat-icon purple">Revenue</div>
-                        <div class="stat-value" id="s-rev">INR 48k</div>
+                        <div class="stat-value" id="s-rev">₹0</div>
                         <div class="stat-label">Monthly Revenue</div>
                         <div class="stat-change up">Up 18% from last month</div>
                     </div>

@@ -78,9 +78,9 @@ const urlBase64ToUint8Array = (base64String = "") => {
 };
 
 export const getAuthState = () => {
-  const token = localStorage.getItem(TOKEN_KEY);
+  const token = localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
   const localUser = parseJson(localStorage.getItem(USER_KEY));
-  const sessionUser = parseJson(sessionStorage.getItem(SESSION_USER_KEY));
+  const sessionUser = parseJson(sessionStorage.getItem(USER_KEY)) || parseJson(sessionStorage.getItem(SESSION_USER_KEY));
   const user = localUser || sessionUser || null;
   return { token, user };
 };
@@ -93,6 +93,8 @@ export const getStoredUser = () => {
 export const clearAuthState = () => {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(USER_KEY);
   sessionStorage.removeItem(SESSION_USER_KEY);
 };
 

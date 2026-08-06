@@ -84,6 +84,11 @@ window.ArogyaGeo = (function () {
   }
 
   async function reverseGeocode(lat, lng) {
+    const details = await reverseGeocodeDetails(lat, lng);
+    return details.displayName;
+  }
+
+  async function reverseGeocodeDetails(lat, lng) {
     try {
       const response = await fetch('/api/map/reverse-geocode', {
         method: 'POST',
@@ -91,9 +96,13 @@ window.ArogyaGeo = (function () {
         body: JSON.stringify({ latitude: lat, longitude: lng })
       });
       const data = await response.json();
-      return data.success ? data.displayName : `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
+      return {
+        displayName: data.displayName || `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`,
+        hospitalName: data.hospitalName || '',
+        phone: data.phone || ''
+      };
     } catch (err) {
-      return `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
+      return { displayName: `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`, hospitalName: '', phone: '' };
     }
   }
 
@@ -101,6 +110,7 @@ window.ArogyaGeo = (function () {
     getCurrentLocation,
     watchUserPosition,
     geocodeAddress,
-    reverseGeocode
+    reverseGeocode,
+    reverseGeocodeDetails
   };
 })();

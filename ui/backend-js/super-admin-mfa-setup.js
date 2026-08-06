@@ -94,6 +94,22 @@ const loadPasskeys = async () => {
   } catch (err) {
     console.warn("Could not load passkeys:", err);
   }
+
+  try {
+    const totpRes = await apiRequest("/api/auth/passkey/totp-setup");
+    if (totpRes.success) {
+      const qrContainer = document.getElementById("totp-qr-container");
+      const secretCode = document.getElementById("totp-secret-code");
+      if (qrContainer && totpRes.qrCodeUrl) {
+        qrContainer.innerHTML = `<img src="${totpRes.qrCodeUrl}" alt="2FA QR Code" style="width:140px;height:140px;border-radius:8px">`;
+      }
+      if (secretCode && totpRes.secret) {
+        secretCode.textContent = totpRes.secret;
+      }
+    }
+  } catch (err) {
+    console.warn("Could not load TOTP setup QR code:", err);
+  }
 };
 
 const setupPasskeyRegistration = () => {

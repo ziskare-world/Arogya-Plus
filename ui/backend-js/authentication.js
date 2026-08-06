@@ -229,21 +229,30 @@
         return; // Pause login flow until 2FA is verified
       }
 
-      // No MFA required - save token and redirect
-      if (data.token) {
-        localStorage.setItem(TOKEN_KEY, data.token);
-      }
-      if (data.user) {
-        localStorage.setItem(USER_KEY, JSON.stringify(data.user));
-        sessionStorage.setItem(
-          "arogya_user",
-          JSON.stringify({
-            name: data.user.name,
-            email: data.user.email,
-            role: data.user.role
-          })
-        );
-      }
+      // Store session helper
+      const storeAuthSession = (tokenData) => {
+        const rememberCheckbox = document.getElementById("remember");
+        const isRemember = rememberCheckbox ? rememberCheckbox.checked : true;
+        const storage = isRemember ? localStorage : sessionStorage;
+
+        if (tokenData.token) {
+          storage.setItem(TOKEN_KEY, tokenData.token);
+        }
+        if (tokenData.user) {
+          storage.setItem(USER_KEY, JSON.stringify(tokenData.user));
+          sessionStorage.setItem(
+            "arogya_user",
+            JSON.stringify({
+              name: tokenData.user.name,
+              email: tokenData.user.email,
+              role: tokenData.user.role
+            })
+          );
+        }
+      };
+
+      // Save token & user if no 2FA required
+      storeAuthSession(data);
 
       setMessage(messageBox, "Login successful. Redirecting...", "success");
       setTimeout(() => {
@@ -294,18 +303,7 @@
 
       const data = await parseApiResponse(authResponse);
 
-      if (data.token) localStorage.setItem(TOKEN_KEY, data.token);
-      if (data.user) {
-        localStorage.setItem(USER_KEY, JSON.stringify(data.user));
-        sessionStorage.setItem(
-          "arogya_user",
-          JSON.stringify({
-            name: data.user.name,
-            email: data.user.email,
-            role: data.user.role
-          })
-        );
-      }
+      storeAuthSession(data);
 
       setMessage(messageBox, "Passkey verified! Opening dashboard...", "success");
       setTimeout(() => {
@@ -344,18 +342,7 @@
       });
       const data = await parseApiResponse(response);
 
-      if (data.token) localStorage.setItem(TOKEN_KEY, data.token);
-      if (data.user) {
-        localStorage.setItem(USER_KEY, JSON.stringify(data.user));
-        sessionStorage.setItem(
-          "arogya_user",
-          JSON.stringify({
-            name: data.user.name,
-            email: data.user.email,
-            role: data.user.role
-          })
-        );
-      }
+      storeAuthSession(data);
 
       setMessage(messageBox, "2FA Verified! Opening dashboard...", "success");
       setTimeout(() => {
@@ -408,6 +395,19 @@
       document.querySelector('form[onsubmit*="handleRegister"]');
 
     if (loginForm) {
+      // Check if user is already logged in with Remember Me / active session
+      const existingToken = localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
+      const existingUserStr = localStorage.getItem(USER_KEY) || sessionStorage.getItem(USER_KEY);
+      if (existingToken && existingUserStr) {
+        try {
+          const userObj = JSON.parse(existingUserStr);
+          if (userObj && userObj.role) {
+            window.location.href = redirectByRole(userObj.role);
+            return;
+          }
+        } catch (e) {}
+      }
+
       bindFormHandler(loginForm, handleLogin, "loginBound");
       const notice = sessionStorage.getItem(NOTICE_KEY);
       if (notice) {

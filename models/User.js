@@ -128,6 +128,10 @@ const userSchema = new mongoose.Schema(
     totpVerified: {
       type: Boolean,
       default: false
+    },
+    totpSecret: {
+      type: String,
+      default: null
     }
   },
   { timestamps: true }

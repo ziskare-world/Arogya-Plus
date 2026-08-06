@@ -325,7 +325,7 @@ router.post("/geocode", async (req, res) => {
       return res.status(400).json({ success: false, error: "Address query is required" });
     }
 
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`;
+    const url = `https://nominatim.openstreetmap.org/search?format=json&extratags=1&addressdetails=1&q=${encodeURIComponent(query)}&limit=5`;
     const response = await fetch(url, {
       headers: { "User-Agent": "ArogyaPlus-Healthcare-System/1.0" }
     });
@@ -335,13 +335,19 @@ router.post("/geocode", async (req, res) => {
     }
 
     const data = await response.json();
-    const results = data.map(item => ({
-      placeId: item.place_id,
-      displayName: item.display_name,
-      latitude: parseFloat(item.lat),
-      longitude: parseFloat(item.lon),
-      type: item.type
-    }));
+    const results = data.map(item => {
+      const phone = item.extratags?.phone || item.extratags?.["contact:phone"] || item.extratags?.["phone:mobile"] || item.extratags?.mobile || "";
+      const name = item.extratags?.name || item.name || item.address?.hospital || item.address?.clinic || item.address?.amenity || "";
+      return {
+        placeId: item.place_id,
+        displayName: item.display_name,
+        latitude: parseFloat(item.lat),
+        longitude: parseFloat(item.lon),
+        type: item.type,
+        hospitalName: name,
+        phone: phone ? String(phone).trim() : ""
+      };
+    });
 
     res.json({ success: true, count: results.length, data: results });
   } catch (err) {
@@ -351,7 +357,7 @@ router.post("/geocode", async (req, res) => {
 
 /**
  * @route POST /api/map/reverse-geocode
- * @desc Latitude/Longitude to Address Conversion via Nominatim API
+ * @desc Latitude/Longitude to Address & Details Conversion via Nominatim API
  */
 router.post("/reverse-geocode", async (req, res) => {
   try {
@@ -360,7 +366,7 @@ router.post("/reverse-geocode", async (req, res) => {
       return res.status(400).json({ success: false, error: "latitude and longitude are required" });
     }
 
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`;
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&extratags=1&addressdetails=1&lat=${latitude}&lon=${longitude}`;
     const response = await fetch(url, {
       headers: { "User-Agent": "ArogyaPlus-Healthcare-System/1.0" }
     });
@@ -370,10 +376,15 @@ router.post("/reverse-geocode", async (req, res) => {
     }
 
     const data = await response.json();
+    const phone = data.extratags?.phone || data.extratags?.["contact:phone"] || data.extratags?.["phone:mobile"] || data.extratags?.mobile || "";
+    const name = data.extratags?.name || data.name || data.address?.hospital || data.address?.clinic || data.address?.amenity || "";
+
     res.json({
       success: true,
       displayName: data.display_name || `Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`,
-      addressDetails: data.address || {}
+      addressDetails: data.address || {},
+      hospitalName: name ? String(name).trim() : "",
+      phone: phone ? String(phone).trim() : ""
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

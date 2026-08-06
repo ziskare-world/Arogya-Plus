@@ -1,184 +1,498 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>Arogya Plus - Hospital Storage Explorer</title>
-    <link rel="stylesheet" href="../css/global.css" />
-    <link rel="stylesheet" href="../css/dashboard.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Storage Drive - ArogyaPlus</title>
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
     <style>
-        .storage-layout {
-            display: grid;
-            grid-template-columns: 240px 1fr;
-            gap: 18px;
-        }
-
-        .folder-list {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .folder-item {
-            padding: 10px 14px;
-            border-radius: 8px;
-            background: #f8fafc;
-            border: 1px solid var(--border);
+        .drive-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            font-size: 0.88rem;
-            font-weight: 500;
-            transition: all 0.15s ease;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
-        .folder-item:hover, .folder-item.active {
-            background: var(--blue-light);
-            color: var(--blue-dark);
-            border-color: var(--blue);
+        .drive-search-bar {
+            position: relative;
+            flex: 1;
+            max-width: 480px;
+        }
+
+        .drive-search-bar input {
+            width: 100%;
+            padding: 10px 16px 10px 42px;
+            border-radius: var(--r-md);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: .88rem;
+            color: var(--text-100);
+        }
+
+        .drive-search-bar .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-400);
+            pointer-events: none;
+        }
+
+        .storage-quota-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .quota-bar-container {
+            flex: 1;
+            max-width: 320px;
+        }
+
+        .quota-track {
+            height: 8px;
+            border-radius: var(--r-full);
+            background: var(--bg-700);
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .quota-fill {
+            height: 100%;
+            background: var(--grad-cyan);
+            border-radius: var(--r-full);
+            width: 0%;
+            transition: width var(--t-mid);
+        }
+
+        .drive-action-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .drive-filters {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .filter-chip {
+            padding: 6px 14px;
+            border-radius: var(--r-full);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: .8rem;
             font-weight: 600;
+            color: var(--text-300);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all var(--t-fast);
         }
 
+        .filter-chip:hover, .filter-chip.active {
+            background: var(--cyan);
+            color: #fff;
+            border-color: var(--cyan);
+        }
+
+        .view-switchers {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--bg-750);
+            padding: 3px;
+            border-radius: var(--r-md);
+        }
+
+        .view-btn {
+            padding: 6px 10px;
+            border-radius: var(--r-sm);
+            border: none;
+            background: transparent;
+            font-size: .78rem;
+            font-weight: 600;
+            color: var(--text-400);
+            cursor: pointer;
+        }
+
+        .view-btn.active {
+            background: var(--surface);
+            color: var(--text-100);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .drive-breadcrumbs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            font-size: .88rem;
+            font-weight: 600;
+            color: var(--text-300);
+        }
+
+        .crumb-link {
+            color: var(--cyan);
+            cursor: pointer;
+        }
+
+        .crumb-link:hover {
+            text-decoration: underline;
+        }
+
+        /* GRID VIEW STYLES */
         .file-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 14px;
-            margin-top: 14px;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
         }
 
         .file-card {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 14px;
+            border-radius: var(--r-md);
+            padding: 12px;
+            transition: all var(--t-fast);
             display: flex;
             flex-direction: column;
-            gap: 8px;
             position: relative;
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
 
         .file-card:hover {
-            transform: translateY(-2px);
+            border-color: var(--cyan);
             box-shadow: var(--shadow-md);
-            border-color: var(--blue-light);
         }
 
-        .file-icon {
-            width: 42px;
-            height: 42px;
-            border-radius: 8px;
+        .file-thumb-box {
+            width: 100%;
+            height: 120px;
+            border-radius: var(--r-sm);
+            background: var(--bg-800);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
-            font-weight: 700;
-            background: #e0f2fe;
-            color: #0284c7;
+            overflow: hidden;
+            margin-bottom: 10px;
+            position: relative;
         }
 
-        .file-name {
-            font-size: 0.88rem;
+        .file-thumb-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .file-icon-placeholder {
+            font-size: 2.2rem;
+            color: var(--text-400);
+        }
+
+        .file-card-title {
+            font-size: .84rem;
             font-weight: 600;
             color: var(--text-100);
-            word-break: break-all;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 4px;
         }
 
-        .file-meta {
-            font-size: 0.76rem;
+        .file-card-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: .72rem;
             color: var(--text-500);
         }
 
-        @media (max-width: 900px) {
-            .storage-layout {
-                grid-template-columns: 1fr;
-            }
+        .file-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--bg-750);
+        }
+
+        .file-action-btn {
+            flex: 1;
+            padding: 4px;
+            font-size: .72rem;
+            border-radius: var(--r-sm);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-200);
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .file-action-btn:hover {
+            background: var(--bg-750);
+            color: var(--cyan);
+        }
+
+        .file-action-btn.delete-btn:hover {
+            color: var(--red);
+            border-color: var(--red);
+        }
+
+        /* LIGHTBOX MODAL */
+        .lightbox-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .lightbox-content {
+            background: var(--surface);
+            border-radius: var(--r-lg);
+            max-width: 90vw;
+            max-height: 90vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .lightbox-img-box {
+            max-width: 80vw;
+            max-height: 70vh;
+            overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lightbox-img-box img {
+            max-width: 100%;
+            max-height: 70vh;
+            border-radius: var(--r-sm);
+            object-fit: contain;
+        }
+
+        /* DROPZONE */
+        .dropzone-box {
+            border: 2px dashed var(--border);
+            border-radius: var(--r-md);
+            padding: 24px;
+            text-align: center;
+            background: var(--bg-800);
+            cursor: pointer;
+            transition: all var(--t-fast);
+        }
+
+        .dropzone-box:hover {
+            border-color: var(--cyan);
+            background: var(--surface);
         }
     </style>
 </head>
-
 <body>
     <div id="toast-container"></div>
     <div class="app-layout">
         <div class="main-area">
             <div id="topbar-container"></div>
+
             <main class="page-content">
-                <div class="page-header flex-between">
+                
+                <!-- Drive Top Header & Search -->
+                <div class="drive-header">
                     <div>
-                        <h2>🏥 Hospital Storage Explorer</h2>
-                        <p>All medical documents, prescriptions, images, and user files organized by hospital subfolders on disk.</p>
+                        <h2 id="hospital-storage-title">🏥 Hospital Storage Drive</h2>
+                        <p style="margin-top:2px">Manage, search, preview, and upload medical media and documents for your hospital.</p>
                     </div>
-                    <div style="display:flex;gap:8px">
-                        <button class="btn btn-outline btn-sm" onclick="refreshStorageFiles()">Refresh</button>
-                        <button class="btn btn-primary btn-sm" onclick="document.getElementById('upload-modal').classList.remove('hidden')">+ Upload File</button>
-                    </div>
-                </div>
-
-                <div class="dashboard-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px,1fr));gap:14px;margin-bottom:18px;">
-                    <div class="stat-card blue card-sm">
-                        <div id="stat-total-files" class="stat-value">0</div>
-                        <div class="stat-label">Total Files</div>
-                    </div>
-                    <div class="stat-card green card-sm">
-                        <div id="stat-hospital-folders" class="stat-value">0</div>
-                        <div class="stat-label">Hospital Folders</div>
-                    </div>
-                    <div class="stat-card cyan card-sm">
-                        <div id="stat-total-size" class="stat-value">0 KB</div>
-                        <div class="stat-label">Disk Storage Used</div>
+                    <div class="drive-search-bar">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="drive-search-input" placeholder="Search photos, files, and folders...">
                     </div>
                 </div>
 
-                <div class="storage-layout">
-                    <!-- Hospital Subfolder Selector -->
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-title">📁 Hospital Folders</div>
+                <!-- Storage Quota Widget -->
+                <div class="storage-quota-card">
+                    <div>
+                        <div style="font-weight:700;font-size:1.1rem" id="quota-used-text">Loading hospital storage used...</div>
+                        <div style="font-size:.8rem;color:var(--text-400)" id="quota-items-text">Calculating hospital files & media</div>
+                    </div>
+                    <div class="quota-bar-container">
+                        <div style="display:flex;justify-content:space-between;font-size:.75rem;font-weight:600">
+                            <span>Hospital Storage Usage</span>
+                            <span id="quota-pct-text">0%</span>
                         </div>
-                        <div id="folder-list-container" class="folder-list">
-                            <div class="muted">Loading hospital folders...</div>
+                        <div class="quota-track">
+                            <div class="quota-fill" id="quota-fill-bar"></div>
                         </div>
                     </div>
+                    <div style="display:flex;gap:12px">
+                        <div class="badge badge-blue" id="count-photos">📷 0 Photos</div>
+                        <div class="badge badge-green" id="count-docs">📄 0 Docs</div>
+                        <div class="badge badge-yellow" id="count-folders">📁 0 Folders</div>
+                    </div>
+                </div>
 
-                    <!-- File Explorer Container -->
-                    <div class="card">
-                        <div class="card-header flex-between">
-                            <div id="current-folder-title" class="card-title">All Hospital Files</div>
-                            <input id="file-search-input" class="form-input" placeholder="Search files..." style="max-width:200px;font-size:12px;padding:4px 8px;" />
-                        </div>
-                        <div id="file-grid-container" class="file-grid">
-                            <div class="muted" style="grid-column:1/-1;text-align:center;padding:20px;">Loading files from storage...</div>
+                <!-- Drive Action Bar & Filters -->
+                <div class="drive-action-bar">
+                    <div class="drive-filters">
+                        <button class="filter-chip active" data-category="all">All Files</button>
+                        <button class="filter-chip" data-category="photo">📷 Photos & Images</button>
+                        <button class="filter-chip" data-category="document">📄 Documents</button>
+                        <button class="filter-chip" data-category="folder">📁 Folders</button>
+                    </div>
+
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <button class="btn btn-outline btn-sm" id="download-selected-btn" style="display:none;background:var(--bg-750);color:var(--cyan)">📦 Download Selected (ZIP)</button>
+                        <button class="btn btn-outline btn-sm" id="new-folder-btn">📁 New Folder</button>
+                        <button class="btn btn-primary btn-sm" id="upload-file-btn">📤 Upload File</button>
+
+                        <div class="view-switchers">
+                            <button class="view-btn active" id="btn-grid-view">🔳 Grid</button>
+                            <button class="view-btn" id="btn-list-view">☰ List</button>
                         </div>
                     </div>
                 </div>
+
+                <!-- Breadcrumbs & Back Button -->
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+                    <button class="btn btn-outline btn-sm" id="back-folder-btn" disabled style="display:inline-flex;align-items:center;gap:4px">
+                        ⬅️ Back
+                    </button>
+                    <div class="drive-breadcrumbs" id="drive-breadcrumbs" style="margin-bottom:0">
+                        <span class="crumb-link" data-folder="">Hospital Root</span>
+                    </div>
+                </div>
+
+                <!-- Storage Contents (Grid View) -->
+                <div class="file-grid" id="drive-grid-container"></div>
+
+                <!-- Storage Contents (List View Table) -->
+                <div class="table-wrap card" id="drive-list-container" style="display:none;padding:0">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:40px;text-align:center">
+                                    <input type="checkbox" id="select-all-checkbox" style="cursor:pointer">
+                                </th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Size</th>
+                                <th>Modified Date</th>
+                                <th style="text-align:right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="drive-list-tbody"></tbody>
+                    </table>
+                </div>
+
             </main>
         </div>
     </div>
 
-    <!-- Upload File Modal -->
-    <div id="upload-modal" class="modal-backdrop hidden" style="position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:120;display:flex;align-items:center;justify-content:center;padding:16px;">
-        <div class="card" style="width:100%;max-width:480px;background:var(--surface);">
-            <div class="card-header flex-between">
-                <div class="card-title">📁 Upload File to Hospital Storage</div>
-                <button class="close-btn" style="border:none;background:none;font-size:1.2rem;cursor:pointer;" onclick="document.getElementById('upload-modal').classList.add('hidden')">✕</button>
+    <!-- NEW FOLDER MODAL -->
+    <div id="new-folder-modal" class="lightbox-modal">
+        <div class="lightbox-content" style="width:360px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <h3 style="margin:0">📁 Create New Folder</h3>
+                <button class="btn btn-ghost btn-sm" id="close-folder-modal-btn">✕</button>
             </div>
-            <form id="storage-upload-form" style="display:grid;gap:12px;margin-top:10px;">
-                <div class="form-group">
-                    <label class="form-label" for="upload-hospital">Select Target Hospital Folder</label>
-                    <input id="upload-hospital" class="form-input" placeholder="e.g. Arogya Central Hospital" required />
+            <p style="font-size:.8rem;color:var(--text-400)">Enter a name for the new subfolder inside your hospital storage.</p>
+            <input type="text" id="new-folder-name-input" placeholder="e.g. Prescriptions_2026" class="form-input" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--r-sm)">
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
+                <button class="btn btn-ghost btn-sm" id="cancel-folder-btn">Cancel</button>
+                <button class="btn btn-primary btn-sm" id="create-folder-submit-btn">Create Folder</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- UPLOAD FILE MODAL -->
+    <div id="upload-file-modal" class="lightbox-modal">
+        <div class="lightbox-content" style="width:440px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <h3 style="margin:0">📤 Upload File to Hospital Storage</h3>
+                <button class="btn btn-ghost btn-sm" id="close-upload-modal-btn">✕</button>
+            </div>
+            <p style="font-size:.8rem;color:var(--text-400);margin-bottom:12px">Select a photo or document from your device to upload to hospital disk storage.</p>
+            
+            <div class="dropzone-box" id="modal-dropzone">
+                <div style="font-size:2rem;margin-bottom:6px">📁</div>
+                <div style="font-weight:600;font-size:.9rem;color:var(--text-100)">Click or Drag File Here</div>
+                <div style="font-size:.76rem;color:var(--text-500);margin-top:4px">Supports Images, Documents, and Files up to 25MB</div>
+                <input type="file" id="file-picker-input" style="display:none">
+            </div>
+
+            <div id="selected-file-info" style="font-size:.8rem;font-weight:600;color:var(--cyan);display:none;margin-top:8px"></div>
+
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
+                <button class="btn btn-ghost btn-sm" id="cancel-upload-btn">Cancel</button>
+                <button class="btn btn-primary btn-sm" id="submit-upload-btn" disabled>Upload File</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- IMAGE LIGHTBOX PREVIEW MODAL -->
+    <div id="image-lightbox-modal" class="lightbox-modal">
+        <div class="lightbox-content">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <h4 id="lightbox-title" style="margin:0">Photo Preview</h4>
+                <button class="btn btn-ghost btn-sm" id="close-lightbox-btn">✕ Close</button>
+            </div>
+            <div class="lightbox-img-box">
+                <img id="lightbox-img" src="" alt="Preview">
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:.78rem;color:var(--text-400)">
+                <span id="lightbox-meta">-</span>
+                <a id="lightbox-download-link" href="#" download class="btn btn-primary btn-sm">⬇️ Download File</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- DELETE CONFIRMATION MODAL -->
+    <div id="delete-confirm-modal" class="lightbox-modal">
+        <div class="lightbox-content" style="width:400px;border-top:4px solid var(--red)">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <div style="font-size:1.8rem;color:var(--red)">🗑️</div>
+                <div>
+                    <h3 style="margin:0;color:var(--red-light)">Confirm Deletion</h3>
+                    <p style="font-size:.78rem;color:var(--text-400);margin-top:2px">Permanently remove item from hospital storage</p>
                 </div>
-                <div class="form-group">
-                    <label class="form-label" for="upload-file-input">Select Document or Image</label>
-                    <input id="upload-file-input" class="form-input" type="file" required />
-                </div>
-                <button class="btn btn-primary btn-full" type="submit">Upload File to Disk</button>
-            </form>
+            </div>
+
+            <div style="background:var(--bg-800);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;margin:10px 0">
+                <div style="font-size:.84rem;font-weight:600;color:var(--text-100)" id="delete-item-name">Filename.png</div>
+                <div style="font-size:.74rem;color:var(--text-400);margin-top:2px" id="delete-item-path">Path: storage/Filename.png</div>
+            </div>
+
+            <p style="font-size:.8rem;color:var(--text-300);margin-bottom:14px">Are you sure you want to delete this item? This operation cannot be reversed.</p>
+
+            <div style="display:flex;justify-content:flex-end;gap:8px">
+                <button class="btn btn-ghost btn-sm" id="cancel-delete-btn">Cancel</button>
+                <button class="btn btn-danger btn-sm" id="confirm-delete-submit-btn">🗑️ Delete Permanently</button>
+            </div>
         </div>
     </div>
 
     <script type="module" src="../backend-js/admin-storage.js"></script>
 </body>
-
 </html>

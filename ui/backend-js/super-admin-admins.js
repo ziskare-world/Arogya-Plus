@@ -473,8 +473,8 @@ const setCoordsLabel = () => {
 };
 
 const reverseGeocode = async (coords) => {
-  if (!coords) return "";
-  return await window.ArogyaGeo.reverseGeocode(coords.lat, coords.lng);
+  if (!coords) return { displayName: "", hospitalName: "", phone: "" };
+  return await window.ArogyaGeo.reverseGeocodeDetails(coords.lat, coords.lng);
 };
 
 const geocodeByAddress = async (address) => {
@@ -482,13 +482,16 @@ const geocodeByAddress = async (address) => {
   if (!query) return null;
   const results = await window.ArogyaGeo.geocodeAddress(query);
   if (!results || results.length === 0) return null;
+  const first = results[0];
   return {
-    coords: { lat: results[0].latitude, lng: results[0].longitude },
-    address: results[0].displayName || query
+    coords: { lat: first.latitude, lng: first.longitude },
+    address: first.displayName || query,
+    hospitalName: first.hospitalName || "",
+    phone: first.phone || ""
   };
 };
 
-const setHospitalLocation = (coords, address = "") => {
+const setHospitalLocation = (coords, address = "", details = {}) => {
   const normalized = normalizeCoords(coords);
   if (!normalized) return;
 
@@ -497,6 +500,19 @@ const setHospitalLocation = (coords, address = "") => {
 
   if (hospitalAddressInputEl && address) {
     hospitalAddressInputEl.value = address;
+  }
+
+  // Populate phone number if found on internet, or leave blank if unavailable
+  const phoneInputEl = document.getElementById("admin-phone");
+  if (phoneInputEl) {
+    phoneInputEl.value = details.phone || "";
+  }
+
+  // Populate hospital name if found and input is empty or has placeholder
+  if (hospitalNameInputEl && details.hospitalName) {
+    if (!hospitalNameInputEl.value || hospitalNameInputEl.value === "Hospital") {
+      hospitalNameInputEl.value = details.hospitalName;
+    }
   }
 
   if (!hospitalMap) return;
@@ -550,7 +566,10 @@ const locateAddressOnMap = async () => {
     throw new Error("Could not find this address on map");
   }
 
-  setHospitalLocation(result.coords, result.address);
+  setHospitalLocation(result.coords, result.address, {
+    hospitalName: result.hospitalName,
+    phone: result.phone
+  });
   setMapStatus("Ready", "badge-green");
   if (mapHelpEl) {
     mapHelpEl.textContent = "Address located. You can click map to adjust exact hospital pin.";
@@ -582,8 +601,8 @@ const initializeHospitalMap = async () => {
 
     hospitalMap.on("click", async (event) => {
       const coords = { lat: event.latlng.lat, lng: event.latlng.lng };
-      const address = await reverseGeocode(coords);
-      setHospitalLocation(coords, address || hospitalAddressInputEl?.value || "");
+      const details = await reverseGeocode(coords);
+      setHospitalLocation(coords, details.displayName || hospitalAddressInputEl?.value || "", details);
     });
 
     mapInitialized = true;

@@ -5,6 +5,7 @@ const { body } = require("express-validator");
 const User = require("../models/User");
 const { protect } = require("../middleware/authMiddleware");
 const validateRequest = require("../middleware/validateMiddleware");
+const { generateSecret, verifyTotpCode, generateQrCodeDataUrl, getOtpAuthUrl } = require("../utils/totp");
 
 const router = express.Router();
 
@@ -75,9 +76,9 @@ router.post(
       return res.status(401).json({ success: false, message: "Invalid email or password" });
     }
 
-    const mfaEnabled = Boolean(user.mfaEnabled || (user.passkeys && user.passkeys.length > 0) || user.totpVerified);
     const hasPasskey = Boolean(user.passkeys && user.passkeys.length > 0);
-    const hasTotp = Boolean(user.totpVerified || user.mfaEnabled);
+    const hasTotp = Boolean(user.totpVerified && user.totpSecret);
+    const mfaEnabled = Boolean(user.mfaEnabled && (hasPasskey || hasTotp));
 
     const token = generateToken(user._id);
     return res.status(200).json({
@@ -186,18 +187,59 @@ router.get(
   })
 );
 
+router.get(
+  "/passkey/totp-setup",
+  protect,
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    if (!user.totpSecret) {
+      user.totpSecret = generateSecret(16);
+      await user.save();
+    }
+
+    const otpauthUrl = getOtpAuthUrl(user.email, user.totpSecret);
+    const qrCodeUrl = await generateQrCodeDataUrl(otpauthUrl);
+
+    return res.status(200).json({
+      success: true,
+      secret: user.totpSecret,
+      qrCodeUrl,
+      otpauthUrl
+    });
+  })
+);
+
 router.post(
   "/passkey/verify-totp",
   protect,
   asyncHandler(async (req, res) => {
     const { code } = req.body;
-    if (!code || String(code).trim().length !== 6) {
+    const cleanCode = String(code || "").trim();
+
+    if (!cleanCode || cleanCode.length !== 6 || !/^\d{6}$/.test(cleanCode)) {
       return res.status(400).json({ success: false, message: "Valid 6-digit numeric TOTP code is required" });
     }
 
     const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    if (!user.totpSecret) {
+      user.totpSecret = generateSecret(16);
+      await user.save();
+    }
+
+    const isValid = verifyTotpCode(user.totpSecret, cleanCode);
+    if (!isValid) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired authenticator code. Please check your app and try again."
+      });
     }
 
     user.mfaEnabled = true;
@@ -278,9 +320,9 @@ router.post(
 
 const handleTotpLoginReq = async (req, res) => {
   const { email, code, totpCode } = req.body;
+  const cleanCode = String(code || totpCode || "").trim();
 
-  const codeStr = String(code || totpCode || "").trim();
-  if (!codeStr || codeStr.length !== 6 || !/^\d+$/.test(codeStr)) {
+  if (!cleanCode || cleanCode.length !== 6 || !/^\d{6}$/.test(cleanCode)) {
     return res.status(400).json({ success: false, message: "Please enter a valid 6-digit numeric authenticator app code" });
   }
 
@@ -294,15 +336,19 @@ const handleTotpLoginReq = async (req, res) => {
   }
 
   if (!user) {
-    user = await User.findOne({ mfaEnabled: true });
+    return res.status(404).json({ success: false, message: "No account found matching this request" });
   }
 
-  if (!user) {
-    user = await User.findOne({ isActive: true });
+  if (!user.totpSecret) {
+    return res.status(400).json({ success: false, message: "TOTP 2FA is not set up for this account" });
   }
 
-  if (!user) {
-    return res.status(404).json({ success: false, message: "No account found matching this Authenticator App" });
+  const isValid = verifyTotpCode(user.totpSecret, cleanCode);
+  if (!isValid) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid or expired authenticator code. Please check your app and try again."
+    });
   }
 
   const token = generateToken(user._id);

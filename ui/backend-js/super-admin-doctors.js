@@ -176,6 +176,27 @@ const setupModalEvents = () => {
   if (closeBtn) closeBtn.addEventListener("click", window.closeAddDoctorModal);
   if (cancelBtn) cancelBtn.addEventListener("click", window.closeAddDoctorModal);
 
+  const docHospitalSelect = document.getElementById("doc-hospital");
+  const docPhoneInput = document.getElementById("doc-phone");
+
+  if (docHospitalSelect) {
+    docHospitalSelect.addEventListener("change", async () => {
+      const selectedHospital = docHospitalSelect.value.trim();
+      if (!selectedHospital) return;
+
+      try {
+        const results = await window.ArogyaGeo.geocodeAddress(selectedHospital);
+        if (results && results.length > 0 && results[0].phone && docPhoneInput) {
+          docPhoneInput.value = results[0].phone;
+        } else if (docPhoneInput) {
+          docPhoneInput.value = ""; // Leave blank if not available on the internet
+        }
+      } catch (err) {
+        if (docPhoneInput) docPhoneInput.value = "";
+      }
+    });
+  }
+
   if (form) {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -203,7 +224,7 @@ const setupModalEvents = () => {
         });
 
         toast("Doctor account created successfully and assigned to hospital", "success");
-        closeModal();
+        window.closeAddDoctorModal();
         form.reset();
         await loadDoctors();
       } catch (err) {

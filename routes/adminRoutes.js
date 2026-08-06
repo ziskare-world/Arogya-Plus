@@ -1179,15 +1179,34 @@ router.get(
   authorize("admin", "super-admin"),
   asyncHandler(async (req, res) => {
     ensureStorageBaseDir();
-    const subFolder = String(req.query.folder || "").trim();
+    let subFolder = String(req.query.folder || "").trim();
+
+    if (req.user.role === "admin") {
+      const hospitalRoot = sanitizeFolderName(req.user.hospitalName || "General_Hospital");
+      if (!subFolder || (!subFolder.startsWith(hospitalRoot) && !subFolder.startsWith(hospitalRoot + "/"))) {
+        subFolder = hospitalRoot;
+      }
+    }
+
     const targetDir = resolveSafeStoragePath(subFolder);
 
-    if (!fs.existsSync(targetDir) || !fs.statSync(targetDir).isDirectory()) {
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+
+    if (!fs.statSync(targetDir).isDirectory()) {
       return res.status(404).json({ success: false, message: "Storage directory not found" });
     }
 
-    const currentRelative = path.relative(STORAGE_BASE_DIR, targetDir).replace(/\\/g, "/");
-    const parentRelative = currentRelative ? path.dirname(currentRelative).replace(/\\/g, "/") : "";
+    let currentRelative = path.relative(STORAGE_BASE_DIR, targetDir).replace(/\\/g, "/");
+    let parentRelative = currentRelative ? path.dirname(currentRelative).replace(/\\/g, "/") : "";
+
+    if (req.user.role === "admin") {
+      const hospitalRoot = sanitizeFolderName(req.user.hospitalName || "General_Hospital");
+      if (currentRelative.toLowerCase() === hospitalRoot.toLowerCase() || parentRelative === "." || !parentRelative.startsWith(hospitalRoot)) {
+        parentRelative = "";
+      }
+    }
 
     const entries = fs.readdirSync(targetDir, { withFileTypes: true });
 

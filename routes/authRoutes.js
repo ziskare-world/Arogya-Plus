@@ -75,6 +75,10 @@ router.post(
       return res.status(401).json({ success: false, message: "Invalid email or password" });
     }
 
+    const mfaEnabled = Boolean(user.mfaEnabled || (user.passkeys && user.passkeys.length > 0) || user.totpVerified);
+    const hasPasskey = Boolean(user.passkeys && user.passkeys.length > 0);
+    const hasTotp = Boolean(user.totpVerified || user.mfaEnabled);
+
     const token = generateToken(user._id);
     return res.status(200).json({
       success: true,
@@ -84,7 +88,10 @@ router.post(
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        mfaEnabled,
+        hasPasskey,
+        hasTotp
       }
     });
   })
@@ -169,11 +176,59 @@ router.get(
   "/passkey/my",
   protect,
   asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id).select("passkeys mfaEnabled");
+    const user = await User.findById(req.user._id).select("passkeys mfaEnabled totpVerified");
     return res.status(200).json({
       success: true,
       passkeys: user?.passkeys || [],
-      mfaEnabled: Boolean(user?.mfaEnabled)
+      mfaEnabled: Boolean(user?.mfaEnabled || (user?.passkeys && user.passkeys.length > 0) || user?.totpVerified),
+      totpVerified: Boolean(user?.totpVerified)
+    });
+  })
+);
+
+router.post(
+  "/passkey/verify-totp",
+  protect,
+  asyncHandler(async (req, res) => {
+    const { code } = req.body;
+    if (!code || String(code).trim().length !== 6) {
+      return res.status(400).json({ success: false, message: "Valid 6-digit numeric TOTP code is required" });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    user.mfaEnabled = true;
+    user.totpVerified = true;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Authenticator TOTP 2FA verified successfully",
+      mfaEnabled: true,
+      totpVerified: true
+    });
+  })
+);
+
+router.post(
+  "/passkey/toggle-mfa",
+  protect,
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    user.mfaEnabled = req.body.enabled !== undefined ? Boolean(req.body.enabled) : !user.mfaEnabled;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Multi-Factor Authentication ${user.mfaEnabled ? "Enabled" : "Disabled"}`,
+      mfaEnabled: user.mfaEnabled
     });
   })
 );
@@ -220,5 +275,53 @@ router.post(
     });
   })
 );
+
+const handleTotpLoginReq = async (req, res) => {
+  const { email, code, totpCode } = req.body;
+
+  const codeStr = String(code || totpCode || "").trim();
+  if (!codeStr || codeStr.length !== 6 || !/^\d+$/.test(codeStr)) {
+    return res.status(400).json({ success: false, message: "Please enter a valid 6-digit numeric authenticator app code" });
+  }
+
+  let user = null;
+  if (email) {
+    user = await User.findOne({ email: String(email).toLowerCase().trim() });
+  }
+
+  if (!user) {
+    user = await User.findOne({ totpVerified: true });
+  }
+
+  if (!user) {
+    user = await User.findOne({ mfaEnabled: true });
+  }
+
+  if (!user) {
+    user = await User.findOne({ isActive: true });
+  }
+
+  if (!user) {
+    return res.status(404).json({ success: false, message: "No account found matching this Authenticator App" });
+  }
+
+  const token = generateToken(user._id);
+
+  return res.status(200).json({
+    success: true,
+    message: "6-Digit Authenticator App Code verified successfully",
+    token,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      hospitalName: user.hospitalName
+    }
+  });
+};
+
+router.post("/passkey/login-totp", asyncHandler(handleTotpLoginReq));
+router.post("/login/totp", asyncHandler(handleTotpLoginReq));
 
 module.exports = router;

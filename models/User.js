@@ -124,6 +124,10 @@ const userSchema = new mongoose.Schema(
     mfaEnabled: {
       type: Boolean,
       default: false
+    },
+    totpVerified: {
+      type: Boolean,
+      default: false
     }
   },
   { timestamps: true }

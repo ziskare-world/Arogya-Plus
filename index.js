@@ -4,6 +4,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const fs = require("fs");
 const path = require("path");
+const os = require("os");
 const { Server } = require("socket.io");
 const helmet = require("helmet");
 const compression = require("compression");
@@ -192,14 +193,8 @@ const storageDirectory = path.join(__dirname, "storage");
 app.use("/storage", express.static(storageDirectory));
 app.use(
   express.static(uiDirectory, {
-    maxAge: process.env.NODE_ENV === "production" ? "1d" : 0,
-    setHeaders: (res) => {
-      if (process.env.NODE_ENV !== "production") {
-        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-        res.setHeader("Pragma", "no-cache");
-        res.setHeader("Expires", "0");
-      }
-    }
+    maxAge: process.env.NODE_ENV === "production" ? "7d" : "1h",
+    etag: true
   })
 );
 
@@ -288,7 +283,7 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("video:join-room", (payload = {}, callback) => {
-    const respond = typeof callback === "function" ? callback : () => {};
+    const respond = typeof callback === "function" ? callback : () => { };
     const roomKey = normalizeRoomKey(payload.roomKey);
     const displayName = String(payload.displayName || "").trim().slice(0, 80);
     const email = String(payload.email || "").trim().toLowerCase().slice(0, 160);
@@ -354,7 +349,7 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("video:leave-room", (payload = {}, callback) => {
-    const respond = typeof callback === "function" ? callback : () => {};
+    const respond = typeof callback === "function" ? callback : () => { };
     const roomKey = normalizeRoomKey(payload.roomKey || socket.data.videoRoomKey);
 
     if (!roomKey) {
@@ -460,10 +455,27 @@ io.on("connection", async (socket) => {
 app.use(notFound);
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 3000;
+const getLocalNetworkIp = () => {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const net of interfaces[name] || []) {
+      if (net.family === "IPv4" && !net.internal) {
+        return net.address;
+      }
+    }
+  }
+  return "127.0.0.1";
+};
+
+const PORT = process.env.PORT;
 if (process.env.NODE_ENV !== "test") {
-  server.listen(PORT, () => {
-    console.log(`Server running at http://127.0.0.1:${PORT}`);
+  server.listen(PORT, "0.0.0.0", () => {
+    const networkIp = getLocalNetworkIp();
+    console.log(`\n==================================================`);
+    console.log(`🏥 Arogya Plus Healthcare Server Running!`);
+    console.log(`  ➜  Local:   http://127.0.0.1:${PORT}`);
+    console.log(`  ➜  Network: http://${networkIp}:${PORT}`);
+    console.log(`==================================================\n`);
   });
 }
 

@@ -8,6 +8,7 @@ document.getElementById("topbar-container").innerHTML = renderTopbar("Passkey & 
 
 let mfaEnabled = true;
 let userPasskeys = [];
+let totpVerified = false;
 
 const updateMFABadge = (enabled) => {
   mfaEnabled = enabled;
@@ -28,6 +29,22 @@ const updateMFABadge = (enabled) => {
     desc.textContent = enabled
       ? "Your account is protected with FIDO2 Biometric Passkeys and 2-Step Authentication."
       : "Two-step authentication is currently disabled. Enable it to secure your super admin portal.";
+  }
+};
+
+const updateTOTPUI = (isVerified) => {
+  totpVerified = isVerified;
+  const setupBox = document.getElementById("totp-setup-box");
+  const verifiedBadge = document.getElementById("totp-verified-badge");
+
+  if (setupBox && verifiedBadge) {
+    if (isVerified) {
+      setupBox.style.display = "none";
+      verifiedBadge.style.display = "block";
+    } else {
+      setupBox.style.display = "flex";
+      verifiedBadge.style.display = "none";
+    }
   }
 };
 
@@ -72,6 +89,7 @@ const loadPasskeys = async () => {
     if (res.success) {
       renderPasskeysList(res.passkeys || []);
       updateMFABadge(res.mfaEnabled);
+      updateTOTPUI(Boolean(res.totpVerified));
     }
   } catch (err) {
     console.warn("Could not load passkeys:", err);
@@ -141,16 +159,34 @@ const setupTOTPVerification = () => {
   const input = document.getElementById("totp-verify-input");
 
   if (verifyBtn && input) {
-    verifyBtn.addEventListener("click", () => {
+    verifyBtn.addEventListener("click", async () => {
       const code = input.value.trim();
       if (code.length !== 6 || !/^\d+$/.test(code)) {
         toast("Please enter a valid 6-digit numeric authenticator code", "warn");
         return;
       }
 
-      toast("Authenticator TOTP code verified! 2FA sync complete.", "success");
-      input.value = "";
-      updateMFABadge(true);
+      verifyBtn.disabled = true;
+      verifyBtn.textContent = "Verifying...";
+
+      try {
+        const res = await apiRequest("/api/auth/passkey/verify-totp", {
+          method: "POST",
+          body: JSON.stringify({ code })
+        });
+
+        if (res.success) {
+          toast("Authenticator TOTP code verified and activated!", "success");
+          input.value = "";
+          updateMFABadge(true);
+          updateTOTPUI(true);
+        }
+      } catch (err) {
+        toast(err.message || "Failed to verify TOTP code", "error");
+      } finally {
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = "Verify & Activate";
+      }
     });
   }
 };
@@ -205,13 +241,16 @@ const setupGlobalToggle = () => {
     updateMFABadge(nextState);
 
     try {
-      await apiRequest("/api/admin/settings", {
-        method: "PUT",
-        body: JSON.stringify({ require2FA: nextState })
+      const res = await apiRequest("/api/auth/passkey/toggle-mfa", {
+        method: "POST",
+        body: JSON.stringify({ enabled: nextState })
       });
-      toast(`Multi-Factor Authentication ${nextState ? "Enabled" : "Disabled"}`, nextState ? "success" : "info");
+
+      if (res.success) {
+        toast(`Multi-Factor Authentication ${nextState ? "Enabled" : "Disabled"}`, nextState ? "success" : "info");
+      }
     } catch (err) {
-      console.warn("MFA state toggle saved locally:", err);
+      console.warn("MFA state toggle error:", err);
     }
   });
 };

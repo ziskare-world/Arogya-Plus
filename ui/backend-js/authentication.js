@@ -171,6 +171,8 @@
     }
   };
 
+  let isVerifyingTotp = false;
+
   const handleLogin = async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -189,17 +191,45 @@
     try {
       const response = await fetch(`${API_BASE}/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          email,
-          password
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
       });
-
       const data = await parseApiResponse(response);
 
+      const mfaEnabled = Boolean(
+        data.user && (data.user.mfaEnabled || data.user.hasPasskey || data.user.hasTotp)
+      );
+
+      if (mfaEnabled) {
+        setMessage(messageBox, "Primary login verified. Please complete 2FA verification below.", "info");
+
+        // Show post-login 2FA section
+        const mfaSection = document.getElementById("mfa-section");
+        if (mfaSection) mfaSection.style.display = "flex";
+
+        // Show passkey button ONLY if user has passkey enabled
+        const passkeyBtn = document.getElementById("login-passkey-btn");
+        if (passkeyBtn) {
+          passkeyBtn.style.display = data.user.hasPasskey ? "block" : "none";
+        }
+
+        // Show 6-digit code container ONLY if user has TOTP enabled (or by default if 2FA active)
+        const totpContainer = document.getElementById("totp-login-container");
+        const totpInput = document.getElementById("totp-code-input");
+        const showTotp = Boolean(data.user.hasTotp || !data.user.hasPasskey);
+
+        if (totpContainer) {
+          totpContainer.style.display = showTotp ? "flex" : "none";
+        }
+        if (totpInput && showTotp) {
+          totpInput.value = "";
+          totpInput.focus();
+        }
+
+        return; // Pause login flow until 2FA is verified
+      }
+
+      // No MFA required - save token and redirect
       if (data.token) {
         localStorage.setItem(TOKEN_KEY, data.token);
       }
@@ -224,7 +254,7 @@
     } finally {
       if (submitButton) {
         submitButton.disabled = false;
-        submitButton.textContent = "Login";
+        submitButton.textContent = "Sign In";
       }
     }
   };
@@ -239,44 +269,32 @@
     }
     setMessage(messageBox, "Requesting Passkey authentication...", "info");
 
-    let credentialId = null;
     const email = document.getElementById("email")?.value?.trim();
 
     try {
-      if (window.PublicKeyCredential && typeof window.PublicKeyCredential === "function") {
-        const challenge = new Uint8Array(32);
-        window.crypto.getRandomValues(challenge);
+      const response = await fetch(`${API_BASE}/passkey/login-options?email=${encodeURIComponent(email)}`);
+      const options = await parseApiResponse(response);
 
-        const assertion = await navigator.credentials.get({
-          publicKey: {
-            challenge,
-            userVerification: "preferred",
-            timeout: 60000
-          }
-        });
+      const assertion = await navigator.credentials.get({ publicKey: options });
 
-        if (assertion) {
-          credentialId = assertion.id;
-        }
-      }
-    } catch (err) {
-      console.warn("WebAuthn assertion fallback simulation:", err);
-    }
-
-    try {
-      const response = await fetch(`${API_BASE}/passkey/login`, {
+      const authResponse = await fetch(`${API_BASE}/passkey/login-verify`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ credentialId, email })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: assertion.id,
+          rawId: btoa(String.fromCharCode(...new Uint8Array(assertion.rawId))),
+          response: {
+            authenticatorData: btoa(String.fromCharCode(...new Uint8Array(assertion.response.authenticatorData))),
+            clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(assertion.response.clientDataJSON))),
+            signature: btoa(String.fromCharCode(...new Uint8Array(assertion.response.signature))),
+            userHandle: assertion.response.userHandle ? btoa(String.fromCharCode(...new Uint8Array(assertion.response.userHandle))) : null
+          }
+        })
       });
 
-      const data = await parseApiResponse(response);
+      const data = await parseApiResponse(authResponse);
 
-      if (data.token) {
-        localStorage.setItem(TOKEN_KEY, data.token);
-      }
+      if (data.token) localStorage.setItem(TOKEN_KEY, data.token);
       if (data.user) {
         localStorage.setItem(USER_KEY, JSON.stringify(data.user));
         sessionStorage.setItem(
@@ -289,17 +307,68 @@
         );
       }
 
-      setMessage(messageBox, `🔑 Biometric Passkey Verified! Welcome ${data.user?.name || "User"}. Redirecting...`, "success");
+      setMessage(messageBox, "Passkey verified! Opening dashboard...", "success");
       setTimeout(() => {
         window.location.href = redirectByRole(data.user?.role);
       }, 500);
     } catch (error) {
-      setMessage(messageBox, error.message || "Passkey authentication failed", "error");
+      setMessage(messageBox, error.message, "error");
     } finally {
       if (passkeyBtn) {
         passkeyBtn.disabled = false;
-        passkeyBtn.textContent = "🔑 Login with Biometric Passkey / Fingerprint";
+        passkeyBtn.textContent = "🔑 Verify with Biometric Passkey / Fingerprint";
       }
+    }
+  };
+
+  const handleTotpLogin = async () => {
+    if (isVerifyingTotp) return;
+    const messageBox = document.getElementById("formMessage");
+    const totpInput = document.getElementById("totp-code-input");
+    const totpCode = totpInput?.value?.trim();
+    const email = document.getElementById("email")?.value?.trim();
+
+    if (!totpCode || totpCode.length !== 6 || !/^\d{6}$/.test(totpCode)) {
+      setMessage(messageBox, "Please enter a valid 6-digit numeric code.", "error");
+      return;
+    }
+
+    isVerifyingTotp = true;
+    setMessage(messageBox, "Verifying 6-digit code...", "info");
+
+    try {
+      const response = await fetch(`${API_BASE}/login/totp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code: totpCode })
+      });
+      const data = await parseApiResponse(response);
+
+      if (data.token) localStorage.setItem(TOKEN_KEY, data.token);
+      if (data.user) {
+        localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+        sessionStorage.setItem(
+          "arogya_user",
+          JSON.stringify({
+            name: data.user.name,
+            email: data.user.email,
+            role: data.user.role
+          })
+        );
+      }
+
+      setMessage(messageBox, "2FA Verified! Opening dashboard...", "success");
+      setTimeout(() => {
+        window.location.href = redirectByRole(data.user?.role);
+      }, 400);
+    } catch (error) {
+      setMessage(messageBox, error.message, "error");
+      if (totpInput) {
+        totpInput.value = "";
+        totpInput.focus();
+      }
+    } finally {
+      isVerifyingTotp = false;
     }
   };
 
@@ -350,6 +419,22 @@
     const passkeyBtn = document.getElementById("login-passkey-btn");
     if (passkeyBtn) {
       passkeyBtn.addEventListener("click", handlePasskeyLogin);
+    }
+
+    const loginTotpBtn = document.getElementById("login-totp-btn");
+    if (loginTotpBtn) {
+      loginTotpBtn.addEventListener("click", handleTotpLogin);
+    }
+
+    // Auto-process verification when user inputs 6 digits
+    const totpInput = document.getElementById("totp-code-input");
+    if (totpInput) {
+      totpInput.addEventListener("input", (e) => {
+        const val = e.target.value.trim();
+        if (val.length === 6 && /^\d{6}$/.test(val)) {
+          handleTotpLogin();
+        }
+      });
     }
 
     if (registerForm) {

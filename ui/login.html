@@ -100,9 +100,11 @@
                 <h1>Welcome back 👋</h1>
                 <p>Sign in to your Arogya Plus account to continue</p>
 
-                <div class="divider-text" style="margin-bottom:20px">or continue with email</div>
+                <div id="formMessage" class="message" style="margin-bottom:14px"></div>
 
-                <form class="form-stack">
+                <div class="divider-text" style="margin-bottom:20px">Sign in with email</div>
+
+                <form class="form-stack" id="loginForm">
                     <div class="form-group">
                         <label class="form-label">Email Address</label>
                         <div class="input-wrap">
@@ -127,21 +129,30 @@
                     </div>
                     <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:4px" id="loginBtn">Sign In</button>
 
-                    <div class="divider-text" style="margin:12px 0 6px">or use passwordless login</div>
+                    <!-- POST-LOGIN 2FA STEP (Only displayed after successful primary login if 2FA is enabled) -->
+                    <div id="mfa-section" style="display:none; flex-direction:column; gap:12px; margin-top:16px; padding:16px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-md);">
+                        <div style="font-weight:700; font-size:.88rem; color:var(--text-100);">🔐 Two-Factor Authentication Required</div>
+                        <div style="font-size:.78rem; color:var(--text-400);">Please complete verification using your enabled 2FA method below.</div>
 
-                    <button type="button" class="btn btn-outline btn-full btn-lg" style="border-color:var(--cyan);color:var(--cyan);background:rgba(6,182,212,0.06)" id="login-passkey-btn">
-                        🔑 Login with Biometric Passkey / Fingerprint
-                    </button>
+                        <!-- Biometric Passkey option (Shown ONLY if Passkey is enabled for user) -->
+                        <button type="button" class="btn btn-outline btn-full btn-lg" style="display:none; border-color:var(--cyan); color:var(--cyan); background:rgba(6,182,212,0.06)" id="login-passkey-btn">
+                            🔑 Verify with Biometric Passkey / Fingerprint
+                        </button>
+
+                        <!-- 6-digit Authenticator Code option (Shown ONLY if TOTP is enabled for user) -->
+                        <div id="totp-login-container" style="display:none; flex-direction:column; gap:8px;">
+                            <label class="form-label" style="font-size:.78rem; margin:0">Enter 6-digit Code from Authenticator App</label>
+                            <div style="display:flex; gap:8px">
+                                <input type="text" id="totp-code-input" placeholder="123456" maxlength="6" autocomplete="one-time-code" class="form-input" style="text-align:center; letter-spacing:6px; font-size:1.1rem; font-weight:700; flex:1">
+                                <button type="button" class="btn btn-primary btn-sm" id="login-totp-btn">Verify</button>
+                            </div>
+                            <div style="font-size:.72rem; color:var(--text-400); text-align:center;">Code automatically verifies upon entering 6 digits.</div>
+                        </div>
+                    </div>
                 </form>
 
                 <div class="auth-footer-text">
                     Don't have an account? <a href="register.html">Create one free</a>
-                </div>
-
-                <div
-                    style="margin-top:24px;padding:14px;border:1px solid var(--border);border-radius:var(--r-md);font-size:.78rem;color:var(--text-400);text-align:center">
-                    🔐 Demo: <code style="color:var(--blue)">super-admin@arogyaplus.com</code> / <code
-                        style="color:var(--blue)">123456</code>
                 </div>
             </div>
         </div>

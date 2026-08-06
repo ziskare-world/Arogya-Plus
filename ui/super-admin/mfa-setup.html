@@ -148,22 +148,30 @@
                             </div>
                         </div>
 
-                        <p style="font-size:.82rem;color:var(--text-300);line-height:1.5">
-                            Scan the QR code below using your mobile authenticator app to generate time-based 6-digit verification codes.
-                        </p>
+                        <div id="totp-setup-box" style="display:flex;flex-direction:column;gap:14px">
+                            <p style="font-size:.82rem;color:var(--text-300);line-height:1.5;margin:0">
+                                Scan the QR code below using your mobile authenticator app to generate time-based 6-digit verification codes.
+                            </p>
 
-                        <div class="qr-placeholder" id="totp-qr-container">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=otpauth://totp/ArogyaPlus:super-admin@arogyaplus.com?secret=JBSWY3DPEHPK3PXP&issuer=ArogyaPlus" alt="2FA QR Code" style="width:140px;height:140px">
+                            <div class="qr-placeholder" id="totp-qr-container">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=otpauth://totp/ArogyaPlus:super-admin@arogyaplus.com?secret=JBSWY3DPEHPK3PXP&issuer=ArogyaPlus" alt="2FA QR Code" style="width:140px;height:140px">
+                            </div>
+
+                            <div style="text-align:center">
+                                <div style="font-size:.74rem;color:var(--text-500)">Manual Secret Key:</div>
+                                <code style="font-size:.85rem;color:var(--cyan);font-weight:700">JBSW Y3DP EHPK 3PXP</code>
+                            </div>
+
+                            <div style="display:flex;gap:8px" id="totp-input-box">
+                                <input type="text" id="totp-verify-input" placeholder="Enter 6-digit code" class="form-input" style="flex:1;text-align:center;letter-spacing:2px">
+                                <button class="btn btn-primary btn-sm" id="verify-totp-btn">Verify & Activate</button>
+                            </div>
                         </div>
 
-                        <div style="text-align:center">
-                            <div style="font-size:.74rem;color:var(--text-500)">Manual Secret Key:</div>
-                            <code style="font-size:.85rem;color:var(--cyan);font-weight:700">JBSW Y3DP EHPK 3PXP</code>
-                        </div>
-
-                        <div style="display:flex;gap:8px">
-                            <input type="text" id="totp-verify-input" placeholder="Enter 6-digit code" class="form-input" style="flex:1;text-align:center;letter-spacing:2px">
-                            <button class="btn btn-primary btn-sm" id="verify-totp-btn">Verify</button>
+                        <div id="totp-verified-badge" style="display:none;background:rgba(16,185,129,0.1);border:1px solid var(--green);border-radius:var(--r-md);padding:20px;text-align:center">
+                            <div style="font-size:2.2rem;margin-bottom:6px">✅</div>
+                            <div style="font-weight:700;font-size:1rem;color:var(--green-light)">Authenticator App Verified</div>
+                            <div style="font-size:.78rem;color:var(--text-400);margin-top:4px">Your mobile authenticator app is active and paired for two-step security.</div>
                         </div>
                     </div>
 

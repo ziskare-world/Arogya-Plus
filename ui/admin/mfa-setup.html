@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - Passkey & Multi-Factor Auth Setup</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+    <style>
+        .mfa-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: var(--shadow);
+            transition: all var(--t-fast);
+        }
+
+        .mfa-card:hover {
+            border-color: var(--cyan);
+        }
+
+        .mfa-icon-box {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--r-md);
+            background: rgba(6, 182, 212, 0.12);
+            color: var(--cyan);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+        }
+
+        .mfa-status-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .qr-placeholder {
+            width: 160px;
+            height: 160px;
+            background: #ffffff;
+            border-radius: var(--r-md);
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+
+        .recovery-code-chip {
+            background: var(--bg-800);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: var(--r-sm);
+            font-family: monospace;
+            font-size: .88rem;
+            text-align: center;
+            letter-spacing: 1px;
+            color: var(--cyan);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="app-layout">
+        <div class="main-area">
+            <div id="topbar-container"></div>
+
+            <main class="page-content" style="padding:24px">
+                <div class="page-header">
+                    <div>
+                        <h2>🛡️ Passkey & Multi-Factor Authentication (MFA)</h2>
+                        <p>Configure FIDO2 Passkeys, Authenticator TOTP apps, and emergency backup codes for two-step security.</p>
+                    </div>
+                </div>
+
+                <!-- MFA Overall Status Banner -->
+                <div class="mfa-status-banner">
+                    <div style="display:flex;align-items:center;gap:16px">
+                        <div style="font-size:2.4rem" id="mfa-status-icon">🛡️</div>
+                        <div>
+                            <div style="display:flex;align-items:center;gap:10px">
+                                <h3 style="margin:0" id="mfa-status-title">Multi-Factor Authentication Setup</h3>
+                                <span class="badge badge-green" id="mfa-status-badge">🟢 MFA Active</span>
+                            </div>
+                            <p style="font-size:.82rem;color:var(--text-400);margin-top:4px" id="mfa-status-desc">
+                                Your account is protected with FIDO2 Biometric Passkeys and 2-Step Authentication.
+                            </p>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-outline btn-sm" id="toggle-mfa-global-btn" style="border-color:var(--cyan);color:var(--cyan)">
+                        ⚙️ Toggle 2FA State
+                    </button>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(340px, 1fr));gap:20px">
+                    
+                    <!-- FIDO2 / WebAuthn Biometric Passkey Card -->
+                    <div class="mfa-card">
+                        <div style="display:flex;align-items:center;gap:14px">
+                            <div class="mfa-icon-box">🔑</div>
+                            <div>
+                                <h3 style="margin:0;font-size:1.1rem">FIDO2 / WebAuthn Biometric Passkey</h3>
+                                <div style="font-size:.76rem;color:var(--text-400)">Fingerprint, FaceID, Windows Hello & YubiKey</div>
+                            </div>
+                        </div>
+
+                        <p style="font-size:.82rem;color:var(--text-300);line-height:1.5">
+                            Passkeys provide fast, passwordless cryptographic security using your device's built-in biometric sensor or hardware security key.
+                        </p>
+
+                        <div style="background:var(--bg-800);border:1px solid var(--border);border-radius:var(--r-md);padding:12px">
+                            <div style="font-size:.78rem;font-weight:600;color:var(--text-200);margin-bottom:6px">Registered Passkeys</div>
+                            <div id="registered-passkeys-list" style="display:flex;flex-direction:column;gap:8px">
+                                <div style="display:flex;justify-content:space-between;align-items:center;font-size:.78rem;color:var(--text-300)">
+                                    <span>💻 Windows Hello / Touch ID (Primary)</span>
+                                    <span class="badge badge-green">Active</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary btn-sm" id="register-passkey-btn" style="width:100%">
+                            ➕ Register New Biometric Passkey
+                        </button>
+                    </div>
+
+                    <!-- Authenticator App (TOTP QR Code) Card -->
+                    <div class="mfa-card">
+                        <div style="display:flex;align-items:center;gap:14px">
+                            <div class="mfa-icon-box" style="background:rgba(16,185,129,0.12);color:var(--green)">📱</div>
+                            <div>
+                                <h3 style="margin:0;font-size:1.1rem">Authenticator App (TOTP)</h3>
+                                <div style="font-size:.76rem;color:var(--text-400)">Google Authenticator, Authy, Microsoft Authenticator</div>
+                            </div>
+                        </div>
+
+                        <div id="totp-setup-box" style="display:flex;flex-direction:column;gap:14px">
+                            <p style="font-size:.82rem;color:var(--text-300);line-height:1.5;margin:0">
+                                Scan the QR code below using your mobile authenticator app to generate time-based 6-digit verification codes.
+                            </p>
+
+                            <div class="qr-placeholder" id="totp-qr-container">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=otpauth://totp/ArogyaPlus:admin@arogyaplus.com?secret=JBSWY3DPEHPK3PXP&issuer=ArogyaPlus" alt="2FA QR Code" style="width:140px;height:140px">
+                            </div>
+
+                            <div style="text-align:center">
+                                <div style="font-size:.74rem;color:var(--text-500)">Manual Secret Key:</div>
+                                <code id="totp-secret-code" style="font-size:.85rem;color:var(--cyan);font-weight:700">Loading secret...</code>
+                            </div>
+
+                            <div style="display:flex;gap:8px" id="totp-input-box">
+                                <input type="text" id="totp-verify-input" placeholder="Enter 6-digit code" class="form-input" style="flex:1;text-align:center;letter-spacing:2px">
+                                <button class="btn btn-primary btn-sm" id="verify-totp-btn">Verify & Activate</button>
+                            </div>
+                        </div>
+
+                        <div id="totp-verified-badge" style="display:none;background:rgba(16,185,129,0.1);border:1px solid var(--green);border-radius:var(--r-md);padding:20px;text-align:center">
+                            <div style="font-size:2.2rem;margin-bottom:6px">✅</div>
+                            <div style="font-weight:700;font-size:1rem;color:var(--green-light)">Authenticator App Verified</div>
+                            <div style="font-size:.78rem;color:var(--text-400);margin-top:4px">Your mobile authenticator app is active and paired for two-step security.</div>
+                        </div>
+                    </div>
+
+                    <!-- Emergency Backup Recovery Codes Card -->
+                    <div class="mfa-card">
+                        <div style="display:flex;align-items:center;gap:14px">
+                            <div class="mfa-icon-box" style="background:rgba(245,158,11,0.12);color:var(--yellow)">🛡️</div>
+                            <div>
+                                <h3 style="margin:0;font-size:1.1rem">Emergency Recovery Backup Codes</h3>
+                                <div style="font-size:.76rem;color:var(--text-400)">Single-use codes if your mobile device is lost</div>
+                            </div>
+                        </div>
+
+                        <p style="font-size:.82rem;color:var(--text-300);line-height:1.5">
+                            Save these single-use recovery codes in a secure password manager. Each code can be used once to regain account access.
+                        </p>
+
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="backup-codes-grid">
+                            <div class="recovery-code-chip">9281-4019</div>
+                            <div class="recovery-code-chip">5102-8834</div>
+                            <div class="recovery-code-chip">3019-7412</div>
+                            <div class="recovery-code-chip">8472-1093</div>
+                            <div class="recovery-code-chip">6104-9238</div>
+                            <div class="recovery-code-chip">1982-4501</div>
+                        </div>
+
+                        <div style="display:flex;gap:8px;margin-top:6px">
+                            <button class="btn btn-outline btn-sm" id="download-recovery-codes-btn" style="flex:1">💾 Save Codes</button>
+                            <button class="btn btn-outline btn-sm" id="generate-new-codes-btn" style="flex:1">🔄 Regenerate</button>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="../backend-js/super-admin-mfa-setup.js"></script>
+</body>
+
+</html>

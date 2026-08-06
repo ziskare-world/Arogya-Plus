@@ -1424,7 +1424,7 @@ router.get(
 router.put(
   "/settings",
   protect,
-  authorize("super-admin"),
+  authorize("admin", "super-admin"),
   asyncHandler(async (req, res) => {
     let settings = await SystemSettings.findOne({ key: "global_settings" });
     if (!settings) {
@@ -1446,7 +1446,11 @@ router.put(
       "hospitalAutoApproval",
       "platformTitle",
       "defaultStorageQuota",
-      "tempFileCleanup"
+      "tempFileCleanup",
+      "totalBeds",
+      "occupiedBeds",
+      "icuBedsTotal",
+      "icuBedsOccupied"
     ];
 
     allowedFields.forEach((field) => {
@@ -1459,7 +1463,7 @@ router.put(
 
     return res.status(200).json({
       success: true,
-      message: "Security and accessibility settings saved successfully",
+      message: "Hospital settings saved successfully",
       settings
     });
   })

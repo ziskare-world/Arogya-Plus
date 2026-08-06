@@ -157,6 +157,35 @@
                         </form>
                     </div>
 
+                    <!-- Hospital Bed Capacity & Occupancy Settings -->
+                    <div class="card" style="padding:20px">
+                        <h3 style="margin-bottom:12px;font-size:1.05rem">🛏️ Hospital Bed Capacity & Occupancy</h3>
+                        <form id="settings-bed-form" style="display:flex;flex-direction:column;gap:14px">
+                            <div class="form-group">
+                                <label class="form-label" for="setting-total-beds">Total Hospital Beds Capacity</label>
+                                <input id="setting-total-beds" class="form-input" type="number" min="0" value="0" placeholder="0 (Default)" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="setting-occupied-beds">Currently Occupied Beds</label>
+                                <input id="setting-occupied-beds" class="form-input" type="number" min="0" value="0" placeholder="0 (Default)" required />
+                            </div>
+
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                                <div class="form-group">
+                                    <label class="form-label" for="setting-icu-beds-total">Total ICU Beds</label>
+                                    <input id="setting-icu-beds-total" class="form-input" type="number" min="0" value="0" placeholder="0" required />
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="setting-icu-beds-occupied">Occupied ICU Beds</label>
+                                    <input id="setting-icu-beds-occupied" class="form-input" type="number" min="0" value="0" placeholder="0" required />
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary btn-sm" type="submit" style="align-self:flex-end">Save Bed Settings</button>
+                        </form>
+                    </div>
+
                 </div>
             </main>
         </div>

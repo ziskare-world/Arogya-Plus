@@ -46,6 +46,17 @@ const populateForms = (settings = {}) => {
   if (platformTitle) platformTitle.value = settings.platformTitle || "Arogya Plus Healthcare Platform";
   if (storageQuota) storageQuota.value = settings.defaultStorageQuota || "5GB";
 
+  // Bed Capacity Controls
+  const totalBeds = document.getElementById("setting-total-beds");
+  const occupiedBeds = document.getElementById("setting-occupied-beds");
+  const icuBedsTotal = document.getElementById("setting-icu-beds-total");
+  const icuBedsOccupied = document.getElementById("setting-icu-beds-occupied");
+
+  if (totalBeds) totalBeds.value = settings.totalBeds ?? 0;
+  if (occupiedBeds) occupiedBeds.value = settings.occupiedBeds ?? 0;
+  if (icuBedsTotal) icuBedsTotal.value = settings.icuBedsTotal ?? 0;
+  if (icuBedsOccupied) icuBedsOccupied.value = settings.icuBedsOccupied ?? 0;
+
   applyAccessibilityEffects(settings);
 };
 
@@ -140,6 +151,20 @@ const setupFormListeners = () => {
         defaultStorageQuota: document.getElementById("setting-storage-quota").value
       };
       await saveSettings(payload, "Hospital network and storage preferences saved");
+    });
+  }
+
+  const bedForm = document.getElementById("settings-bed-form");
+  if (bedForm) {
+    bedForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const payload = {
+        totalBeds: Number(document.getElementById("setting-total-beds").value || 0),
+        occupiedBeds: Number(document.getElementById("setting-occupied-beds").value || 0),
+        icuBedsTotal: Number(document.getElementById("setting-icu-beds-total").value || 0),
+        icuBedsOccupied: Number(document.getElementById("setting-icu-beds-occupied").value || 0)
+      };
+      await saveSettings(payload, "Hospital bed capacity settings saved successfully");
     });
   }
 };

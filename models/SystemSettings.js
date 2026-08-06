@@ -23,7 +23,13 @@ const systemSettingsSchema = new mongoose.Schema(
     hospitalAutoApproval: { type: String, enum: ["manual", "auto"], default: "manual" },
     platformTitle: { type: String, default: "Arogya Plus Healthcare Platform" },
     defaultStorageQuota: { type: String, default: "5GB" },
-    tempFileCleanup: { type: String, default: "daily" }
+    tempFileCleanup: { type: String, default: "daily" },
+
+    // Hospital Bed Capacity & Occupancy Settings (Default 0)
+    totalBeds: { type: Number, default: 0 },
+    occupiedBeds: { type: Number, default: 0 },
+    icuBedsTotal: { type: Number, default: 0 },
+    icuBedsOccupied: { type: Number, default: 0 }
   },
   { timestamps: true }
 );

@@ -189,17 +189,15 @@ const renderWeeklyAppointments = () => {
 };
 
 const renderOccupancy = () => {
-  const baseCapacity = 200;
-  let occupied = 188; // Default 188 occupied out of 200 (94%)
-  if (state.patients.length > 0) {
-    occupied = Math.min(
-      baseCapacity,
-      Math.max(40, Math.round(180 + state.patients.length * 0.05 + state.queue.length))
-    );
-  }
-  const pct = Math.round((occupied / baseCapacity) * 100);
+  const totalBeds = Number(state.settings?.totalBeds || 0);
+  const occupiedBeds = Number(state.settings?.occupiedBeds || 0);
+  const icuBedsTotal = Number(state.settings?.icuBedsTotal || 0);
+  const icuBedsOccupied = Number(state.settings?.icuBedsOccupied || 0);
 
-  renderDonut("donut-svg", pct, "#ef4444");
+  const pct = totalBeds > 0 ? Math.min(100, Math.max(0, Math.round((occupiedBeds / totalBeds) * 100))) : 0;
+  const availableBeds = Math.max(0, totalBeds - occupiedBeds);
+
+  renderDonut("donut-svg", pct, pct > 85 ? "#ef4444" : "#06b6d4");
 
   const centerPctEl = document.getElementById("bed-occupancy-pct") || document.querySelector(".donut-center div");
   if (centerPctEl) {
@@ -211,10 +209,10 @@ const renderOccupancy = () => {
   const bedAvailableEl = document.getElementById("bed-available");
   const bedIcuEl = document.getElementById("bed-icu");
 
-  if (bedTotalEl) bedTotalEl.textContent = String(baseCapacity);
-  if (bedOccupiedEl) bedOccupiedEl.textContent = String(occupied);
-  if (bedAvailableEl) bedAvailableEl.textContent = String(baseCapacity - occupied);
-  if (bedIcuEl) bedIcuEl.textContent = `${Math.round(occupied * 0.13)}/30`;
+  if (bedTotalEl) bedTotalEl.textContent = String(totalBeds);
+  if (bedOccupiedEl) bedOccupiedEl.textContent = String(occupiedBeds);
+  if (bedAvailableEl) bedAvailableEl.textContent = String(availableBeds);
+  if (bedIcuEl) bedIcuEl.textContent = `${icuBedsOccupied}/${icuBedsTotal}`;
 };
 
 const buildActivityItems = () => {
@@ -342,7 +340,8 @@ const loadDashboardData = async () => {
     apiRequest("/api/admin/users?role=patient"),
     apiRequest("/api/emergency/queue"),
     apiRequest("/api/payment/my"),
-    apiRequest("/api/admin/doctor-reviews?limit=20")
+    apiRequest("/api/admin/doctor-reviews?limit=20"),
+    apiRequest("/api/admin/settings")
   ]);
 
   state.appointments = requests[0].status === "fulfilled" ? requests[0].value.appointments || [] : [];
@@ -351,6 +350,7 @@ const loadDashboardData = async () => {
   state.queue = requests[3].status === "fulfilled" ? requests[3].value.queue || [] : [];
   state.payments = requests[4].status === "fulfilled" ? requests[4].value.payments || [] : [];
   state.doctorReviews = requests[5].status === "fulfilled" ? requests[5].value.reviews || [] : [];
+  state.settings = requests[6].status === "fulfilled" ? requests[6].value.settings || {} : {};
 
   const firstError = requests.find((result) => result.status === "rejected");
   if (firstError) {

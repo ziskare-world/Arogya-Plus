@@ -3,29 +3,58 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>Arogya Plus - Ambulance Desk</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arogya Plus - Ambulance Desk & Fleet Management</title>
     <link rel="stylesheet" href="../css/global.css" />
     <link rel="stylesheet" href="../css/dashboard.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
+        .page-content {
+            padding: 24px 32px !important;
+            box-sizing: border-box;
+            max-width: 100%;
+        }
+
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 14px;
-            margin-bottom: 18px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card-custom {
+            background: #ffffff;
+            border: 1px solid var(--border, #e2e8f0);
+            border-radius: 12px;
+            padding: 18px 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .stat-val-custom {
+            font-size: 1.8rem;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        .stat-lbl-custom {
+            font-size: 0.8rem;
+            color: var(--text-400, #64748b);
+            font-weight: 600;
         }
 
         .layout-grid {
             display: grid;
-            grid-template-columns: 1.35fr 1fr;
-            gap: 16px;
+            grid-template-columns: 1fr 410px;
+            gap: 24px;
+            align-items: start;
         }
 
         .mini-note {
             font-size: .78rem;
-            color: var(--text-500);
-            margin-top: 6px;
+            color: var(--text-500, #64748b);
+            margin-top: 4px;
         }
 
         .tag-free {
@@ -34,18 +63,18 @@
         }
 
         .tag-busy {
-            color: #f59e0b;
+            color: #d97706;
             font-weight: 600;
         }
 
         .inline-actions {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 6px;
             align-items: center;
         }
 
-        @media (max-width: 1080px) {
+        @media (max-width: 1100px) {
             .layout-grid {
                 grid-template-columns: 1fr;
             }
@@ -58,55 +87,42 @@
     <div class="app-layout">
         <div class="main-area">
             <div id="topbar-container"></div>
-            <main class="page-content" style="padding:24px">
-                <div class="page-header flex-between" style="margin-bottom:20px">
+            
+            <main class="page-content">
+                <div class="page-header flex-between" style="margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
                     <div>
-                        <h2>🚑 Ambulance Reception Desk & Fleet Management</h2>
-                        <p>Manage incoming emergency bookings, dispatch ambulances, and add driver/vehicle fleet inventory manually.</p>
+                        <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:4px">🚑 Ambulance Reception Desk & Fleet Management</h2>
+                        <p style="color:var(--text-400);font-size:.88rem">Manage emergency requests, dispatch hospital ambulances, and register driver/vehicle details manually.</p>
                     </div>
                     <button id="refresh-ambulance-dashboard-btn" class="btn btn-outline btn-sm" type="button">🔄 Refresh Desk</button>
                 </div>
 
+                <!-- 4 Clean Stat Overview Cards -->
                 <div class="dashboard-grid">
-                    <div class="stat-card blue card-sm">
-                        <div id="stat-total-bookings" class="stat-value">0</div>
-                        <div class="stat-label">Total Requests</div>
+                    <div class="stat-card-custom" style="border-top:4px solid #2563eb">
+                        <div id="stat-total-bookings" class="stat-val-custom" style="color:#2563eb">0</div>
+                        <div class="stat-lbl-custom">Total Requests</div>
                     </div>
-                    <div class="stat-card yellow card-sm">
-                        <div id="stat-active-bookings" class="stat-value">0</div>
-                        <div class="stat-label">Active Requests</div>
+                    <div class="stat-card-custom" style="border-top:4px solid #d97706">
+                        <div id="stat-active-bookings" class="stat-val-custom" style="color:#d97706">0</div>
+                        <div class="stat-lbl-custom">Active Requests</div>
                     </div>
-                    <div class="stat-card green card-sm">
-                        <div id="stat-available-fleet" class="stat-value">0</div>
-                        <div class="stat-label">Available Ambulance</div>
+                    <div class="stat-card-custom" style="border-top:4px solid #16a34a">
+                        <div id="stat-available-fleet" class="stat-val-custom" style="color:#16a34a">0</div>
+                        <div class="stat-lbl-custom">Available Ambulances</div>
                     </div>
-                    <div class="stat-card red card-sm">
-                        <div id="stat-unavailable-fleet" class="stat-value">0</div>
-                        <div class="stat-label">Unavailable Ambulance</div>
+                    <div class="stat-card-custom" style="border-top:4px solid #dc2626">
+                        <div id="stat-unavailable-fleet" class="stat-val-custom" style="color:#dc2626">0</div>
+                        <div class="stat-lbl-custom">Unavailable Ambulances</div>
                     </div>
                 </div>
 
-                <!-- Admin Interactive Fleet & Emergency Live Map -->
-                <div class="card" style="margin-bottom:24px">
-                    <div class="card-header flex-between">
-                        <div class="card-title">🌐 Hospital, Fleet & Emergency SOS Live Map</div>
-                        <div style="display:flex;gap:8px">
-                            <input id="admin-map-search" class="form-input" placeholder="Search location..." style="max-width:200px;padding:4px 8px;font-size:12px;" />
-                            <select id="admin-map-filter" class="form-input" style="max-width:140px;padding:4px 8px;font-size:12px;">
-                                <option value="all">Show All</option>
-                                <option value="hospitals">Hospitals</option>
-                                <option value="ambulances">Ambulances</option>
-                                <option value="emergencies">Emergencies</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div id="admin-live-map" style="width:100%;height:380px;border-radius:8px;background:#1e293b;position:relative;z-index:1"></div>
-                </div>
-
+                <!-- Clean Two-Column Layout -->
                 <div class="layout-grid">
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-title">Ambulance Requests Received</div>
+                    <!-- Left Column: Ambulance Booking Requests Received -->
+                    <div class="card" style="padding:20px">
+                        <div class="card-header" style="margin-bottom:16px">
+                            <div class="card-title" style="font-size:1.05rem;font-weight:700">📋 Incoming Ambulance Requests</div>
                         </div>
                         <div class="table-wrap">
                             <table>
@@ -114,32 +130,34 @@
                                     <tr>
                                         <th>Booking</th>
                                         <th>Patient</th>
-                                        <th>Pickup</th>
-                                        <th>Problem</th>
+                                        <th>Pickup Location</th>
+                                        <th>Problem Details</th>
                                         <th>Assigned Doctor</th>
                                         <th>Ambulance</th>
                                         <th>Status</th>
-                                        <th>ETA</th>
+                                        <th>ETA (Min)</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="ambulance-requests-body">
                                     <tr>
-                                        <td colspan="9" class="muted" style="text-align:center">Loading ambulance requests...</td>
+                                        <td colspan="9" class="muted" style="text-align:center;padding:24px">Loading ambulance requests...</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
-                    <div style="display:flex;flex-direction:column;gap:20px">
-                        <!-- Add Ambulance Inventory Card -->
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-title">➕ Add New Ambulance Fleet</div>
+                    <!-- Right Column: Add Vehicle Form & Registered Fleet List -->
+                    <div style="display:flex;flex-direction:column;gap:24px">
+                        
+                        <!-- Manual Entry Ambulance Form -->
+                        <div class="card" style="padding:20px">
+                            <div class="card-header" style="margin-bottom:14px">
+                                <div class="card-title" style="font-size:1.05rem;font-weight:700">➕ Add New Ambulance Vehicle</div>
                             </div>
-                            <div id="fleet-permission-note" class="mini-note" style="margin-bottom:8px"></div>
-                            <form id="fleet-form" style="display:grid;gap:12px">
+                            <div id="fleet-permission-note" class="mini-note" style="margin-bottom:12px"></div>
+                            <form id="fleet-form" style="display:flex;flex-direction:column;gap:14px">
                                 <div class="form-group">
                                     <label class="form-label" for="fleet-vehicle-number">Ambulance Vehicle Number</label>
                                     <input id="fleet-vehicle-number" class="form-input" placeholder="e.g. OD-05-AX-9912 or MH-12-AB-1234" required />
@@ -148,9 +166,9 @@
                                     <label class="form-label" for="fleet-driver-name">Driver Full Name</label>
                                     <input id="fleet-driver-name" class="form-input" placeholder="e.g. Ramesh Kumar" required />
                                 </div>
-                                <div class="grid-2" style="gap:10px;display:grid;grid-template-columns:1fr 1fr">
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
                                     <div class="form-group">
-                                        <label class="form-label" for="fleet-driver-phone">Driver Contact Phone</label>
+                                        <label class="form-label" for="fleet-driver-phone">Driver Phone</label>
                                         <input id="fleet-driver-phone" class="form-input" placeholder="+91 9876543210" required />
                                     </div>
                                     <div class="form-group">
@@ -158,12 +176,12 @@
                                         <input id="fleet-driver-email" class="form-input" type="email" placeholder="driver@hospital.com" required />
                                     </div>
                                 </div>
-                                <div class="grid-2" style="gap:10px;display:grid;grid-template-columns:1fr 1fr">
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
                                     <div class="form-group">
                                         <label class="form-label" for="fleet-equipment-level">Equipment Level</label>
                                         <select id="fleet-equipment-level" class="form-input">
-                                            <option value="BLS">BLS (Basic Life Support)</option>
-                                            <option value="ALS">ALS (Advanced Life Support)</option>
+                                            <option value="BLS">BLS (Basic Support)</option>
+                                            <option value="ALS">ALS (Advanced Support)</option>
                                             <option value="ICU Ambulance">ICU Ambulance</option>
                                             <option value="Patient Transport">Patient Transport</option>
                                         </select>
@@ -177,14 +195,14 @@
                                         </select>
                                     </div>
                                 </div>
-                                <button id="fleet-submit-btn" class="btn btn-primary btn-full" type="submit">➕ Add Ambulance Manually</button>
+                                <button id="fleet-submit-btn" class="btn btn-primary btn-full" type="submit" style="margin-top:4px">➕ Add Ambulance Manually</button>
                             </form>
                         </div>
 
-                        <!-- Fleet Availability Table Card -->
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-title">🚑 Registered Ambulance Fleet</div>
+                        <!-- Fleet Availability & Inventory List -->
+                        <div class="card" style="padding:20px">
+                            <div class="card-header" style="margin-bottom:14px">
+                                <div class="card-title" style="font-size:1.05rem;font-weight:700">🚑 Registered Ambulance Fleet</div>
                             </div>
                             <div class="table-wrap">
                                 <table>
@@ -198,26 +216,19 @@
                                     </thead>
                                     <tbody id="ambulance-fleet-body">
                                         <tr>
-                                            <td colspan="4" class="muted" style="text-align:center">Loading ambulance inventory...</td>
+                                            <td colspan="4" class="muted" style="text-align:center;padding:16px">Loading ambulance inventory...</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </main>
         </div>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="../js/map.js"></script>
-    <script src="../js/routing.js"></script>
-    <script src="../js/geolocation.js"></script>
-    <script src="../js/hospital.js"></script>
-    <script src="../js/ambulance.js"></script>
-    <script src="../js/emergency.js"></script>
     <script type="module" src="../backend-js/admin-ambulance.js"></script>
 </body>
 

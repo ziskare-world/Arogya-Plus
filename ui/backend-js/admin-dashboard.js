@@ -204,6 +204,11 @@ const renderOccupancy = () => {
     centerPctEl.textContent = `${pct}%`;
   }
 
+  const welcomePctEl = document.getElementById("welcome-occupancy-pct");
+  if (welcomePctEl) {
+    welcomePctEl.textContent = `${pct}%`;
+  }
+
   const bedTotalEl = document.getElementById("bed-total");
   const bedOccupiedEl = document.getElementById("bed-occupied");
   const bedAvailableEl = document.getElementById("bed-available");

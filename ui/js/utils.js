@@ -76,11 +76,11 @@ export function renderDonut(svgId, pct, color = '#06b6d4') {
   const svg = document.getElementById(svgId);
   if (!svg) return;
   const r = 45, c = 2 * Math.PI * r;
-  const dash = (pct / 100) * c;
+  const safePct = Math.max(0, Math.min(100, Number(pct || 0)));
+  const dash = (safePct / 100) * c;
   svg.innerHTML = `
     <circle cx="60" cy="60" r="${r}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="10"/>
-    <circle cx="60" cy="60" r="${r}" fill="none" stroke="${color}" stroke-width="10"
-      stroke-dasharray="${dash} ${c}" stroke-linecap="round"/>`;
+    ${safePct > 0 ? `<circle cx="60" cy="60" r="${r}" fill="none" stroke="${color}" stroke-width="10" stroke-dasharray="${dash} ${c}" stroke-linecap="round"/>` : ''}`;
 }
 
 /* ── SAMPLE DATA ── */

@@ -257,7 +257,19 @@ const setEditForm = (doctor) => {
 
   if (doctorNameEl) doctorNameEl.value = doctor.name || "";
   if (doctorEmailEl) doctorEmailEl.value = doctor.email || "";
-  if (doctorSpecializationEl) doctorSpecializationEl.value = doctor.specialization || "";
+  if (doctorSpecializationEl) {
+    const spec = doctor.specialization || "";
+    if (spec) {
+      const exists = Array.from(doctorSpecializationEl.options).some((opt) => opt.value.toLowerCase() === spec.toLowerCase());
+      if (!exists) {
+        const opt = document.createElement("option");
+        opt.value = spec;
+        opt.textContent = spec;
+        doctorSpecializationEl.appendChild(opt);
+      }
+    }
+    doctorSpecializationEl.value = spec;
+  }
   if (doctorPhoneEl) doctorPhoneEl.value = doctor.phone || "";
 };
 

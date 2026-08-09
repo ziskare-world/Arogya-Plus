@@ -590,10 +590,44 @@ router.get(
       .select("-password")
       .sort({ createdAt: -1 });
 
+    const doctorIds = doctors.map((d) => d._id);
+    const ratingsAgg = await Appointment.aggregate([
+      {
+        $match: {
+          doctor: { $in: doctorIds },
+          doctorRating: { $gte: 1, $lte: 5 }
+        }
+      },
+      {
+        $group: {
+          _id: "$doctor",
+          avgRating: { $avg: "$doctorRating" },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const ratingMap = new Map();
+    ratingsAgg.forEach((item) => {
+      ratingMap.set(String(item._id), {
+        avgRating: Number(item.avgRating.toFixed(1)),
+        count: item.count
+      });
+    });
+
+    const normalizedDoctors = doctors.map((doc) => {
+      const docObj = doc.toObject();
+      const rInfo = ratingMap.get(String(doc._id)) || { avgRating: 0, count: 0 };
+      docObj.rating = rInfo.avgRating;
+      docObj.reviewCount = rInfo.count;
+      docObj.experienceYears = Number(docObj.experienceYears || 0);
+      return docObj;
+    });
+
     return res.status(200).json({
       success: true,
-      count: doctors.length,
-      doctors
+      count: normalizedDoctors.length,
+      doctors: normalizedDoctors
     });
   })
 );

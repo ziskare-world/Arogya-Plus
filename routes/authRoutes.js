@@ -112,22 +112,52 @@ router.get(
 router.get(
   "/doctors",
   asyncHandler(async (req, res) => {
+    const Appointment = require("../models/Appointment");
     const doctors = await User.find({ role: "doctor", isActive: true })
       .select(
-        "name email specialization phone clinicAddress clinicCoordinates hospitalName hospitalCoordinates createdByAdmin"
+        "name email specialization experienceYears rating reviewCount phone clinicAddress clinicCoordinates hospitalName hospitalCoordinates createdByAdmin"
       )
       .populate("createdByAdmin", "hospitalCoordinates")
       .lean();
 
+    const doctorIds = doctors.map((d) => d._id);
+    const ratingsAgg = await Appointment.aggregate([
+      {
+        $match: {
+          doctor: { $in: doctorIds },
+          doctorRating: { $gte: 1, $lte: 5 }
+        }
+      },
+      {
+        $group: {
+          _id: "$doctor",
+          avgRating: { $avg: "$doctorRating" },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const ratingMap = new Map();
+    ratingsAgg.forEach((item) => {
+      ratingMap.set(String(item._id), {
+        avgRating: Number(item.avgRating.toFixed(1)),
+        count: item.count
+      });
+    });
+
     const normalizedDoctors = doctors.map((doctor) => {
       const fallbackHospitalCoordinates =
         doctor.hospitalCoordinates || doctor.createdByAdmin?.hospitalCoordinates || null;
+      const rInfo = ratingMap.get(String(doctor._id)) || { avgRating: 0, count: 0 };
 
       return {
         _id: doctor._id,
         name: doctor.name,
         email: doctor.email,
         specialization: doctor.specialization,
+        experienceYears: Number(doctor.experienceYears || 0),
+        rating: rInfo.avgRating,
+        reviewCount: rInfo.count,
         phone: doctor.phone,
         clinicAddress: doctor.clinicAddress,
         clinicCoordinates: doctor.clinicCoordinates || null,

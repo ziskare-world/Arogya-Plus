@@ -505,6 +505,8 @@ router.post(
     body("email").isEmail().withMessage("Valid email is required").normalizeEmail(),
     body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 characters"),
     body("specialization").trim().notEmpty().withMessage("Specialization is required"),
+    body("experienceYears").optional(),
+    body("experience").optional(),
     body("phone").optional().isString(),
     body("clinicAddress").optional().isString(),
     body("clinicCoordinates").optional().isObject().withMessage("clinicCoordinates must be an object"),
@@ -513,10 +515,11 @@ router.post(
   ],
   validateRequest,
   asyncHandler(async (req, res) => {
-    const { name, email, password, phone, specialization, experienceYears, clinicAddress, clinicCoordinates, hospitalName } =
+    const { name, email, password, phone, specialization, experienceYears, experience, clinicAddress, clinicCoordinates, hospitalName } =
       req.body;
     const normalizedCoordinates = normalizeCoordinates(clinicCoordinates);
-    
+    const expVal = Number(experienceYears !== undefined ? experienceYears : (experience !== undefined ? experience : 0));
+
     let targetHospitalName = hospitalName || req.user.hospitalName || undefined;
     let targetHospitalAddress = req.user.hospitalAddress || undefined;
     let targetHospitalCoordinates = normalizeCoordinates(req.user.hospitalCoordinates);
@@ -544,7 +547,8 @@ router.post(
       password,
       phone,
       specialization,
-      experienceYears: Number(experienceYears || 0),
+      experienceYears: expVal,
+      experience: expVal,
       rating: 0,
       reviewCount: 0,
       clinicAddress: clinicAddress || targetHospitalAddress || undefined,
@@ -561,11 +565,13 @@ router.post(
       message: "Doctor account created successfully",
       doctor: {
         id: doctor._id,
+        _id: doctor._id,
         name: doctor.name,
         email: doctor.email,
         phone: doctor.phone,
         specialization: doctor.specialization,
         experienceYears: doctor.experienceYears,
+        experience: doctor.experience,
         rating: doctor.rating,
         reviewCount: doctor.reviewCount,
         clinicAddress: doctor.clinicAddress,
@@ -618,9 +624,11 @@ router.get(
     const normalizedDoctors = doctors.map((doc) => {
       const docObj = doc.toObject();
       const rInfo = ratingMap.get(String(doc._id)) || { avgRating: 0, count: 0 };
+      const exp = Number(docObj.experienceYears ?? docObj.experience ?? 0);
       docObj.rating = rInfo.avgRating;
       docObj.reviewCount = rInfo.count;
-      docObj.experienceYears = Number(docObj.experienceYears || 0);
+      docObj.experienceYears = exp;
+      docObj.experience = exp;
       return docObj;
     });
 
@@ -649,7 +657,8 @@ router.patch(
       .trim()
       .notEmpty()
       .withMessage("Specialization cannot be empty"),
-    body("experienceYears").optional().isNumeric().withMessage("experienceYears must be a number"),
+    body("experienceYears").optional(),
+    body("experience").optional(),
     body("phone").optional().isString(),
     body("clinicAddress").optional().isString(),
     body("clinicCoordinates").optional().isObject().withMessage("clinicCoordinates must be an object"),
@@ -678,12 +687,19 @@ router.patch(
       }
     }
 
-    const fields = ["name", "email", "phone", "specialization", "experienceYears", "password", "clinicAddress"];
+    const fields = ["name", "email", "phone", "specialization", "password", "clinicAddress"];
     fields.forEach((field) => {
       if (req.body[field] !== undefined) {
-        doctor[field] = field === "experienceYears" ? Number(req.body[field]) : req.body[field];
+        doctor[field] = req.body[field];
       }
     });
+
+    const expInput = req.body.experienceYears !== undefined ? req.body.experienceYears : req.body.experience;
+    if (expInput !== undefined) {
+      const expNum = Number(expInput || 0);
+      doctor.experienceYears = expNum;
+      doctor.experience = expNum;
+    }
 
     if (req.body.clinicCoordinates !== undefined) {
       doctor.clinicCoordinates = normalizeCoordinates(req.body.clinicCoordinates);
@@ -705,7 +721,8 @@ router.patch(
         email: doctor.email,
         phone: doctor.phone,
         specialization: doctor.specialization,
-        experienceYears: Number(doctor.experienceYears || 0),
+        experienceYears: Number(doctor.experienceYears ?? doctor.experience ?? 0),
+        experience: Number(doctor.experienceYears ?? doctor.experience ?? 0),
         rating: Number(doctor.rating || 0),
         reviewCount: Number(doctor.reviewCount || 0),
         clinicAddress: doctor.clinicAddress,

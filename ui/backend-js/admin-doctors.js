@@ -367,6 +367,7 @@ const onSubmitDoctor = async (event) => {
         specialization,
         phone,
         experienceYears,
+        experience: experienceYears,
         isActive: statusInputEl?.value === "true"
       };
       if (password) payload.password = password;
@@ -385,6 +386,7 @@ const onSubmitDoctor = async (event) => {
           specialization,
           phone,
           experienceYears,
+          experience: experienceYears,
           password
         })
       });

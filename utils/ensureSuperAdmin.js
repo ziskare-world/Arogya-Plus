@@ -46,7 +46,41 @@ const ensureSuperAdmin = async () => {
     isActive: true
   });
 
-  console.log(`[Auth] Super admin created: ${superAdmin.email}`);
+  // Clean up legacy doctor ratings/reviews defaults if any doctors were created with old static defaults
+  try {
+    const Appointment = require("../models/Appointment");
+    const doctors = await User.find({ role: "doctor" }).select("_id rating reviewCount");
+    const doctorIds = doctors.map((d) => d._id);
+
+    const ratingsAgg = await Appointment.aggregate([
+      {
+        $match: {
+          doctor: { $in: doctorIds },
+          doctorRating: { $gte: 1, $lte: 5 }
+        }
+      },
+      {
+        $group: {
+          _id: "$doctor",
+          avgRating: { $avg: "$doctorRating" },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const ratedDoctorIds = new Set(ratingsAgg.map((item) => String(item._id)));
+    const unratedDoctorIds = doctorIds.filter((id) => !ratedDoctorIds.has(String(id)));
+
+    if (unratedDoctorIds.length > 0) {
+      await User.updateMany(
+        { _id: { $in: unratedDoctorIds } },
+        { $set: { rating: 0, reviewCount: 0 } }
+      );
+    }
+  } catch (err) {
+    console.error("[Migration] Legacy doctor rating cleanup notice:", err.message);
+  }
+
   return superAdmin;
 };
 

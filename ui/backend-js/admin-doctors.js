@@ -26,6 +26,7 @@ const doctorNameEl = document.getElementById("doctor-name");
 const doctorEmailEl = document.getElementById("doctor-email");
 const doctorSpecializationEl = document.getElementById("doctor-specialization");
 const doctorPhoneEl = document.getElementById("doctor-phone");
+const doctorExperienceEl = document.getElementById("doctor-experience");
 
 let doctors = [];
 let doctorReviews = [];
@@ -143,8 +144,9 @@ const renderDoctors = () => {
       const id = getDoctorId(doctor);
       const createdAt = new Date(doctor.createdAt);
       const createdText = Number.isNaN(createdAt.getTime()) ? "-" : createdAt.toLocaleString();
-      const ratingVal = Number(doctor.rating || 4.8).toFixed(1);
-      const reviewsCount = doctor.reviewCount || 12;
+      const ratingVal = Number(doctor.rating || 0).toFixed(1);
+      const reviewsCount = Number(doctor.reviewCount || 0);
+      const expYears = Number(doctor.experienceYears || 0);
       const isTerminated = !!doctor.isTerminated;
       const avatarText = initials(doctor.name);
 
@@ -160,7 +162,7 @@ const renderDoctors = () => {
           <div class="doc-avatar">${escapeHtml(avatarText)}</div>
           <div style="font-weight:700;font-size:1rem;color:var(--text-100)">${escapeHtml(doctor.name)}</div>
           <div style="font-size:.82rem;color:var(--blue);font-weight:600;margin-top:2px;">⭐ ${ratingVal} / 5.0 <span style="color:var(--text-500);font-weight:400;">(${reviewsCount} reviews)</span></div>
-          <div style="font-size:.8rem;color:var(--text-400);margin-top:4px">${escapeHtml(doctor.specialization || "General Healthcare")} | ${doctor.experienceYears || 8} yrs exp</div>
+          <div style="font-size:.8rem;color:var(--text-400);margin-top:4px">${escapeHtml(doctor.specialization || "General Healthcare")} | ${expYears} yrs exp</div>
           <div style="font-size:.78rem;color:var(--text-500);margin-top:6px">📧 ${escapeHtml(doctor.email || "-")}</div>
           <div style="font-size:.76rem;color:var(--text-500);margin-top:2px">📞 ${escapeHtml(doctor.phone || "-")}</div>
           <div style="margin-top:10px">${statusBadgeHtml}</div>
@@ -232,6 +234,7 @@ const renderDoctorReviews = () => {
 const resetForm = () => {
   editingDoctorId = null;
   if (doctorFormEl) doctorFormEl.reset();
+  if (doctorExperienceEl) doctorExperienceEl.value = "0";
   if (modalTitleEl) modalTitleEl.textContent = "Create Doctor Account";
   if (submitBtnEl) submitBtnEl.textContent = "Create Doctor";
   if (passwordInputEl) {
@@ -271,6 +274,7 @@ const setEditForm = (doctor) => {
     doctorSpecializationEl.value = spec;
   }
   if (doctorPhoneEl) doctorPhoneEl.value = doctor.phone || "";
+  if (doctorExperienceEl) doctorExperienceEl.value = String(doctor.experienceYears ?? 0);
 };
 
 window.openDoctorModal = function openDoctorModal() {
@@ -338,6 +342,7 @@ const onSubmitDoctor = async (event) => {
   const email = String(doctorEmailEl?.value || "").trim();
   const specialization = String(doctorSpecializationEl?.value || "").trim();
   const phone = String(doctorPhoneEl?.value || "").trim();
+  const experienceYears = Number(doctorExperienceEl?.value || 0);
   const password = String(passwordInputEl?.value || "").trim();
 
   if (!name || !email || !specialization) {
@@ -361,6 +366,7 @@ const onSubmitDoctor = async (event) => {
         email,
         specialization,
         phone,
+        experienceYears,
         isActive: statusInputEl?.value === "true"
       };
       if (password) payload.password = password;
@@ -378,6 +384,7 @@ const onSubmitDoctor = async (event) => {
           email,
           specialization,
           phone,
+          experienceYears,
           password
         })
       });

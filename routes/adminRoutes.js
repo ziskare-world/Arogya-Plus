@@ -513,7 +513,7 @@ router.post(
   ],
   validateRequest,
   asyncHandler(async (req, res) => {
-    const { name, email, password, phone, specialization, clinicAddress, clinicCoordinates, hospitalName } =
+    const { name, email, password, phone, specialization, experienceYears, clinicAddress, clinicCoordinates, hospitalName } =
       req.body;
     const normalizedCoordinates = normalizeCoordinates(clinicCoordinates);
     
@@ -544,6 +544,9 @@ router.post(
       password,
       phone,
       specialization,
+      experienceYears: Number(experienceYears || 0),
+      rating: 0,
+      reviewCount: 0,
       clinicAddress: clinicAddress || targetHospitalAddress || undefined,
       clinicCoordinates: normalizedCoordinates,
       hospitalName: targetHospitalName,
@@ -562,6 +565,9 @@ router.post(
         email: doctor.email,
         phone: doctor.phone,
         specialization: doctor.specialization,
+        experienceYears: doctor.experienceYears,
+        rating: doctor.rating,
+        reviewCount: doctor.reviewCount,
         clinicAddress: doctor.clinicAddress,
         clinicCoordinates: doctor.clinicCoordinates,
         hospitalName: doctor.hospitalName,
@@ -609,6 +615,7 @@ router.patch(
       .trim()
       .notEmpty()
       .withMessage("Specialization cannot be empty"),
+    body("experienceYears").optional().isNumeric().withMessage("experienceYears must be a number"),
     body("phone").optional().isString(),
     body("clinicAddress").optional().isString(),
     body("clinicCoordinates").optional().isObject().withMessage("clinicCoordinates must be an object"),
@@ -637,10 +644,10 @@ router.patch(
       }
     }
 
-    const fields = ["name", "email", "phone", "specialization", "password", "clinicAddress"];
+    const fields = ["name", "email", "phone", "specialization", "experienceYears", "password", "clinicAddress"];
     fields.forEach((field) => {
       if (req.body[field] !== undefined) {
-        doctor[field] = req.body[field];
+        doctor[field] = field === "experienceYears" ? Number(req.body[field]) : req.body[field];
       }
     });
 

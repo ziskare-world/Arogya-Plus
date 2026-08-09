@@ -93,13 +93,13 @@ const userSchema = new mongoose.Schema(
     },
     rating: {
       type: Number,
-      default: 4.8,
-      min: 1.0,
+      default: 0,
+      min: 0,
       max: 5.0
     },
     reviewCount: {
       type: Number,
-      default: 12,
+      default: 0,
       min: 0
     },
     qualification: {
@@ -109,7 +109,7 @@ const userSchema = new mongoose.Schema(
     },
     experienceYears: {
       type: Number,
-      default: 8,
+      default: 0,
       min: 0
     },
     passkeys: [

@@ -17,8 +17,20 @@ window.ArogyaGeo = (function () {
         return resolve({ ...DEFAULT_LOCATION, isFallback: true });
       }
 
+      let resolved = false;
+      const timer = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          console.warn('Geolocation timed out. Falling back to default Delhi location.');
+          resolve({ ...DEFAULT_LOCATION, isFallback: true });
+        }
+      }, 3000);
+
       navigator.geolocation.getCurrentPosition(
         async (position) => {
+          if (resolved) return;
+          resolved = true;
+          clearTimeout(timer);
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
 
@@ -34,12 +46,15 @@ window.ArogyaGeo = (function () {
           });
         },
         (error) => {
+          if (resolved) return;
+          resolved = true;
+          clearTimeout(timer);
           console.warn('Geolocation access denied or failed:', error.message);
           resolve({ ...DEFAULT_LOCATION, isFallback: true, error: error.message });
         },
         {
-          enableHighAccuracy: true,
-          timeout: 10000,
+          enableHighAccuracy: false,
+          timeout: 3000,
           maximumAge: 60000
         }
       );

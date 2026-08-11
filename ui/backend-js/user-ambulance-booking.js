@@ -63,13 +63,14 @@ async function initLeafletMap() {
     return;
   }
 
-  // Detect user current location
-  const userLoc = await window.ArogyaGeo.getCurrentLocation();
-  pickupCoords = { lat: userLoc.latitude, lng: userLoc.longitude };
+  const defaultLat = 28.6139;
+  const defaultLng = 77.2090;
+  const defaultAddress = "Connaught Place, New Delhi, India";
 
+  // Initialize Leaflet Map immediately so tiles render instantly without waiting for geolocation promise
   map = window.ArogyaMap.initMap("ambulance-map", {
-    lat: userLoc.latitude,
-    lng: userLoc.longitude,
+    lat: defaultLat,
+    lng: defaultLng,
     zoom: 13
   });
 
@@ -81,14 +82,14 @@ async function initLeafletMap() {
     mapKeyHelpEl.textContent = "100% Free OpenStreetMap & Leaflet Routing active.";
   }
 
-  // Set initial pickup location marker
-  setPickupLocation(userLoc.latitude, userLoc.longitude, userLoc.address);
+  // Set initial pickup location marker at default location
+  setPickupLocation(defaultLat, defaultLng, defaultAddress);
 
   // Map click handler to pick pickup or hospital locations
   map.on("click", async (e) => {
     const lat = e.latlng.lat;
     const lng = e.latlng.lng;
-    const address = await window.ArogyaGeo.reverseGeocode(lat, lng);
+    const address = window.ArogyaGeo ? await window.ArogyaGeo.reverseGeocode(lat, lng) : "";
 
     if (selectionMode === "pickup") {
       setPickupLocation(lat, lng, address);
@@ -103,10 +104,25 @@ async function initLeafletMap() {
   // Initialize Socket.IO for live ambulance tracking
   if (window.io) {
     socket = window.io();
-    window.ArogyaAmbulance.initLiveTracking(map, socket, (updateData) => {
-      if (lastLiveUpdateEl) {
-        lastLiveUpdateEl.textContent = `Live GPS Signal: ${new Date().toLocaleTimeString()}`;
+    if (window.ArogyaAmbulance) {
+      window.ArogyaAmbulance.initLiveTracking(map, socket, (updateData) => {
+        if (lastLiveUpdateEl) {
+          lastLiveUpdateEl.textContent = `Live GPS Signal: ${new Date().toLocaleTimeString()}`;
+        }
+      });
+    }
+  }
+
+  // Detect user current location asynchronously in background and update map smoothly
+  if (window.ArogyaGeo) {
+    window.ArogyaGeo.getCurrentLocation().then((userLoc) => {
+      if (userLoc && userLoc.latitude && userLoc.longitude && !userLoc.isFallback) {
+        setPickupLocation(userLoc.latitude, userLoc.longitude, userLoc.address);
+        if (map) map.setView([userLoc.latitude, userLoc.longitude], 13);
+        findNearestHospitalForPickup();
       }
+    }).catch((err) => {
+      console.warn("Background geolocation notice:", err);
     });
   }
 }

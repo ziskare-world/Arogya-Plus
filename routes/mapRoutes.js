@@ -48,6 +48,70 @@ const DEFAULT_HOSPITALS = [
   }
 ];
 
+const DEFAULT_FLEET = [
+  {
+    hospitalName: "Arogya Central Multi-Specialty Hospital",
+    hospitalAddress: "Block A, Connaught Place, New Delhi",
+    hospitalCoordinates: { lat: 28.6139, lng: 77.2090 },
+    vehicleNumber: "DL-01-AMB-101",
+    driverName: "Rajesh Kumar",
+    driverPhone: "+91-9876543210",
+    equipmentLevel: "ALS",
+    status: "available",
+    speed: 0,
+    currentCoordinates: { lat: 28.6139, lng: 77.2090 }
+  },
+  {
+    hospitalName: "City Care Trauma & Emergency Center",
+    hospitalAddress: "Sector 4, RK Puram, New Delhi",
+    hospitalCoordinates: { lat: 28.6250, lng: 77.2180 },
+    vehicleNumber: "DL-02-AMB-202",
+    driverName: "Vikram Singh",
+    driverPhone: "+91-9876543211",
+    equipmentLevel: "ICU Ambulance",
+    status: "available",
+    speed: 0,
+    currentCoordinates: { lat: 28.6250, lng: 77.2180 }
+  },
+  {
+    hospitalName: "Metro Health Super Specialty Clinic",
+    hospitalAddress: "Green Park Extension, New Delhi",
+    hospitalCoordinates: { lat: 28.6010, lng: 77.1950 },
+    vehicleNumber: "DL-03-AMB-303",
+    driverName: "Amit Sharma",
+    driverPhone: "+91-9876543212",
+    equipmentLevel: "BLS",
+    status: "available",
+    speed: 0,
+    currentCoordinates: { lat: 28.6010, lng: 77.1950 }
+  }
+];
+
+/**
+ * Bootstraps and pre-populates location map GIS markers when server starts
+ */
+const initializeMapData = async () => {
+  try {
+    let hospitals = await Hospital.find();
+    if (!hospitals || hospitals.length === 0) {
+      hospitals = await Hospital.insertMany(DEFAULT_HOSPITALS);
+      console.log(`[Map GIS] Seeded ${hospitals.length} default hospital locations.`);
+    }
+
+    let fleet = await AmbulanceFleet.find();
+    if (!fleet || fleet.length === 0) {
+      fleet = await AmbulanceFleet.insertMany(DEFAULT_FLEET);
+      console.log(`[Map GIS] Seeded ${fleet.length} default ambulance fleet markers.`);
+    }
+
+    console.log(`[Map GIS] Location map initialized at server startup (${hospitals.length} Hospitals, ${fleet.length} Fleet Vehicles active).`);
+    return { success: true, hospitalsCount: hospitals.length, fleetCount: fleet.length };
+  } catch (err) {
+    console.error(`[Map GIS] Location map initialization error: ${err.message}`);
+    return { success: false, error: err.message };
+  }
+};
+
 // Helper to calculate Haversine Distance in Kilometers
 function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // Radius of Earth in KM
@@ -392,3 +456,4 @@ router.post("/reverse-geocode", async (req, res) => {
 });
 
 module.exports = router;
+module.exports.initializeMapData = initializeMapData;

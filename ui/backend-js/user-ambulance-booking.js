@@ -249,9 +249,20 @@ if (hospitalModeBtnEl) {
 
 if (useCurrentBtnEl) {
   useCurrentBtnEl.onclick = async () => {
-    const loc = await window.ArogyaGeo.getCurrentLocation();
-    setPickupLocation(loc.latitude, loc.longitude, loc.address);
-    findNearestHospitalForPickup();
+    useCurrentBtnEl.disabled = true;
+    useCurrentBtnEl.textContent = "⌛ Locating...";
+    try {
+      const loc = await window.ArogyaGeo.getCurrentLocation();
+      setPickupLocation(loc.latitude, loc.longitude, loc.address);
+      if (map) map.setView([loc.latitude, loc.longitude], 14);
+      findNearestHospitalForPickup();
+      toast("🎯 Current location selected", "success");
+    } catch (err) {
+      toast("Failed to get current location", "error");
+    } finally {
+      useCurrentBtnEl.disabled = false;
+      useCurrentBtnEl.innerHTML = "🎯 Use Current Location";
+    }
   };
 }
 

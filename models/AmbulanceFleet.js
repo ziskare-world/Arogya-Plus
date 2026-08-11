@@ -63,7 +63,7 @@ const ambulanceFleetSchema = new mongoose.Schema(
     createdByAdmin: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: false
     },
     updatedByAdmin: {
       type: mongoose.Schema.Types.ObjectId,

@@ -161,15 +161,14 @@ app.get("/doctor/patients", sendUiPage("doctor", "patients.html"));
 app.get("/doctor/prescriptions", sendUiPage("doctor", "prescriptions.html"));
 
 // User pages
-app.get("/user", sendUiPage("user", "dashboard.html"));
-app.get("/user/dashboard", sendUiPage("user", "dashboard.html"));
-app.get("/user/appointments", sendUiPage("user", "appointments.html"));
-app.get("/user/doctors", sendUiPage("user", "doctors.html"));
-app.get("/user/ambulance-booking", sendUiPage("user", "ambulance-booking.html"));
-app.get("/user/medical-records", sendUiPage("user", "medical-records.html"));
-app.get("/user/payments", sendUiPage("user", "payments.html"));
-app.get("/user/prescriptions", sendUiPage("user", "prescriptions.html"));
-app.get("/user/profile", sendUiPage("user", "profile.html"));
+app.get(["/user", "/user/dashboard", "/user/dashboard.html"], sendUiPage("user", "dashboard.html"));
+app.get(["/user/appointments", "/user/appointments.html"], sendUiPage("user", "appointments.html"));
+app.get(["/user/doctors", "/user/doctors.html"], sendUiPage("user", "doctors.html"));
+app.get(["/user/ambulance-booking", "/user/ambulance-booking.html"], sendUiPage("user", "ambulance-booking.html"));
+app.get(["/user/medical-records", "/user/medical-records.html"], sendUiPage("user", "medical-records.html"));
+app.get(["/user/payments", "/user/payments.html"], sendUiPage("user", "payments.html"));
+app.get(["/user/prescriptions", "/user/prescriptions.html"], sendUiPage("user", "prescriptions.html"));
+app.get(["/user/profile", "/user/profile.html"], sendUiPage("user", "profile.html"));
 app.get("/video-consultation", sendUiPage("shared", "video-consultation.html"));
 app.get("/doctor/video-consultation", sendUiPage("shared", "video-consultation.html"));
 app.get("/user/video-consultation", sendUiPage("shared", "video-consultation.html"));

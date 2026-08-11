@@ -1,10 +1,12 @@
-﻿        import { toast } from '../js/utils.js';
+        import { toast } from '../js/utils.js';
         import { injectSidebar, renderTopbar } from '../js/sidebar.js';
         import { apiRequest, ensureSession, formatCurrencyINR } from '../js/api-client.js';
+        import { initAiChatWidget } from '../js/ai-chat-widget.js';
 
         window.toast = toast;
         injectSidebar('dashboard.html');
         document.getElementById('topbar-container').innerHTML = renderTopbar('User Dashboard');
+        initAiChatWidget();
 
         const toStatusBadge = (status) => {
             const normalized = String(status || '').toLowerCase();

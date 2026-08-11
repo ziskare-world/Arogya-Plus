@@ -389,17 +389,15 @@
         "id": "FEAT-011",
         "name": "OpenStreetMap & Leaflet.js Free GIS Interactive Mapping System",
         "category": "GIS Mapping"
+      },
+      {
+        "id": "FEAT-012",
+        "name": "Floating AI Bot Assistant & Interactive Triage Chat Widget",
+        "category": "AI Healthcare"
       }
     ],
     "in_progress": [],
     "pending": [
-      {
-        "id": "BACKLOG-001",
-        "name": "AI Symptom Checker & Automated Triage Assistant",
-        "priority": "High",
-        "category": "AI Healthcare",
-        "description": "Integrate LLM/rule-based clinical triage in routes/aiRoutes.js to score symptom severity and auto-trigger ambulance queue if critical."
-      },
       {
         "id": "BACKLOG-002",
         "name": "Multi-Hospital & Multi-Branch Support",

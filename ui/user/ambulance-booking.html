@@ -117,7 +117,12 @@
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="pickup-location-input">Pickup Location</label>
-                                    <input id="pickup-location-input" class="form-input" placeholder="Click map or type address" />
+                                    <div style="display:flex;gap:8px">
+                                        <input id="pickup-location-input" class="form-input" placeholder="Click map or type address" style="flex:1" />
+                                        <button id="use-current-btn" class="btn btn-blue btn-sm" type="button" style="white-space:nowrap;display:inline-flex;align-items:center;gap:6px">
+                                            🎯 Use Current Location
+                                        </button>
+                                    </div>
                                     <div class="map-help" id="pickup-coords-label"></div>
                                 </div>
                                 <div class="form-group">

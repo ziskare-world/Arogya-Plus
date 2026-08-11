@@ -10,6 +10,12 @@ const connectDB = async () => {
     } catch (error) {
       console.error(`Super admin bootstrap failed: ${error.message}`);
     }
+    try {
+      const { initializeMapData } = require("../routes/mapRoutes");
+      await initializeMapData();
+    } catch (error) {
+      console.error(`Map data initialization failed: ${error.message}`);
+    }
   } catch (error) {
     console.error(`MongoDB connection failed: ${error.message}`);
     process.exit(1);

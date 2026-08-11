@@ -88,6 +88,24 @@ describe("Additional Modules API", () => {
     expect(response.body.assessment.triageLevel).toBe("critical");
   });
 
+  test("AI chat assistant endpoint handles queries and emergency alerts", async () => {
+    const normalRes = await request(app).post("/api/ai/chat").send({
+      message: "How do I book an appointment with a doctor?"
+    });
+
+    expect(normalRes.statusCode).toBe(200);
+    expect(normalRes.body.success).toBe(true);
+    expect(normalRes.body.action.href).toBe("appointments.html");
+
+    const criticalRes = await request(app).post("/api/ai/chat").send({
+      message: "I am having severe chest pain and shortness of breath"
+    });
+
+    expect(criticalRes.statusCode).toBe(200);
+    expect(criticalRes.body.triageLevel).toBe("critical");
+    expect(criticalRes.body.action.href).toBe("ambulance-booking.html");
+  });
+
   test("payment API works in mock mode", async () => {
     const patient = await registerAndLogin({
       name: "Pay Patient",

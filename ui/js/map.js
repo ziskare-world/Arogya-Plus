@@ -67,6 +67,10 @@ window.ArogyaMap = (function () {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | ArogyaPlus Clinical GIS'
     }).addTo(map);
 
+    setTimeout(() => {
+      try { map.invalidateSize(); } catch (e) {}
+    }, 250);
+
     return map;
   }
 

@@ -57,9 +57,9 @@ const statusBadge = (status = "") => {
 };
 
 async function initLeafletMap() {
-  if (!window.ArogyaMap) {
+  if (!window.ArogyaMap || !window.L) {
     if (mapStatusEl) mapStatusEl.textContent = "Map Loading...";
-    setTimeout(initLeafletMap, 300);
+    setTimeout(initLeafletMap, 150);
     return;
   }
 
@@ -320,7 +320,8 @@ if (formEl) {
 window.refreshAmbulanceBookings = fetchMyBookings;
 
 // Boot application
+initLeafletMap();
+
 ensureSession().then(() => {
-  initLeafletMap();
   fetchMyBookings();
 });

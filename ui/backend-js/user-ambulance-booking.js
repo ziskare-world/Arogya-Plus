@@ -98,8 +98,12 @@ async function initLeafletMap() {
     }
   });
 
+  // Find and render all available hospitals on the map
+  const hospitals = await window.ArogyaHospital.getHospitals();
+  renderAllHospitalMarkers(hospitals);
+
   // Find nearest hospital automatically
-  findNearestHospitalForPickup();
+  findNearestHospitalForPickup(hospitals);
 
   // Initialize Socket.IO for live ambulance tracking
   if (window.io) {
@@ -119,13 +123,48 @@ async function initLeafletMap() {
       if (userLoc && userLoc.latitude && userLoc.longitude && !userLoc.isFallback) {
         setPickupLocation(userLoc.latitude, userLoc.longitude, userLoc.address);
         if (map) map.setView([userLoc.latitude, userLoc.longitude], 13);
-        findNearestHospitalForPickup();
+        findNearestHospitalForPickup(hospitals);
       }
     }).catch((err) => {
       console.warn("Background geolocation notice:", err);
     });
   }
 }
+
+let allHospitalMarkers = [];
+
+function renderAllHospitalMarkers(hospitals = []) {
+  if (!map || !window.ArogyaMap) return;
+
+  allHospitalMarkers.forEach(m => {
+    if (m && map) map.removeLayer(m);
+  });
+  allHospitalMarkers = [];
+
+  hospitals.forEach(hospital => {
+    const lat = Number(hospital.latitude || hospital.lat);
+    const lng = Number(hospital.longitude || hospital.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+    const popupHtml = `
+      <div style="min-width:180px">
+        <h4 style="margin:0 0 4px;color:var(--blue);font-weight:700">🏥 ${escapeHtml(hospital.name)}</h4>
+        <div style="font-size:0.82rem;color:#475569">${escapeHtml(hospital.specialty || 'Emergency Facility')}</div>
+        <div style="font-size:0.78rem;margin-top:4px;color:#64748b">${escapeHtml(hospital.address || '')}</div>
+        <div style="margin-top:6px;font-size:0.8rem">🛏️ Beds: <strong>${hospital.availableBeds ?? 'Available'}</strong></div>
+        <button class="btn btn-primary btn-sm" style="width:100%;margin-top:8px" type="button" onclick="window.selectHospitalFromMap(${lat}, ${lng}, '${escapeHtml(hospital.name)}')">Set as Destination</button>
+      </div>
+    `;
+
+    const marker = window.ArogyaMap.addMarker(map, lat, lng, "hospital", popupHtml);
+    allHospitalMarkers.push(marker);
+  });
+}
+
+window.selectHospitalFromMap = (lat, lng, name) => {
+  setHospitalLocation(Number(lat), Number(lng), name);
+  toast(`Selected ${name} as destination hospital`, "success");
+};
 
 function setPickupLocation(lat, lng, addressStr = "") {
   pickupCoords = { lat, lng };
@@ -158,20 +197,21 @@ function setHospitalLocation(lat, lng, addressStr = "") {
       lat,
       lng,
       "hospital",
-      `<b>🏥 Assigned Hospital</b><br>${addressStr || 'Medical Facility'}`
+      `<b>🏥 Assigned Destination Hospital</b><br>${addressStr || 'Medical Facility'}`
     );
   }
 
   updateRouteDisplay();
 }
 
-async function findNearestHospitalForPickup() {
+async function findNearestHospitalForPickup(cachedHospitals = null) {
   if (!pickupCoords) return;
-  const hospitals = await window.ArogyaHospital.getHospitals();
+  const hospitals = cachedHospitals || await window.ArogyaHospital.getHospitals();
   const nearest = window.ArogyaHospital.findNearestHospital(pickupCoords.lat, pickupCoords.lng, hospitals);
 
   if (nearest) {
-    setHospitalLocation(nearest.latitude, nearest.longitude, `${nearest.name} (${nearest.specialty})`);
+    const distText = nearest.distanceKm ? ` (${nearest.distanceKm} km away)` : '';
+    setHospitalLocation(nearest.latitude, nearest.longitude, `${nearest.name}${distText}`);
   }
 }
 
@@ -252,6 +292,14 @@ if (pickupModeBtnEl) {
     selectionMode = "pickup";
     pickupModeBtnEl.className = "btn btn-outline btn-sm active";
     if (hospitalModeBtnEl) hospitalModeBtnEl.className = "btn btn-outline btn-sm";
+  };
+}
+
+const selectNearestHospitalBtnEl = document.getElementById("select-nearest-hospital-btn");
+if (selectNearestHospitalBtnEl) {
+  selectNearestHospitalBtnEl.onclick = async () => {
+    await findNearestHospitalForPickup();
+    toast("🏥 Nearest Emergency Hospital selected", "success");
   };
 }
 

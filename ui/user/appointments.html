@@ -102,6 +102,23 @@
         </div>
     </div>
 
+    <div id="qr-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+        <div class="modal-card" style="max-width:440px;text-align:center">
+            <div class="card-header">
+                <div class="card-title">Appointment Check-in Pass</div>
+                <button class="btn btn-ghost btn-sm" type="button" onclick="window.closeQrModal()">Close</button>
+            </div>
+            <div style="padding:16px 0">
+                <div id="qr-token-label" style="font-weight:800;font-size:1.4rem;letter-spacing:1px;color:var(--blue);margin-bottom:8px">APT-000000-000</div>
+                <div class="muted" id="qr-doctor-label" style="margin-bottom:16px">Consultation Check-in Token</div>
+                <div style="background:#fff;padding:16px;border-radius:12px;display:inline-block;border:1px solid var(--border)">
+                    <img id="qr-code-img" src="" alt="Appointment QR Code Pass" style="width:200px;height:200px;display:block;margin:0 auto" />
+                </div>
+                <p class="muted" style="font-size:0.8rem;margin-top:14px">Show this QR code or Token Number at the hospital reception desk for instant check-in.</p>
+            </div>
+        </div>
+    </div>
+
     <div id="rating-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
         <div class="modal-card" style="max-width:520px">
             <div class="card-header">

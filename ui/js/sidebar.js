@@ -102,6 +102,7 @@ export function injectSidebar(activePage) {
       { href: "medical-records.html", icon: "records", label: "My Medical Records" },
       { href: "prescriptions.html", icon: "prescription", label: "Prescriptions" },
       { href: "payments.html", icon: "billing", label: "Billing" },
+      { href: "insurance.html", icon: "shield", label: "Insurance Claims" },
       { href: "profile.html", icon: "profile", label: "My Profile" }
     ];
   } else {

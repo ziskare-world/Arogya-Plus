@@ -177,6 +177,41 @@ const renderDoctorOptions = () => {
     .join("");
 };
 
+const qrModalEl = document.getElementById("qr-modal");
+const qrTokenLabelEl = document.getElementById("qr-token-label");
+const qrDoctorLabelEl = document.getElementById("qr-doctor-label");
+const qrCodeImgEl = document.getElementById("qr-code-img");
+
+const closeQrModal = () => {
+  if (qrModalEl) qrModalEl.classList.add("hidden");
+};
+
+const openQrModal = async (appointmentId) => {
+  const appointment = findAppointmentRecord(appointmentId);
+  if (!appointment) {
+    toast("Appointment details not found", "error");
+    return;
+  }
+
+  try {
+    const data = await apiRequest(`/api/appointments/${appointmentId}/token-qr`);
+    if (qrTokenLabelEl) qrTokenLabelEl.textContent = data.tokenNumber || appointment.tokenNumber || "APT-PASS";
+    if (qrDoctorLabelEl) qrDoctorLabelEl.textContent = `Check-in Token for Dr. ${appointment.doctor?.name || "Assigned Doctor"}`;
+    if (qrCodeImgEl) qrCodeImgEl.src = data.qrDataUrl || "";
+    if (qrModalEl) qrModalEl.classList.remove("hidden");
+  } catch (error) {
+    toast(error.message || "Failed to load check-in QR pass", "error");
+  }
+};
+
+window.closeQrModal = closeQrModal;
+
+if (qrModalEl) {
+  qrModalEl.addEventListener("click", (event) => {
+    if (event.target === qrModalEl) closeQrModal();
+  });
+}
+
 const renderAppointments = () => {
   if (!listEl) return;
 
@@ -192,6 +227,7 @@ const renderAppointments = () => {
       const status = String(appointment.status || "pending").toLowerCase();
       const consultation = consultationTypeDetails(appointment);
       const subtitleParts = [formatDateTime(appointment.appointmentDate), consultation.label];
+      if (appointment.tokenNumber) subtitleParts.push(`Token: ${appointment.tokenNumber}`);
       if (appointment.reason) subtitleParts.push(appointment.reason);
       const existingRating = Number(appointment.doctorRating || 0);
       if (existingRating >= 1 && existingRating <= 5) {
@@ -201,11 +237,17 @@ const renderAppointments = () => {
       const canJoinVideoCall = consultation.value === "video" && status === "confirmed";
       const canModify = !["completed", "cancelled"].includes(status);
       const canRateDoctor = status === "completed" && !(existingRating >= 1 && existingRating <= 5);
+      const canViewQr = status !== "cancelled";
 
       const actions = [];
       if (canJoinVideoCall) {
         actions.push(
           `<button class="btn btn-primary btn-sm" type="button" data-action="join-video" data-id="${appointment._id}">Join Video Call</button>`
+        );
+      }
+      if (canViewQr) {
+        actions.push(
+          `<button class="btn btn-outline btn-sm" type="button" data-action="view-qr" data-id="${appointment._id}">View QR Pass</button>`
         );
       }
       if (canRateDoctor) {
@@ -358,6 +400,11 @@ if (listEl) {
           return;
         }
         openUserVideoPanel(appointment);
+        return;
+      }
+
+      if (action === "view-qr") {
+        await openQrModal(appointmentId);
         return;
       }
 

@@ -99,12 +99,39 @@
     return data;
   };
 
+  const storeAuthSession = (tokenData) => {
+    const rememberCheckbox = document.getElementById("remember");
+    const isRemember = rememberCheckbox ? rememberCheckbox.checked : true;
+    const storage = isRemember ? localStorage : sessionStorage;
+
+    if (tokenData.token) {
+      storage.setItem(TOKEN_KEY, tokenData.token);
+    }
+    if (tokenData.user) {
+      storage.setItem(USER_KEY, JSON.stringify(tokenData.user));
+      sessionStorage.setItem(
+        "arogya_user",
+        JSON.stringify({
+          name: tokenData.user.name,
+          email: tokenData.user.email,
+          role: tokenData.user.role
+        })
+      );
+    }
+  };
+
   const redirectByRole = (role) => {
-    if (role === "super-admin") return "/super-admin/"
-    if (role === "admin") return "/admin/dashboard";
-    if (role === "doctor") return "/doctor/dashboard";
+    const normalized = (role || "").toLowerCase();
+    if (normalized === "super-admin" || normalized === "super_admin" || normalized === "superadmin") {
+      return "/super-admin/dashboard";
+    }
+    if (normalized === "admin") return "/admin/dashboard";
+    if (normalized === "doctor") return "/doctor/dashboard";
     return "/user/dashboard";
   };
+
+  window.storeAuthSession = storeAuthSession;
+  window.redirectByRole = redirectByRole;
 
   const handleRegister = async (event) => {
     event.preventDefault();
@@ -228,28 +255,6 @@
 
         return; // Pause login flow until 2FA is verified
       }
-
-      // Store session helper
-      const storeAuthSession = (tokenData) => {
-        const rememberCheckbox = document.getElementById("remember");
-        const isRemember = rememberCheckbox ? rememberCheckbox.checked : true;
-        const storage = isRemember ? localStorage : sessionStorage;
-
-        if (tokenData.token) {
-          storage.setItem(TOKEN_KEY, tokenData.token);
-        }
-        if (tokenData.user) {
-          storage.setItem(USER_KEY, JSON.stringify(tokenData.user));
-          sessionStorage.setItem(
-            "arogya_user",
-            JSON.stringify({
-              name: tokenData.user.name,
-              email: tokenData.user.email,
-              role: tokenData.user.role
-            })
-          );
-        }
-      };
 
       // Save token & user if no 2FA required
       storeAuthSession(data);

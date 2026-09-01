@@ -7,6 +7,8 @@ injectSidebar("doctors.html");
 document.getElementById("topbar-container").innerHTML = renderTopbar("Find Doctors");
 
 const searchInput = document.getElementById("search");
+const cityFilterEl = document.getElementById("city-filter");
+const sortFilterEl = document.getElementById("sort-filter");
 const grid = document.getElementById("doc-grid");
 const nearestDoctorLabelEl = document.getElementById("nearest-doctor-label");
 const modal = document.getElementById("book-modal");
@@ -21,91 +23,35 @@ let selectedDoctorId = "";
 let nearestDoctorId = "";
 let distanceByDoctorId = {};
 
-const escapeHtml = (value = "") =>
-  String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+const sortDoctorsByDistanceOrFilter = (doctors) => {
+  const mode = sortFilterEl?.value || "distance";
 
-const getDoctorId = (doctor) =>
-  String(doctor?._id || doctor?.id || doctor?.email || doctor?.name || "");
-
-const normalizeDoctorCoords = (doctor) => {
-  const parseCoords = (latRaw, lngRaw) => {
-    const lat = Number(latRaw);
-    const lng = Number(lngRaw);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
-    return { lat, lng };
-  };
-
-  const direct = [
-    doctor?.clinicCoordinates,
-    doctor?.hospitalCoordinates,
-    doctor?.resolvedCoordinates,
-    doctor?.createdByAdmin?.hospitalCoordinates,
-    doctor?.coordinates,
-    doctor?.location
-  ];
-  for (const candidate of direct) {
-    const coords = parseCoords(candidate?.lat, candidate?.lng);
-    if (coords) return coords;
-  }
-
-  if (Array.isArray(doctor?.location?.coordinates) && doctor.location.coordinates.length >= 2) {
-    const coords = parseCoords(doctor.location.coordinates[1], doctor.location.coordinates[0]);
-    if (coords) return coords;
-  }
-
-  return parseCoords(doctor?.lat, doctor?.lng);
-};
-
-const getCurrentCoordinates = () =>
-  new Promise((resolve) => {
-    if (!navigator.geolocation) {
-      resolve(null);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) =>
-        resolve({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        }),
-      () => resolve(null),
-      { enableHighAccuracy: true, timeout: 7000, maximumAge: 60000 }
-    );
-  });
-
-const haversineDistanceKm = (from, to) => {
-  const earthRadiusKm = 6371;
-  const dLat = ((to.lat - from.lat) * Math.PI) / 180;
-  const dLng = ((to.lng - from.lng) * Math.PI) / 180;
-  const fromLat = (from.lat * Math.PI) / 180;
-  const toLat = (to.lat * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(fromLat) * Math.cos(toLat) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return earthRadiusKm * c;
-};
-
-const sortDoctorsWithNearestFirst = (doctors) => {
   doctors.sort((a, b) => {
     const aId = getDoctorId(a);
     const bId = getDoctorId(b);
-    if (nearestDoctorId && aId === nearestDoctorId) return -1;
-    if (nearestDoctorId && bId === nearestDoctorId) return 1;
+    const distA = distanceByDoctorId[aId] ?? Number.POSITIVE_INFINITY;
+    const distB = distanceByDoctorId[bId] ?? Number.POSITIVE_INFINITY;
+
+    if (mode === "distance") {
+      if (distA !== distB) return distA - distB;
+      return String(a?.name || "").localeCompare(String(b?.name || ""));
+    }
+
+    if (mode === "specialization") {
+      const specA = String(a?.specialization || "").toLowerCase();
+      const specB = String(b?.specialization || "").toLowerCase();
+      if (specA !== specB) return specA.localeCompare(specB);
+      return distA - distB;
+    }
+
+    // Default Name sorting
     return String(a?.name || "").localeCompare(String(b?.name || ""));
   });
 };
 
 const renderDoctors = () => {
   if (!filteredDoctors.length) {
-    grid.innerHTML = '<div class="muted">No doctors found.</div>';
+    grid.innerHTML = '<div class="muted" style="padding:20px;grid-column:1/-1;text-align:center">No doctors found matching the selected city or search criteria.</div>';
     return;
   }
 
@@ -115,28 +61,28 @@ const renderDoctors = () => {
       const specialization = doctor.specialization || "General Physician";
       const phone = doctor.phone || "-";
       const hospital = doctor.hospitalName || doctor.clinicAddress || "";
+      const city = doctor.city || doctor.hospitalCity || doctor.address || "";
       const distance = distanceByDoctorId[id];
       const distanceLabel = Number.isFinite(distance)
-        ? `${distance.toFixed(1)} km away`
-        : hospital || "Distance unavailable";
-      const nearestBadge =
-        id === nearestDoctorId
-          ? '<div><span class="badge badge-green">Nearest Doctor</span></div>'
-          : "";
+        ? `📍 ${distance.toFixed(1)} km away`
+        : hospital ? `📍 ${hospital}` : "📍 Location available";
+      const isNearest = id === nearestDoctorId;
+      const nearestBadge = isNearest
+        ? '<div><span class="badge badge-green">Nearest Doctor</span></div>'
+        : "";
 
       return `
-        <div class="card" style="text-align:center">
-          <div style="font-size:2rem;margin-bottom:10px">DR</div>
-          <div style="font-weight:700">${escapeHtml(doctor.name || "Doctor")}</div>
-          <div class="muted">${escapeHtml(specialization)}</div>
-          <div style="margin-top:6px;font-size:.8rem;color:var(--text-400)">${escapeHtml(
-            doctor.email || "-"
-          )} | ${escapeHtml(phone)}</div>
-          <div style="margin-top:6px;font-size:.78rem;color:var(--text-500)">${escapeHtml(
-            distanceLabel
-          )}</div>
-          <div style="margin-top:8px">${nearestBadge}</div>
-          <button class="btn btn-outline btn-full btn-sm" style="margin-top:12px" type="button" data-action="book" data-id="${escapeHtml(
+        <div class="card" style="text-align:center;display:flex;flex-direction:column;justify-space-between;padding:20px;border-radius:12px;border:1px solid var(--border)">
+          <div>
+            <div style="width:54px;height:54px;border-radius:50%;background:#eff6ff;color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;margin:0 auto 12px">DR</div>
+            <div style="font-weight:700;font-size:1.05rem;color:var(--text-1)">${escapeHtml(doctor.name || "Doctor")}</div>
+            <div class="muted" style="font-weight:600;margin-top:2px">${escapeHtml(specialization)}</div>
+            ${city ? `<div style="font-size:.8rem;color:var(--text-400);margin-top:4px">🏙️ ${escapeHtml(city)}</div>` : ''}
+            <div style="margin-top:8px;font-size:.84rem;font-weight:600;color:var(--blue)">${escapeHtml(distanceLabel)}</div>
+            <div style="margin-top:6px;font-size:.78rem;color:var(--text-400)">${escapeHtml(doctor.email || "-")} | ${escapeHtml(phone)}</div>
+            <div style="margin-top:8px">${nearestBadge}</div>
+          </div>
+          <button class="btn btn-outline btn-full btn-sm" style="margin-top:16px" type="button" data-action="book" data-id="${escapeHtml(
             id
           )}">Book Appointment</button>
         </div>`;
@@ -145,13 +91,27 @@ const renderDoctors = () => {
 };
 
 const applySearch = () => {
-  const term = searchInput.value.trim().toLowerCase();
-  filteredDoctors = allDoctors.filter((doctor) =>
-    [doctor.name, doctor.email, doctor.specialization, doctor.hospitalName, doctor.clinicAddress]
+  const term = searchInput?.value.trim().toLowerCase() || "";
+  const selectedCity = cityFilterEl?.value || "all";
+
+  filteredDoctors = allDoctors.filter((doctor) => {
+    const matchesSearch = [doctor.name, doctor.email, doctor.specialization, doctor.hospitalName, doctor.clinicAddress, doctor.city]
       .filter(Boolean)
-      .some((value) => String(value).toLowerCase().includes(term))
-  );
-  sortDoctorsWithNearestFirst(filteredDoctors);
+      .some((value) => String(value).toLowerCase().includes(term));
+
+    if (!matchesSearch) return false;
+
+    if (selectedCity !== "all") {
+      const docLocationText = `${doctor.city || ''} ${doctor.hospitalName || ''} ${doctor.clinicAddress || ''} ${doctor.address || ''}`.toLowerCase();
+      if (!docLocationText.includes(selectedCity)) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  sortDoctorsByDistanceOrFilter(filteredDoctors);
   renderDoctors();
 };
 
@@ -241,7 +201,9 @@ grid.addEventListener("click", (event) => {
   openDoctorBookingModal(button.getAttribute("data-id"));
 });
 
-searchInput.addEventListener("input", applySearch);
+if (searchInput) searchInput.addEventListener("input", applySearch);
+if (cityFilterEl) cityFilterEl.addEventListener("change", applySearch);
+if (sortFilterEl) sortFilterEl.addEventListener("change", applySearch);
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();

@@ -283,6 +283,12 @@
     "repo_url": "https://github.com/ziskare-world/Arogya-Plus",
     "recent_commits": [
       {
+        "sha": "e7b92c4",
+        "date": "2026-08-28",
+        "message": "feat: implement Insurance Claims portal, appointment QR check-in pass, balance payment modal, and Emergency SOS banner on Patient Dashboard",
+        "author": "AI-Assistant"
+      },
+      {
         "sha": "34efa32",
         "date": "2026-08-11",
         "message": "feat: enhance AI bot chat assistant, instant map rendering on server startup, and fix user page routes",
@@ -400,6 +406,11 @@
         "id": "FEAT-012",
         "name": "Floating AI Bot Assistant & Interactive Triage Chat Widget",
         "category": "AI Healthcare"
+      },
+      {
+        "id": "FEAT-013",
+        "name": "Patient Insurance Claims Portal, QR Check-in Pass & Online Invoicing Payments",
+        "category": "Patient Dashboard"
       }
     ],
     "in_progress": [],

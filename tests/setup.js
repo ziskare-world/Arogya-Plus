@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const { MongoMemoryServer } = require("mongodb-memory-server");
 
-jest.setTimeout(30000);
+jest.setTimeout(60000);
 
 let mongoServer;
 
@@ -10,7 +10,11 @@ beforeAll(async () => {
   process.env.RAZORPAY_KEY_ID = "";
   process.env.RAZORPAY_KEY_SECRET = "";
 
-  mongoServer = await MongoMemoryServer.create();
+  mongoServer = await MongoMemoryServer.create({
+    instance: {
+      launchTimeoutMS: 60000
+    }
+  });
   process.env.MONGO_URI = mongoServer.getUri();
   await mongoose.connect(process.env.MONGO_URI);
 });

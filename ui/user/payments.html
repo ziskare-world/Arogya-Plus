@@ -1,23 +1,83 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>Arogya Plus - Payments</title>
-    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
     <link rel="stylesheet" href="../css/user.css" />
-    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+    <style>
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 150;
+            padding: 16px;
+        }
+
+        .modal-backdrop.hidden {
+            display: none;
+        }
+
+        .modal-card {
+            width: 100%;
+            max-width: 500px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 20px;
+        }
+    </style>
 </head>
 
 <body>
     <div id="toast-container"></div>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+        <div class="modal-card">
+            <div class="card-header">
+                <div class="card-title">Clear Outstanding Bill</div>
+                <button class="btn btn-ghost btn-sm" type="button" onclick="window.closePaymentModal()">Close</button>
+            </div>
+            <form id="payment-form" style="display:grid;gap:12px;margin-top:8px">
+                <div class="form-group">
+                    <label class="form-label" for="pay-amount-input">Amount to Pay (INR)</label>
+                    <input id="pay-amount-input" class="form-input" type="number" step="0.01" min="1" placeholder="Enter amount" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Payment Method</label>
+                    <div style="padding:10px 14px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;display:flex;align-items:center;gap:8px">
+                        <span>💳</span>
+                        <span>Razorpay / Unified Payment Gateway (UPI, Cards, Netbanking)</span>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
+                    <button class="btn btn-outline" type="button" onclick="window.closePaymentModal()">Cancel</button>
+                    <button id="pay-submit-btn" class="btn btn-primary" type="submit">Proceed to Pay</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="app-layout">
         <div class="main-area">
             <div id="topbar-container"></div>
             <main class="page-content">
-                <div class="page-header">
-                    <h2>Payments & Billing</h2>
+                <div class="page-header flex-between">
+                    <div>
+                        <h2>Payments & Billing</h2>
+                        <p>View your billing history and clear outstanding medical invoices</p>
+                    </div>
+                    <button class="btn btn-primary" type="button" onclick="window.openPaymentModal()">💳 Pay Outstanding Balance</button>
                 </div>
                 <div class="stat-grid" style="margin-top:20px">
                     <div class="stat-card red">
@@ -51,6 +111,7 @@
         </div>
     </div>
 
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script type="module" src="../backend-js/user-payments.js"></script>
 </body>
 

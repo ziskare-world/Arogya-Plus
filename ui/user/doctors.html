@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -80,11 +80,31 @@
         <div class="main-area">
             <div id="topbar-container"></div>
             <main class="page-content">
-                <div class="page-header flex-between">
-                    <h2>Find Doctors</h2>
-                    <input class="form-input" style="width:240px" placeholder="Search doctors..." id="search" />
+                <div class="page-header flex-between" style="flex-wrap:wrap;gap:12px">
+                    <div>
+                        <h2>Find Doctors</h2>
+                        <p style="font-size:0.88rem;color:var(--text-400)">Discover and book appointments with doctors ordered from nearest distance to farthest</p>
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                        <select id="city-filter" class="form-input" style="width:160px">
+                            <option value="all">🌆 All Cities</option>
+                            <option value="mumbai">Mumbai</option>
+                            <option value="delhi">Delhi / NCR</option>
+                            <option value="bangalore">Bangalore</option>
+                            <option value="pune">Pune</option>
+                            <option value="hyderabad">Hyderabad</option>
+                            <option value="chennai">Chennai</option>
+                            <option value="kolkata">Kolkata</option>
+                        </select>
+                        <select id="sort-filter" class="form-input" style="width:190px">
+                            <option value="distance">📍 Nearest Distance First</option>
+                            <option value="name">🔤 Name (A - Z)</option>
+                            <option value="specialization">🩺 Specialization</option>
+                        </select>
+                        <input class="form-input" style="width:200px" placeholder="Search doctors or specialty..." id="search" />
+                    </div>
                 </div>
-                <div id="nearest-doctor-label" class="muted" style="margin-top:6px"></div>
+                <div id="nearest-doctor-label" class="muted" style="margin-top:10px;font-size:0.88rem"></div>
                 <div class="grid-auto" id="doc-grid" style="margin-top:20px"></div>
             </main>
         </div>

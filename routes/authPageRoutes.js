@@ -5,19 +5,19 @@ const router = express.Router();
 const uiDirectory = path.join(__dirname, "..", "ui");
 
 router.get("/login", (req, res) => {
-  res.sendFile(path.join(uiDirectory , "login.html"));
+  res.sendFile(path.join(uiDirectory, "login.html"));
 });
 
 router.get("/login.html", (req, res) => {
-  res.sendFile(path.join(uiDirectory, "backend-js", "login.html"));
+  res.sendFile(path.join(uiDirectory, "login.html"));
 });
 
 router.get("/register", (req, res) => {
-  res.sendFile(path.join(uiDirectory, "backend-js", "register.html"));
+  res.sendFile(path.join(uiDirectory, "register.html"));
 });
 
 router.get("/register.html", (req, res) => {
-  res.sendFile(path.join(uiDirectory, "backend-js", "register.html"));
+  res.sendFile(path.join(uiDirectory, "register.html"));
 });
 
 module.exports = router;

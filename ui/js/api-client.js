@@ -91,12 +91,48 @@ export const getStoredUser = () => {
 };
 
 export const clearAuthState = () => {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
-  sessionStorage.removeItem(TOKEN_KEY);
-  sessionStorage.removeItem(USER_KEY);
-  sessionStorage.removeItem(SESSION_USER_KEY);
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem("smart_hospital_auth_notice");
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(USER_KEY);
+    sessionStorage.removeItem(SESSION_USER_KEY);
+    sessionStorage.removeItem("smart_hospital_auth_notice");
+    sessionStorage.removeItem("arogya_user");
+    sessionStorage.clear();
+  } catch (error) {
+    // Ignore storage clear errors
+  }
 };
+
+export const logoutUser = async (redirectTo = "/login") => {
+  try {
+    // Non-blocking call to backend logout endpoint
+    fetch("/api/auth/logout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" }
+    }).catch(() => {});
+  } catch (e) {}
+
+  clearAuthState();
+
+  try {
+    localStorage.setItem("__arogya_logout_timestamp", String(Date.now()));
+    localStorage.removeItem("__arogya_logout_timestamp");
+  } catch (e) {}
+
+  const target = redirectTo.includes("?")
+    ? `${redirectTo}&logout=true`
+    : `${redirectTo}?logout=true`;
+
+  window.location.href = target;
+};
+
+if (typeof window !== "undefined") {
+  window.clearAuthState = clearAuthState;
+  window.logoutUser = logoutUser;
+}
 
 export const ensureSession = ({
   allowedRoles = [],

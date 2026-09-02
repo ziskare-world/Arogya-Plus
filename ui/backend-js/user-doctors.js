@@ -23,6 +23,78 @@ let selectedDoctorId = "";
 let nearestDoctorId = "";
 let distanceByDoctorId = {};
 
+const escapeHtml = (value = "") =>
+  String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+const getDoctorId = (doctor) =>
+  String(doctor?._id || doctor?.id || doctor?._id?.toString() || "");
+
+window.escapeHtml = escapeHtml;
+window.getDoctorId = getDoctorId;
+
+const getCurrentCoordinates = () =>
+  new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve(null);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
+    );
+  });
+
+const normalizeDoctorCoords = (doctor) => {
+  const tryPair = (latVal, lngVal) => {
+    const lat = Number(latVal);
+    const lng = Number(lngVal);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+    return { lat, lng };
+  };
+
+  const candidates = [
+    doctor?.clinicCoordinates,
+    doctor?.hospitalCoordinates,
+    doctor?.resolvedCoordinates,
+    doctor?.createdByAdmin?.hospitalCoordinates,
+    doctor?.coordinates,
+    doctor?.location
+  ];
+
+  for (const c of candidates) {
+    const parsed = tryPair(c?.lat || c?.latitude, c?.lng || c?.longitude);
+    if (parsed) return parsed;
+  }
+
+  if (Array.isArray(doctor?.location?.coordinates) && doctor.location.coordinates.length >= 2) {
+    const parsed = tryPair(doctor.location.coordinates[1], doctor.location.coordinates[0]);
+    if (parsed) return parsed;
+  }
+
+  return tryPair(doctor?.latitude || doctor?.lat, doctor?.longitude || doctor?.lng);
+};
+
+const haversineDistanceKm = (from, to) => {
+  if (!from || !to) return Number.POSITIVE_INFINITY;
+  const earthRadiusKm = 6371;
+  const dLat = ((to.lat - from.lat) * Math.PI) / 180;
+  const dLng = ((to.lng - from.lng) * Math.PI) / 180;
+  const fromLat = (from.lat * Math.PI) / 180;
+  const toLat = (to.lat * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(fromLat) * Math.cos(toLat) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return earthRadiusKm * c;
+};
+
 const sortDoctorsByDistanceOrFilter = (doctors) => {
   const mode = sortFilterEl?.value || "distance";
 
@@ -164,7 +236,7 @@ const loadDoctors = async () => {
   const data = await apiRequest("/api/auth/doctors");
   allDoctors = data.doctors || [];
   await resolveNearestDoctor(allDoctors);
-  sortDoctorsWithNearestFirst(allDoctors);
+  sortDoctorsByDistanceOrFilter(allDoctors);
   filteredDoctors = [...allDoctors];
   renderDoctors();
 };

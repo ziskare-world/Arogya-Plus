@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v1.0.1";
+const CACHE_VERSION = "v1.0.3";
 const STATIC_CACHE = `arogya-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `arogya-runtime-${CACHE_VERSION}`;
 

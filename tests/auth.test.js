@@ -1,4 +1,4 @@
-﻿const request = require("supertest");
+const request = require("supertest");
 const { app } = require("../index");
 
 describe("Auth API", () => {
@@ -58,5 +58,22 @@ describe("Auth API", () => {
 
     expect(meResponse.statusCode).toBe(200);
     expect(meResponse.body.user.email).toBe(registerPayload.email);
+  });
+
+  test("handles POST /api/auth/logout successfully", async () => {
+    const response = await request(app).post("/api/auth/logout").send({});
+    expect(response.statusCode).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.message).toMatch(/logged out/i);
+  });
+
+  test("serves login.html properly for /login and /login.html", async () => {
+    const res1 = await request(app).get("/login");
+    expect(res1.statusCode).toBe(200);
+    expect(res1.text).toContain("loginForm");
+
+    const res2 = await request(app).get("/login.html");
+    expect(res2.statusCode).toBe(200);
+    expect(res2.text).toContain("loginForm");
   });
 });

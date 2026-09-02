@@ -138,7 +138,7 @@ export function injectSidebar(activePage) {
 
   html += `</nav>
     <div class="sidebar-footer">
-      <a href="${prefix}login.html" class="nav-item" style="color:var(--red-light)" onclick="localStorage.removeItem('smart_hospital_token');localStorage.removeItem('smart_hospital_user');sessionStorage.removeItem('arogya_user');"><span class="nav-icon">${iconSvg("logout")}</span><span class="nav-label">Log Out</span></a>
+      <a href="javascript:void(0)" class="nav-item" style="color:var(--red-light)" onclick="if(window.logoutUser){window.logoutUser('/login');}else{try{localStorage.removeItem('smart_hospital_token');localStorage.removeItem('smart_hospital_user');localStorage.removeItem('smart_hospital_auth_notice');sessionStorage.clear();}catch(e){}window.location.href='/login?logout=true';}"><span class="nav-icon">${iconSvg("logout")}</span><span class="nav-label">Log Out</span></a>
       <button class="collapse-btn" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
         <span class="collapse-icon">&#9664;</span><span class="collapse-label">Collapse</span>
       </button>

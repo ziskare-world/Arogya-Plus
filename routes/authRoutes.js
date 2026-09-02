@@ -98,6 +98,16 @@ router.post(
   })
 );
 
+router.post(
+  "/logout",
+  asyncHandler(async (req, res) => {
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully"
+    });
+  })
+);
+
 router.get(
   "/me",
   protect,

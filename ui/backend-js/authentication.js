@@ -99,9 +99,49 @@
     return data;
   };
 
+  const clearAuthState = () => {
+    try {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(NOTICE_KEY);
+      sessionStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(USER_KEY);
+      sessionStorage.removeItem(NOTICE_KEY);
+      sessionStorage.removeItem("arogya_user");
+      sessionStorage.clear();
+    } catch (e) {}
+  };
+
+  const logoutUser = (redirectTo = "/login") => {
+    try {
+      fetch(`${API_BASE}/logout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      }).catch(() => {});
+    } catch (e) {}
+
+    clearAuthState();
+
+    const target = redirectTo.includes("?")
+      ? `${redirectTo}&logout=true`
+      : `${redirectTo}?logout=true`;
+
+    window.location.href = target;
+  };
+
   const storeAuthSession = (tokenData) => {
     const rememberCheckbox = document.getElementById("remember");
     const isRemember = rememberCheckbox ? rememberCheckbox.checked : true;
+
+    // Clean any prior state in both storages to prevent stale session persistence
+    try {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      sessionStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(USER_KEY);
+      sessionStorage.removeItem("arogya_user");
+    } catch (e) {}
+
     const storage = isRemember ? localStorage : sessionStorage;
 
     if (tokenData.token) {
@@ -130,6 +170,8 @@
     return "/user/dashboard";
   };
 
+  window.clearAuthState = clearAuthState;
+  window.logoutUser = logoutUser;
   window.storeAuthSession = storeAuthSession;
   window.redirectByRole = redirectByRole;
 
@@ -400,17 +442,28 @@
       document.querySelector('form[onsubmit*="handleRegister"]');
 
     if (loginForm) {
-      // Check if user is already logged in with Remember Me / active session
-      const existingToken = localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
-      const existingUserStr = localStorage.getItem(USER_KEY) || sessionStorage.getItem(USER_KEY);
-      if (existingToken && existingUserStr) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isExplicitLogout = urlParams.get("logout") === "true";
+
+      if (isExplicitLogout) {
+        // User explicitly logged out - wipe all sessions cleanly and do NOT auto-redirect
+        clearAuthState();
         try {
-          const userObj = JSON.parse(existingUserStr);
-          if (userObj && userObj.role) {
-            window.location.href = redirectByRole(userObj.role);
-            return;
-          }
+          window.history.replaceState({}, document.title, window.location.pathname);
         } catch (e) {}
+      } else {
+        // Check if user is already logged in with Remember Me / active session
+        const existingToken = localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
+        const existingUserStr = localStorage.getItem(USER_KEY) || sessionStorage.getItem(USER_KEY);
+        if (existingToken && existingUserStr) {
+          try {
+            const userObj = JSON.parse(existingUserStr);
+            if (userObj && userObj.role) {
+              window.location.href = redirectByRole(userObj.role);
+              return;
+            }
+          } catch (e) {}
+        }
       }
 
       bindFormHandler(loginForm, handleLogin, "loginBound");

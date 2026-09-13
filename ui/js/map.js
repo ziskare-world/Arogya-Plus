@@ -61,10 +61,12 @@ window.ArogyaMap = (function () {
       attributionControl: true
     }).setView([lat, lng], zoom);
 
-    // Free OpenStreetMap Tile Layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // High-performance, unblocked CartoDB Voyager tiles (powered by OpenStreetMap data)
+    // Avoids OSM volunteer-server strict rate-limiting / 403 blocked tile policy
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | ArogyaPlus Clinical GIS'
+      subdomains: 'abcd',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a> | ArogyaPlus Clinical GIS'
     }).addTo(map);
 
     setTimeout(() => {

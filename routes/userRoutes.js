@@ -359,7 +359,7 @@ router.get(
         path: "appointment",
         populate: {
           path: "doctor",
-          select: "name specialization"
+          select: "name specialization clinicAddress phone email"
         }
       })
       .sort({ createdAt: -1 });
@@ -376,11 +376,17 @@ router.get(
         .reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
     );
 
+    const verifiedCount = payments.filter((p) => p.status === "verified").length;
+    const pendingCount = payments.filter((p) => p.status !== "verified").length;
+
     return res.status(200).json({
       success: true,
       summary: {
         totalPaid,
-        balanceDue
+        balanceDue,
+        verifiedCount,
+        pendingCount,
+        totalInvoices: payments.length
       },
       payments
     });

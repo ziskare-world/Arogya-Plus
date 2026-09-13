@@ -1,65 +1,490 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>Arogya Plus - Doctor Dashboard</title>
+    <title>Arogya Plus - Doctor Clinical Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="../css/global.css" />
     <link rel="stylesheet" href="../css/dashboard.css" />
+    <style>
+        /* Enhanced Clinical Deep-Blue Palette and Cards */
+        .doctor-hero-banner {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0369a1 100%);
+            border-radius: var(--r-xl);
+            padding: 24px 28px;
+            color: #ffffff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25);
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .doctor-hero-left h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin: 0 0 6px 0;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .doctor-hero-left p {
+            margin: 0;
+            color: #cbd5e1;
+            font-size: 0.95rem;
+        }
+
+        .doctor-specialty-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            backdrop-filter: blur(8px);
+        }
+
+        .doctor-status-toggle-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 999px;
+            padding: 6px 14px;
+        }
+
+        .status-dot-pulse {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            animation: pulse-green 2s infinite;
+        }
+
+        .status-dot-pulse.busy {
+            background: #f59e0b;
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+            animation: pulse-yellow 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        @keyframes pulse-yellow {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+
+        /* Earnings Summary Ribbon */
+        .earnings-panel {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .earnings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .earnings-header-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-100);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .earnings-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .earning-stat-box {
+            padding: 16px;
+            border-radius: var(--r-md);
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .earning-stat-box:hover {
+            border-color: #93c5fd;
+            background: #f0f9ff;
+            transform: translateY(-2px);
+        }
+
+        .earning-stat-label {
+            font-size: 0.8rem;
+            color: var(--text-400);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .earning-stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .earning-stat-subtext {
+            font-size: 0.78rem;
+            color: var(--text-500);
+        }
+
+        /* Quick Action Bar */
+        .quick-actions-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .quick-action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: var(--r-md);
+            font-weight: 600;
+            font-size: 0.88rem;
+            color: var(--text-200);
+            cursor: pointer;
+            transition: all 0.18s ease;
+            text-decoration: none;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .quick-action-btn:hover {
+            border-color: var(--blue);
+            color: var(--blue);
+            background: #eff6ff;
+            transform: translateY(-1px);
+        }
+
+        .quick-action-btn.primary {
+            background: var(--blue);
+            color: #ffffff;
+            border-color: var(--blue);
+        }
+
+        .quick-action-btn.primary:hover {
+            background: var(--blue-hover);
+            color: #ffffff;
+        }
+
+        /* Schedule Controls */
+        .schedule-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            padding: 14px 20px;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .schedule-filter-tabs {
+            display: flex;
+            gap: 6px;
+            background: #e2e8f0;
+            padding: 4px;
+            border-radius: 8px;
+        }
+
+        .schedule-filter-btn {
+            border: none;
+            background: transparent;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-400);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .schedule-filter-btn.active {
+            background: #ffffff;
+            color: var(--blue);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .schedule-search-input {
+            padding: 7px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            width: 220px;
+            background: #ffffff;
+        }
+
+        /* Modals */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            padding: 16px;
+        }
+
+        .modal-backdrop.hidden {
+            display: none;
+        }
+
+        .modal-card {
+            width: 100%;
+            max-width: 520px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: var(--r-xl);
+            padding: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Clinical Token Badge */
+        .token-tag {
+            font-family: monospace;
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+        }
+    </style>
 </head>
 
 <body>
     <div id="toast-container"></div>
+
+    <!-- Edit Fee Modal -->
+    <div id="fee-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+        <div class="modal-card">
+            <div class="card-header" style="padding-bottom:12px;border-bottom:1px solid var(--border)">
+                <div class="card-title">💵 Set Consultation Fee</div>
+                <button class="btn btn-ghost btn-sm" type="button" id="close-fee-modal-btn">✕</button>
+            </div>
+            <form id="fee-form" style="display:grid;gap:14px;margin-top:16px">
+                <div class="form-group">
+                    <label class="form-label" for="consultation-fee-input">Standard Fee per Consultation (INR)</label>
+                    <input id="consultation-fee-input" class="form-input" type="number" min="50" max="20000" step="50" required />
+                    <p style="font-size:0.8rem;color:var(--text-400);margin-top:4px">This base fee applies to new patient appointment bookings and telemetry visits.</p>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px">
+                    <button class="btn btn-outline" type="button" id="cancel-fee-modal-btn">Cancel</button>
+                    <button id="save-fee-submit-btn" class="btn btn-primary" type="submit">Save Fee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Patient Consultation Details Modal -->
+    <div id="consultation-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+        <div class="modal-card" style="max-width:580px">
+            <div class="card-header" style="padding-bottom:12px;border-bottom:1px solid var(--border)">
+                <div class="card-title" id="modal-patient-title">Patient Consultation Record</div>
+                <button class="btn btn-ghost btn-sm" type="button" id="close-consult-modal-btn">✕</button>
+            </div>
+            <div id="consultation-modal-content" style="margin-top:16px;display:grid;gap:14px">
+                <!-- Injected by JS -->
+            </div>
+        </div>
+    </div>
+
     <div class="app-layout">
         <!-- Sidebar injected by JS -->
         <div class="main-area">
             <div id="topbar-container"></div>
 
             <main class="page-content">
-                <div class="page-header">
-                    <div>
+                <!-- Doctor Hero Banner -->
+                <div class="doctor-hero-banner">
+                    <div class="doctor-hero-left">
                         <h2 id="doctor-greeting">Good Morning, Doctor</h2>
-                        <p>Loading your consultation schedule...</p>
+                        <p id="doctor-subtitle">Loading clinical consultation schedule & patient queues...</p>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                        <div class="doctor-specialty-badge">
+                            <span>🩺</span>
+                            <span id="doctor-specialty-label">Cardiology & Internal Medicine</span>
+                        </div>
+                        <div class="doctor-status-toggle-wrap">
+                            <div id="doctor-status-dot" class="status-dot-pulse"></div>
+                            <span id="doctor-status-text" style="font-size:0.86rem;font-weight:600">Online & Available</span>
+                            <button id="toggle-availability-btn" class="btn btn-ghost btn-sm" style="color:#ffffff;padding:2px 8px;font-size:0.78rem;border:1px solid rgba(255,255,255,0.25);border-radius:4px" type="button">Switch</button>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Primary Clinical Stats Grid -->
                 <div class="stat-grid">
                     <div class="stat-card blue">
-                        <div class="stat-value">0</div>
+                        <div class="stat-value" id="stat-today-visits">0</div>
                         <div class="stat-label">Today's Visits</div>
                     </div>
                     <div class="stat-card green">
-                        <div class="stat-value">0</div>
+                        <div class="stat-value" id="stat-completed-consults">0</div>
                         <div class="stat-label">Completed Consults</div>
                     </div>
                     <div class="stat-card red">
-                        <div class="stat-value">0</div>
-                        <div class="stat-label">Urgent Reviews</div>
+                        <div class="stat-value" id="stat-urgent-reviews">0</div>
+                        <div class="stat-label">Urgent SOS Reviews</div>
+                    </div>
+                    <div class="stat-card purple">
+                        <div class="stat-value" id="stat-rating">4.9 ★</div>
+                        <div class="stat-label">Clinical Rating</div>
                     </div>
                 </div>
 
-                <div class="card" style="margin-top:24px">
-                    <div class="card-header">
-                        <div class="card-title">Upcoming Schedule</div>
+                <!-- Doctor Earnings & Payout Summary Section -->
+                <div class="earnings-panel">
+                    <div class="earnings-header">
+                        <div class="earnings-header-title">
+                            <span>💳</span>
+                            <span>Doctor Earnings & Settlement Summary</span>
+                        </div>
+                        <div style="display:flex;gap:10px;align-items:center">
+                            <span class="badge badge-green">Automated Direct Payouts</span>
+                            <button id="open-fee-modal-btn" class="btn btn-outline btn-sm" type="button">⚙️ Edit Base Fee</button>
+                        </div>
                     </div>
+
+                    <div class="earnings-stats-grid">
+                        <div class="earning-stat-box">
+                            <div class="earning-stat-label">
+                                <span>Total Revenue Earned</span>
+                                <span>💰</span>
+                            </div>
+                            <div class="earning-stat-value" id="earning-total">₹0</div>
+                            <div class="earning-stat-subtext" id="earning-total-sub">Across all settled consultations</div>
+                        </div>
+
+                        <div class="earning-stat-box">
+                            <div class="earning-stat-label">
+                                <span>Pending Payout</span>
+                                <span>⏳</span>
+                            </div>
+                            <div class="earning-stat-value" id="earning-pending" style="color:#2563eb">₹0</div>
+                            <div class="earning-stat-subtext">Disbursement cycle: 48 hours</div>
+                        </div>
+
+                        <div class="earning-stat-box">
+                            <div class="earning-stat-label">
+                                <span>Today's Earnings</span>
+                                <span>📈</span>
+                            </div>
+                            <div class="earning-stat-value" id="earning-today" style="color:#16a34a">₹0</div>
+                            <div class="earning-stat-subtext">Completed visits today</div>
+                        </div>
+
+                        <div class="earning-stat-box">
+                            <div class="earning-stat-label">
+                                <span>Consultation Fee</span>
+                                <span>🏷️</span>
+                            </div>
+                            <div class="earning-stat-value" id="earning-fee">₹500</div>
+                            <div class="earning-stat-subtext">Standard per-session rate</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions Toolbar -->
+                <div class="quick-actions-bar">
+                    <a href="../doctor/appointments.html" class="quick-action-btn primary">
+                        <span>📅</span>
+                        <span>Full Appointments Queue</span>
+                    </a>
+                    <a href="../doctor/prescriptions.html" class="quick-action-btn">
+                        <span>📝</span>
+                        <span>Issue Digital Prescription</span>
+                    </a>
+                    <a href="../doctor/patients.html" class="quick-action-btn">
+                        <span>👥</span>
+                        <span>Patient Directory & EHR</span>
+                    </a>
+                    <a href="/doctor/video-consultation?role=doctor" target="_blank" class="quick-action-btn">
+                        <span>📹</span>
+                        <span>Telehealth Video Room</span>
+                    </a>
+                </div>
+
+                <!-- Upcoming Schedule Table Card -->
+                <div class="card">
+                    <div class="card-header" style="border-bottom:none;padding-bottom:12px">
+                        <div class="card-title">Active & Upcoming Schedule</div>
+                        <span id="schedule-count-badge" class="badge badge-blue">0 Scheduled</span>
+                    </div>
+
+                    <!-- Filter & Search Controls -->
+                    <div class="schedule-controls">
+                        <div class="schedule-filter-tabs">
+                            <button class="schedule-filter-btn active" data-filter="all" type="button">All (0)</button>
+                            <button class="schedule-filter-btn" data-filter="video" type="button">📹 Video (0)</button>
+                            <button class="schedule-filter-btn" data-filter="in_person" type="button">🏥 In-Person (0)</button>
+                            <button class="schedule-filter-btn" data-filter="confirmed" type="button">✅ Confirmed (0)</button>
+                        </div>
+                        <input id="schedule-search" class="schedule-search-input" type="text" placeholder="🔍 Search patient name / token..." />
+                    </div>
+
                     <div class="table-wrap">
                         <table>
                             <thead>
                                 <tr>
+                                    <th>Token</th>
                                     <th>Time</th>
                                     <th>Patient</th>
-                                    <th>Type</th>
+                                    <th>Consultation Type</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="schedule-tbody">
                                 <tr>
-                                    <td colspan="5" style="text-align:center;color:var(--text-500)">Loading schedule...</td>
+                                    <td colspan="6" style="text-align:center;color:var(--text-500);padding:24px">Loading consultation schedule...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -73,5 +498,3 @@
 </body>
 
 </html>
-
-

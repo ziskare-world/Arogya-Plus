@@ -64,12 +64,20 @@ router.post(
   asyncHandler(async (req, res) => {
     const amount = Number(req.body.amount);
 
+    let serviceDescription = req.body.description || "Clinical Medical Care & Diagnostic Services";
     if (req.body.appointmentId) {
-      const appointment = await Appointment.findById(req.body.appointmentId);
+      const appointment = await Appointment.findById(req.body.appointmentId).populate("doctor", "name specialization");
       if (!appointment) {
         return res.status(404).json({ success: false, message: "Appointment not found" });
       }
+      if (appointment.doctor) {
+        serviceDescription = `Consultation with Dr. ${appointment.doctor.name} (${appointment.doctor.specialization || "Clinical Specialist"})`;
+      }
     }
+
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${Date.now().toString().slice(-5)}${Math.floor(10 + Math.random() * 90)}`;
+    const baseAmount = Math.round((amount / 1.18) * 100) / 100;
+    const taxAmount = Math.round((amount - baseAmount) * 100) / 100;
 
     // For local/test environments without keys, return a mock order.
     if (!hasRazorpayKeys) {
@@ -78,8 +86,11 @@ router.post(
         user: req.user._id,
         appointment: req.body.appointmentId,
         amount,
+        taxAmount,
         currency: "INR",
         razorpayOrderId: mockOrderId,
+        invoiceNumber,
+        serviceDescription,
         status: "created"
       });
 
@@ -107,8 +118,11 @@ router.post(
       user: req.user._id,
       appointment: req.body.appointmentId,
       amount,
+      taxAmount,
       currency: order.currency,
       razorpayOrderId: order.id,
+      invoiceNumber,
+      serviceDescription,
       status: "created"
     });
 
@@ -132,7 +146,7 @@ router.post(
   ],
   validateRequest,
   asyncHandler(async (req, res) => {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, method } = req.body;
 
     let isSignatureValid = false;
     if (!hasRazorpayKeys) {
@@ -159,12 +173,76 @@ router.post(
     payment.razorpayPaymentId = razorpay_payment_id;
     payment.razorpaySignature = razorpay_signature;
     payment.status = "verified";
+    if (method) {
+      payment.method = method;
+    } else if (!payment.method) {
+      payment.method = "Razorpay / Unified Payments";
+    }
     await payment.save();
 
     return res.status(200).json({
       success: true,
       message: "Payment verified successfully",
       payment
+    });
+  })
+);
+
+router.get(
+  "/invoice/:id",
+  protect,
+  asyncHandler(async (req, res) => {
+    const payment = await Payment.findById(req.params.id)
+      .populate("user", "name email phone")
+      .populate({
+        path: "appointment",
+        populate: {
+          path: "doctor",
+          select: "name email specialization clinicAddress phone"
+        }
+      });
+
+    if (!payment) {
+      return res.status(404).json({ success: false, message: "Invoice not found" });
+    }
+
+    const isAdmin = ["admin", "super-admin"].includes(req.user.role);
+    if (!isAdmin && String(payment.user?._id || payment.user) !== String(req.user._id)) {
+      return res.status(403).json({ success: false, message: "Unauthorized access to invoice" });
+    }
+
+    const netAmount = Number(payment.amount || 0);
+    const baseAmount = Math.round((netAmount / 1.18) * 100) / 100;
+    const gstAmount = Math.round((netAmount - baseAmount) * 100) / 100;
+
+    const verificationHash = crypto
+      .createHash("sha256")
+      .update(`${payment._id}-${payment.razorpayOrderId || "ORD"}-${payment.amount}`)
+      .digest("hex")
+      .slice(0, 24)
+      .toUpperCase();
+
+    return res.status(200).json({
+      success: true,
+      invoice: {
+        id: payment._id,
+        invoiceNumber: payment.invoiceNumber || `INV-${payment._id.toString().slice(-8).toUpperCase()}`,
+        date: payment.createdAt,
+        verifiedAt: payment.updatedAt,
+        status: payment.status,
+        method: payment.method || "Razorpay / Unified Gateway",
+        currency: payment.currency || "INR",
+        amount: netAmount,
+        baseAmount,
+        gstAmount,
+        serviceDescription: payment.serviceDescription || "Clinical Consultation & Care",
+        razorpayOrderId: payment.razorpayOrderId,
+        razorpayPaymentId: payment.razorpayPaymentId,
+        razorpaySignature: payment.razorpaySignature,
+        verificationHash,
+        patient: payment.user,
+        appointment: payment.appointment
+      }
     });
   })
 );

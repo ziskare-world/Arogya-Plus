@@ -38,6 +38,19 @@ const paymentSchema = new mongoose.Schema(
     method: {
       type: String,
       trim: true
+    },
+    invoiceNumber: {
+      type: String,
+      trim: true
+    },
+    serviceDescription: {
+      type: String,
+      trim: true,
+      default: "Clinical Consultation & Care"
+    },
+    taxAmount: {
+      type: Number,
+      default: 0
     }
   },
   { timestamps: true }

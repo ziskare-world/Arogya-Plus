@@ -87,6 +87,15 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true
     },
+    isAvailable: {
+      type: Boolean,
+      default: true
+    },
+    consultationFee: {
+      type: Number,
+      default: 500,
+      min: 0
+    },
     isTerminated: {
       type: Boolean,
       default: false

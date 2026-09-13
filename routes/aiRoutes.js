@@ -148,35 +148,27 @@ router.post(
           .lean();
 
         if (!docs || !docs.length) {
+          // If no active doctors, check all doctor records
+          docs = await User.find({ role: "doctor" })
+            .select("name email specialization experienceYears rating reviewCount phone clinicAddress hospitalName")
+            .limit(10)
+            .lean();
+        }
+
+        if ((!docs || !docs.length) && process.env.NODE_ENV === "test") {
           docs = [
             {
               name: "Dr. Priya Sharma",
               specialization: "General Medicine",
-              hospitalName: "ArogyaPlus Multi-Specialty Hospital",
+              hospitalName: "Pawan_Multinational_Hospital",
               experienceYears: 12,
               rating: 4.9,
               phone: "080-23456789"
-            },
-            {
-              name: "Dr. Rajesh Kumar",
-              specialization: "Cardiology",
-              hospitalName: "ArogyaPlus Heart Institute",
-              experienceYears: 16,
-              rating: 4.8,
-              phone: "080-87654321"
-            },
-            {
-              name: "Dr. Ananya Sen",
-              specialization: "Pediatrics & Child Care",
-              hospitalName: "City Children's Hospital",
-              experienceYears: 9,
-              rating: 4.95,
-              phone: "080-45678901"
             }
           ];
         }
 
-        doctors = docs;
+        doctors = docs || [];
         if (isDoctorExploreQuery || !action || action.href === "doctors.html") {
           action = {
             type: "explore_doctors",
@@ -266,10 +258,53 @@ router.post(
       action,
       doctors,
       prescriptions,
+      suggestions: result.suggestions || null,
+      learningProfile: result.learningProfile || null,
       operations: result.intent === "hospital_operations" ? result.details : null,
       bookingRecommendation: result.intent === "appointment_booking" ? result.details : null,
       details: result.details || null,
       disclaimer: "Arogya AI provides clinical information for reference and does not replace certified physician advice."
+    });
+  })
+);
+
+/**
+ * @route   GET /api/ai/learning-profile
+ * @desc    Retrieve the current user's self-learning profile and healthcare preferences
+ * @access  Public (Authenticated when token provided)
+ */
+router.get(
+  "/learning-profile",
+  asyncHandler(async (req, res) => {
+    let currentUser = req.user || null;
+    if (!currentUser && req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+      try {
+        const token = req.headers.authorization.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        currentUser = await User.findById(decoded.id);
+      } catch (authErr) {
+        // Invalid token
+      }
+    }
+
+    if (!currentUser) {
+      return res.status(200).json({
+        success: true,
+        authenticated: false,
+        profile: null,
+        message: "No authenticated user. Guest preferences are stored in client session."
+      });
+    }
+
+    const memory = await AgentMemory.findOne({
+      user: currentUser._id,
+      category: "learned_profile"
+    }).lean();
+
+    return res.status(200).json({
+      success: true,
+      authenticated: true,
+      profile: memory?.value || null
     });
   })
 );

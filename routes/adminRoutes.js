@@ -11,6 +11,7 @@ const Ambulance = require("../models/Ambulance");
 const AmbulanceFleet = require("../models/AmbulanceFleet");
 const Insurance = require("../models/Insurance");
 const SystemSettings = require("../models/SystemSettings");
+const Hospital = require("../models/Hospital");
 const { protect, authorize } = require("../middleware/authMiddleware");
 const validateRequest = require("../middleware/validateMiddleware");
 
@@ -102,6 +103,32 @@ router.post(
       role: "admin",
       createdByAdmin: req.user._id
     });
+
+    // Automatically sync hospital to Hospital collection
+    try {
+      const lat = normalizedCoordinates?.lat ? Number(normalizedCoordinates.lat) : 19.0715764;
+      const lng = normalizedCoordinates?.lng ? Number(normalizedCoordinates.lng) : 83.8095657;
+      await Hospital.findOneAndUpdate(
+        { name: hospitalName },
+        {
+          $setOnInsert: {
+            name: hospitalName,
+            address: hospitalAddress || "Main Healthcare Facility",
+            latitude: lat,
+            longitude: lng,
+            phone: phone || "+91-11-23456789",
+            specialty: department || "Neurology & Multi-Specialty",
+            totalBeds: 100,
+            occupiedBeds: 14,
+            availableBeds: 86,
+            emergencyServices: true
+          }
+        },
+        { upsert: true, new: true }
+      );
+    } catch (hospErr) {
+      console.warn("Auto hospital sync warning:", hospErr.message);
+    }
 
     return res.status(201).json({
       success: true,
@@ -215,6 +242,32 @@ router.post(
         ...sharedPayload
       }
     ]);
+
+    // Automatically sync hospital to Hospital collection
+    try {
+      const lat = normalizedCoordinates?.lat ? Number(normalizedCoordinates.lat) : 19.0715764;
+      const lng = normalizedCoordinates?.lng ? Number(normalizedCoordinates.lng) : 83.8095657;
+      await Hospital.findOneAndUpdate(
+        { name: hospitalName },
+        {
+          $setOnInsert: {
+            name: hospitalName,
+            address: hospitalAddress || "Main Healthcare Facility",
+            latitude: lat,
+            longitude: lng,
+            phone: phone || "+91-11-23456789",
+            specialty: "Neurology & Multi-Specialty",
+            totalBeds: 100,
+            occupiedBeds: 14,
+            availableBeds: 86,
+            emergencyServices: true
+          }
+        },
+        { upsert: true, new: true }
+      );
+    } catch (hospErr) {
+      console.warn("Auto hospital sync warning:", hospErr.message);
+    }
 
     const mapAdminResponse = (admin) => ({
       id: admin._id,
@@ -1533,6 +1586,29 @@ router.put(
     });
 
     await settings.save();
+
+    if (settings.hospitalName) {
+      try {
+        const totBeds = Number(settings.totalBeds || 100);
+        const occBeds = Number(settings.occupiedBeds || 14);
+        await Hospital.findOneAndUpdate(
+          { name: settings.hospitalName },
+          {
+            $set: {
+              name: settings.hospitalName,
+              address: settings.hospitalAddress || "Main Healthcare Facility",
+              phone: settings.emergencyContact || "+91-11-23456789",
+              totalBeds: totBeds,
+              occupiedBeds: occBeds,
+              availableBeds: Math.max(0, totBeds - occBeds)
+            }
+          },
+          { upsert: true, new: true }
+        );
+      } catch (hospErr) {
+        console.warn("Hospital settings sync warning:", hospErr.message);
+      }
+    }
 
     return res.status(200).json({
       success: true,

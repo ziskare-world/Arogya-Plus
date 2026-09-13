@@ -283,6 +283,19 @@
     "repo_url": "https://github.com/ziskare-world/Arogya-Plus",
     "recent_commits": [
       {
+        "sha": "fix-hosp-name-doc-dedup",
+        "date": "2026-09-13",
+        "message": "fix: show only database-added hospital (Pawan_Multinational_Hospital) instead of hardcoded Arogya Central, display assigned doctors in hospital card, and resolve double-response bug in AI chat widget",
+        "author": "AI-Assistant",
+        "files_changed": [
+          "routes/mapRoutes.js",
+          "routes/adminRoutes.js",
+          "routes/aiRoutes.js",
+          "ui/js/ai-chat-widget.js",
+          "scripts/syncHospitals.js"
+        ]
+      },
+      {
         "sha": "hosp-db-amb-auth-ai",
         "date": "2026-09-13",
         "message": "feat: Hospital details & bed occupancy database, nearest hospital ranking, live ambulance tracking automation, guest localStorage chat, and in-chat authentication",

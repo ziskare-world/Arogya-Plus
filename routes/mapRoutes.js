@@ -5,85 +5,81 @@ const AmbulanceFleet = require("../models/AmbulanceFleet");
 const Emergency = require("../models/Emergency");
 
 // Initial sample hospital data to ensure maps load rich clinical markers out of the box
-const DEFAULT_HOSPITALS = [
-  {
-    name: "Arogya Central Multi-Specialty Hospital",
-    latitude: 28.6139,
-    longitude: 77.2090,
-    address: "Block A, Connaught Place, New Delhi",
-    specialty: "Cardiology, Trauma & Emergency",
-    phone: "+91-11-23456789",
-    availableBeds: 45,
-    emergencyServices: true
-  },
-  {
-    name: "City Care Trauma & Emergency Center",
-    latitude: 28.6250,
-    longitude: 77.2180,
-    address: "Sector 4, RK Puram, New Delhi",
-    specialty: "Critical Care, Orthopedics",
-    phone: "+91-11-23456790",
-    availableBeds: 28,
-    emergencyServices: true
-  },
-  {
-    name: "Metro Health Super Specialty Clinic",
-    latitude: 28.6010,
-    longitude: 77.1950,
-    address: "Green Park Extension, New Delhi",
-    specialty: "Neurology, Pediatrics",
-    phone: "+91-11-23456791",
-    availableBeds: 18,
-    emergencyServices: true
-  },
-  {
-    name: "Apex Blood Bank & Urgent Care",
-    latitude: 28.6320,
-    longitude: 77.2250,
-    address: "Barakhamba Road, New Delhi",
-    specialty: "Blood Bank, General Medicine",
-    phone: "+91-11-23456792",
-    availableBeds: 12,
-    emergencyServices: true
-  }
+const User = require("../models/User");
+
+// Legacy dummy sample hospital names that should NEVER be shown if user didn't add them
+const DUMMY_HOSPITAL_NAMES = [
+  "Arogya Central Multi-Specialty Hospital",
+  "City Care Trauma & Emergency Center",
+  "Metro Health Super Specialty Clinic",
+  "Apex Blood Bank & Urgent Care"
 ];
+
+// Helper to ensure hospitals in MongoDB match the actual hospitals added by administrators
+const syncHospitalsFromDatabase = async () => {
+  try {
+    // Purge fake dummy hospitals so only user-added hospitals exist
+    await Hospital.deleteMany({ name: { $in: DUMMY_HOSPITAL_NAMES } });
+
+    // Sync any registered hospital admin users who have a hospitalName
+    const admins = await User.find({
+      role: "admin",
+      hospitalName: { $exists: true, $ne: "" }
+    }).lean();
+
+    for (const admin of admins) {
+      const coords = admin.hospitalCoordinates || {};
+      const lat = Number(coords.lat || 19.0715764);
+      const lng = Number(coords.lng || 83.8095657);
+
+      await Hospital.findOneAndUpdate(
+        { name: admin.hospitalName },
+        {
+          $setOnInsert: {
+            name: admin.hospitalName,
+            address: admin.hospitalAddress || "hospital road, Gunupur Town, Ketalugurha, Gunupur, Rayagada, Odisha, 765022, India",
+            latitude: lat,
+            longitude: lng,
+            phone: admin.phone || "+91-11-23456789",
+            specialty: admin.department || "Neurology & Multi-Specialty",
+            totalBeds: 100,
+            occupiedBeds: 14,
+            availableBeds: 86,
+            emergencyServices: true
+          }
+        },
+        { upsert: true, new: true }
+      );
+    }
+  } catch (err) {
+    console.warn("[Map GIS] syncHospitalsFromDatabase warning:", err.message);
+  }
+};
 
 const DEFAULT_FLEET = [
   {
-    hospitalName: "Arogya Central Multi-Specialty Hospital",
-    hospitalAddress: "Block A, Connaught Place, New Delhi",
-    hospitalCoordinates: { lat: 28.6139, lng: 77.2090 },
+    hospitalName: "Pawan_Multinational_Hospital",
+    hospitalAddress: "hospital road, Gunupur Town, Ketalugurha, Gunupur, Rayagada, Odisha, 765022, India",
+    hospitalCoordinates: { lat: 19.0715764, lng: 83.8095657 },
+    vehicleNumber: "OD17C8056",
+    driverName: "Om Meher",
+    driverPhone: "+91-8658067196",
+    equipmentLevel: "ALS",
+    status: "available",
+    speed: 0,
+    currentCoordinates: { lat: 19.0715764, lng: 83.8095657 }
+  },
+  {
+    hospitalName: "Pawan_Multinational_Hospital",
+    hospitalAddress: "hospital road, Gunupur Town, Ketalugurha, Gunupur, Rayagada, Odisha, 765022, India",
+    hospitalCoordinates: { lat: 19.0715764, lng: 83.8095657 },
     vehicleNumber: "DL-01-AMB-101",
     driverName: "Rajesh Kumar",
     driverPhone: "+91-9876543210",
     equipmentLevel: "ALS",
     status: "available",
     speed: 0,
-    currentCoordinates: { lat: 28.6139, lng: 77.2090 }
-  },
-  {
-    hospitalName: "City Care Trauma & Emergency Center",
-    hospitalAddress: "Sector 4, RK Puram, New Delhi",
-    hospitalCoordinates: { lat: 28.6250, lng: 77.2180 },
-    vehicleNumber: "DL-02-AMB-202",
-    driverName: "Vikram Singh",
-    driverPhone: "+91-9876543211",
-    equipmentLevel: "ICU Ambulance",
-    status: "available",
-    speed: 0,
-    currentCoordinates: { lat: 28.6250, lng: 77.2180 }
-  },
-  {
-    hospitalName: "Metro Health Super Specialty Clinic",
-    hospitalAddress: "Green Park Extension, New Delhi",
-    hospitalCoordinates: { lat: 28.6010, lng: 77.1950 },
-    vehicleNumber: "DL-03-AMB-303",
-    driverName: "Amit Sharma",
-    driverPhone: "+91-9876543212",
-    equipmentLevel: "BLS",
-    status: "available",
-    speed: 0,
-    currentCoordinates: { lat: 28.6010, lng: 77.1950 }
+    currentCoordinates: { lat: 19.0715764, lng: 83.8095657 }
   }
 ];
 
@@ -92,11 +88,8 @@ const DEFAULT_FLEET = [
  */
 const initializeMapData = async () => {
   try {
-    let hospitals = await Hospital.find();
-    if (!hospitals || hospitals.length === 0) {
-      hospitals = await Hospital.insertMany(DEFAULT_HOSPITALS);
-      console.log(`[Map GIS] Seeded ${hospitals.length} default hospital locations.`);
-    }
+    await syncHospitalsFromDatabase();
+    const hospitals = await Hospital.find();
 
     let fleet = await AmbulanceFleet.find();
     if (!fleet || fleet.length === 0) {
@@ -129,15 +122,32 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 
 /**
  * @route GET /api/map/hospitals
- * @desc Get all hospital locations stored in MongoDB
+ * @desc Get all hospital locations stored in MongoDB with assigned doctors
  */
 router.get("/hospitals", async (req, res) => {
   try {
-    let hospitals = await Hospital.find();
-    if (!hospitals || hospitals.length === 0) {
-      hospitals = await Hospital.insertMany(DEFAULT_HOSPITALS);
-    }
-    res.json({ success: true, count: hospitals.length, data: hospitals });
+    await syncHospitalsFromDatabase();
+    const hospitals = await Hospital.find();
+
+    // Query active doctors to attach to their respective hospitals
+    const allDoctors = await User.find({ role: "doctor", isActive: true })
+      .select("name email specialization experienceYears rating reviewCount phone clinicAddress hospitalName")
+      .lean();
+
+    const dataWithDoctors = hospitals.map(h => {
+      const normHospName = (h.name || "").toLowerCase().replace(/[\s_-]+/g, "");
+      const assignedDoctors = allDoctors.filter(doc => {
+        const docHosp = (doc.hospitalName || "").toLowerCase().replace(/[\s_-]+/g, "");
+        return docHosp && (docHosp === normHospName || docHosp.includes(normHospName) || normHospName.includes(docHosp));
+      });
+
+      return {
+        ...h.toObject(),
+        doctors: assignedDoctors
+      };
+    });
+
+    res.json({ success: true, count: dataWithDoctors.length, data: dataWithDoctors });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -145,7 +155,7 @@ router.get("/hospitals", async (req, res) => {
 
 /**
  * @route GET /api/map/nearest-hospital
- * @desc Find the nearest hospital added in the database from user location coordinates with live bed occupancy & ETA
+ * @desc Find the nearest hospital added in the database from user location coordinates with live bed occupancy, ETA, & assigned doctors
  */
 router.get("/nearest-hospital", async (req, res) => {
   try {
@@ -159,10 +169,20 @@ router.get("/nearest-hospital", async (req, res) => {
       });
     }
 
-    let hospitals = await Hospital.find();
+    await syncHospitalsFromDatabase();
+    const hospitals = await Hospital.find();
+
     if (!hospitals || hospitals.length === 0) {
-      hospitals = await Hospital.insertMany(DEFAULT_HOSPITALS);
+      return res.status(404).json({
+        success: false,
+        error: "No hospitals currently registered in database"
+      });
     }
+
+    // Query active doctors to attach to their assigned hospital
+    const allDoctors = await User.find({ role: "doctor", isActive: true })
+      .select("name email specialization experienceYears rating reviewCount phone clinicAddress hospitalName")
+      .lean();
 
     const ranked = hospitals.map(h => {
       const hLat = h.latitude;
@@ -170,11 +190,18 @@ router.get("/nearest-hospital", async (req, res) => {
       const distance = calculateHaversineDistance(lat, lng, hLat, hLng);
       const etaMinutes = Math.max(3, Math.round(distance * 1.5 + 3));
 
+      // Match doctors assigned under this hospital
+      const normHospName = (h.name || "").toLowerCase().replace(/[\s_-]+/g, "");
+      const assignedDoctors = allDoctors.filter(doc => {
+        const docHosp = (doc.hospitalName || "").toLowerCase().replace(/[\s_-]+/g, "");
+        return docHosp && (docHosp === normHospName || docHosp.includes(normHospName) || normHospName.includes(docHosp));
+      });
+
       return {
         id: h._id,
         name: h.name,
         address: h.address,
-        city: h.city || "Delhi NCR",
+        city: h.city || "Healthcare Facility",
         latitude: hLat,
         longitude: hLng,
         phone: h.phone || "+91-11-23456789",
@@ -183,13 +210,14 @@ router.get("/nearest-hospital", async (req, res) => {
         etaMinutes,
         beds: {
           total: h.totalBeds || 100,
-          occupied: h.occupiedBeds || 45,
-          available: h.availableBeds !== undefined ? h.availableBeds : 55,
-          icu: h.icuBeds || { total: 20, occupied: 14, available: 6 },
-          oxygen: h.oxygenBeds || { total: 35, occupied: 22, available: 13 }
+          occupied: h.occupiedBeds || 14,
+          available: h.availableBeds !== undefined ? h.availableBeds : 86,
+          icu: h.icuBeds || { total: 20, occupied: 6, available: 14 },
+          oxygen: h.oxygenBeds || { total: 35, occupied: 10, available: 25 }
         },
         emergencyServices: h.emergencyServices !== false,
-        rating: h.rating || 4.8
+        rating: h.rating || 4.8,
+        doctors: assignedDoctors
       };
     });
 

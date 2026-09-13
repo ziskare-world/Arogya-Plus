@@ -1749,4 +1749,71 @@
     cursor: pointer;
 }
 
+/* Doctor Clinical Copilot & Automation Styles */
+.ai-chat-header.doctor-mode {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0284c7 100%);
+    border-bottom: 2px solid #38bdf8;
+}
+
+.ai-doctor-queue-card {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 12px;
+    margin-top: 8px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.ai-queue-patient-row {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.ai-soap-generator-card {
+    background: #ffffff;
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+    padding: 12px;
+    margin-top: 8px;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+}
+
+.ai-soap-textarea {
+    width: 100%;
+    min-height: 70px;
+    padding: 8px;
+    font-size: 0.8rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.ai-soap-output {
+    background: #f8fafc;
+    border-left: 3px solid #0284c7;
+    border-radius: 0 8px 8px 0;
+    padding: 10px 12px;
+    margin-top: 8px;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: #0f172a;
+}
+
+.ai-soap-section-title {
+    font-weight: 800;
+    color: #0369a1;
+    margin-top: 4px;
+}
+
+
 

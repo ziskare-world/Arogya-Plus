@@ -300,6 +300,9 @@
 
       // Save token & user if no 2FA required
       storeAuthSession(data);
+      try {
+        localStorage.setItem("arogya_ai_auto_open", "true");
+      } catch (e) {}
 
       setMessage(messageBox, "Login successful. Redirecting...", "success");
       setTimeout(() => {
@@ -351,6 +354,9 @@
       const data = await parseApiResponse(authResponse);
 
       storeAuthSession(data);
+      try {
+        localStorage.setItem("arogya_ai_auto_open", "true");
+      } catch (e) {}
 
       setMessage(messageBox, "Passkey verified! Opening dashboard...", "success");
       setTimeout(() => {
@@ -390,6 +396,9 @@
       const data = await parseApiResponse(response);
 
       storeAuthSession(data);
+      try {
+        localStorage.setItem("arogya_ai_auto_open", "true");
+      } catch (e) {}
 
       setMessage(messageBox, "2FA Verified! Opening dashboard...", "success");
       setTimeout(() => {

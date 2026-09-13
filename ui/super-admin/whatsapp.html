@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WhatsApp Dashboard</title>
+  <link rel="stylesheet" href="../css/theme.css" />
+  <style>
+    .whatsapp-container { max-width: 800px; margin: 2rem auto; padding: 1rem; background: var(--bg-200); border-radius: 8px; }
+    .whatsapp-section { margin-bottom: 1.5rem; }
+    .whatsapp-section h2 { margin-bottom: 0.5rem; color: var(--text-primary); }
+    .qr-code { text-align: center; margin: 1rem 0; }
+    .qr-code img { max-width: 200px; border: 2px solid var(--accent); border-radius: 8px; }
+    .status { font-weight: bold; }
+    .form-group { margin-bottom: 0.75rem; }
+    .form-group label { display: block; margin-bottom: 0.25rem; color: var(--text-600); }
+    .form-group input, .form-group textarea { width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-100); color: var(--text-primary); }
+    .btn { background: var(--accent); color: #fff; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .message { margin-top: 0.5rem; }
+  </style>
+</head>
+<body>
+  <div class="whatsapp-container">
+    <h1>WhatsApp Integration</h1>
+    <div class="whatsapp-section" id="status-section">
+      <h2>Status</h2>
+      <p class="status" id="connection-status">Checking...</p>
+    </div>
+    <div class="whatsapp-section" id="qr-section" style="display:none;">
+      <h2>Scan QR Code</h2>
+      <div class="qr-code" id="qr-code"></div>
+      <p>Scan the QR code with your phone’s WhatsApp to connect.</p>
+    </div>
+    <div class="whatsapp-section" id="send-text-section">
+      <h2>Send Text Message</h2>
+      <div class="form-group"><label for="to-number">Phone Number (e.g., 1234567890@c.us)</label><input type="text" id="to-number" placeholder="Enter WhatsApp ID" /></div>
+      <div class="form-group"><label for="message-text">Message</label><textarea id="message-text" rows="3" placeholder="Your message"></textarea></div>
+      <button class="btn" id="send-text-btn">Send Text</button>
+      <div class="message" id="text-result"></div>
+    </div>
+    <div class="whatsapp-section" id="send-media-section">
+      <h2>Send Media (Image / Document)</h2>
+      <div class="form-group"><label for="media-to">Phone Number</label><input type="text" id="media-to" placeholder="Enter WhatsApp ID" /></div>
+      <div class="form-group"><label for="media-file">Choose File</label><input type="file" id="media-file" /></div>
+      <div class="form-group"><label for="media-caption">Caption (optional)</label><input type="text" id="media-caption" placeholder="Caption" /></div>
+      <button class="btn" id="send-media-btn">Send Media</button>
+      <div class="message" id="media-result"></div>
+    </div>
+  </div>
+  <script src="../js/whatsapp-dashboard.js"></script>
+</body>
+</html>

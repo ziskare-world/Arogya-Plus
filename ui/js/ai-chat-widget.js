@@ -36,10 +36,21 @@ export function initAiChatWidget() {
   const chatStatus = isDoctor ? 'Online • Doctor Clinical Automation' : 'Online • Medical Assistant';
   const headerClass = isDoctor ? 'ai-chat-header doctor-mode' : 'ai-chat-header';
   const welcomeIcon = isDoctor ? '👨‍⚕️' : '🩺';
-  const welcomeTitle = isDoctor ? `Welcome, ${currentUser?.name ? 'Dr. ' + currentUser.name : 'Doctor'}!` : 'Welcome to Arogya AI!';
-  const welcomeDesc = isDoctor
-    ? 'Your Clinical Automation Copilot is ready. Ask for clinical guidance, patient queue, auto SOAP notes, bed telemetry, or type "help" for all available commands.'
-    : 'Hello! I am Arogya AI, your 24/7 intelligent healthcare companion. Type "hi" to learn about our platform and services, or type "help" to explore any feature.';
+
+  const isSuperAdmin = window.location.pathname.includes('/super-admin');
+
+  let welcomeTitle;
+  let welcomeDesc;
+  if (isSuperAdmin) {
+    welcomeTitle = 'Arogya AI Assistant';
+    welcomeDesc = `🩺 Arogya AI Assistant<br>👋 Welcome to your Patient Dashboard, Super Admin!<br><br>Your Arogya AI Health Assistant is running and ready. You can:<br>• 📅 Book a doctor by chatting with me or picking specialists<br>• 🏥 Check live hospital beds & emergency services<br>• ✕ Close this chat anytime (click ✕) to continue manually!`;
+  } else if (isDoctor) {
+    welcomeTitle = `Welcome, ${currentUser?.name ? 'Dr. ' + currentUser.name : 'Doctor'}!`;
+    welcomeDesc = 'Your Clinical Automation Copilot is ready. Ask for clinical guidance, patient queue, auto SOAP notes, bed telemetry, or type "help" for all available commands.';
+  } else {
+    welcomeTitle = 'Welcome to Arogya AI!';
+    welcomeDesc = 'Hello! I am Arogya AI, your 24/7 intelligent healthcare companion. Type "hi" to learn about our platform and services, or type "help" to explore any feature.';
+  }
 
   // Create Widget Container HTML
   const container = document.createElement('div');

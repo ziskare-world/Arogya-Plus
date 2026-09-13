@@ -1,0 +1,12 @@
+{
+  "id": "multi-agent-coordination",
+  "name": "Multi-Agent Coordination",
+  "version": "1.0.0",
+  "description": "Orchestrates 8 specialized autonomous sub-agents with bounded execution depth and contract validation.",
+  "category": "multi-agent",
+  "permissions": ["agents:coordinate"],
+  "actions": [
+    "delegate_to_subagent",
+    "list_active_subagents"
+  ]
+}

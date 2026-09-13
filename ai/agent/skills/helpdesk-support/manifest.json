@@ -1,0 +1,18 @@
+{
+  "id": "helpdesk-support",
+  "name": "Help Desk Support",
+  "version": "1.0.0",
+  "description": "Answers FAQs, creates and manages support tickets, tracks SLA deadlines, and handles priority escalation.",
+  "category": "support",
+  "permissions": [
+    "tickets:read",
+    "tickets:create",
+    "tickets:update"
+  ],
+  "actions": [
+    "search_faq",
+    "create_ticket",
+    "update_ticket",
+    "list_tickets"
+  ]
+}

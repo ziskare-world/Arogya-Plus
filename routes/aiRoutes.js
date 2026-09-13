@@ -1,11 +1,78 @@
 const express = require("express");
 const asyncHandler = require("express-async-handler");
+const jwt = require("jsonwebtoken");
 const { body } = require("express-validator");
 const validateRequest = require("../middleware/validateMiddleware");
-const { buildSymptomAssessment } = require("../utils/symptomChecker");
+const { protect, authorize } = require("../middleware/authMiddleware");
+const User = require("../models/User");
+const AgentMemory = require("../models/AgentMemory");
+const {
+  agentOrchestrator,
+  triageAgent,
+  appointmentAgent,
+  clinicalNotesAgent,
+  hospitalOperationsAgent,
+  huggingFaceClient,
+  queryQwenAgent,
+  DEFAULT_QWEN_MODEL
+} = require("../ai");
 
 const router = express.Router();
 
+/**
+ * @route   GET /api/ai/status
+ * @desc    Get AI subsystem health, configured agents, and model provider status
+ * @access  Public
+ */
+router.get(
+  "/status",
+  asyncHandler(async (req, res) => {
+    return res.status(200).json({
+      success: true,
+      status: "online",
+      model: DEFAULT_QWEN_MODEL,
+      provider: huggingFaceClient.isConfigured ? "huggingface-inference-api" : "qwen-clinical-engine",
+      huggingfaceConfigured: huggingFaceClient.isConfigured,
+      agents: [
+        { name: "TalkingAgent", role: "Conversational Healthcare & Empathy Q&A (Qwen3-30B)", active: true },
+        { name: "TriageAgent", role: "Emergency Severity Scoring & 108 Alert", active: true },
+        { name: "AppointmentAgent", role: "Natural Language Smart Scheduling & Live DB Conflict Check", active: true },
+        { name: "ClinicalNotesAgent", role: "SOAP Structuring & Real Prescription Generation", active: true },
+        { name: "HospitalOperationsAgent", role: "Live Hospital Bed & Emergency Fleet Telemetry", active: true },
+        { name: "AgentOrchestrator", role: "Central Intent Classifier & Router", active: true }
+      ]
+    });
+  })
+);
+
+/**
+ * @route   POST /api/ai/qwen/chat
+ * @desc    Direct Node.js accessibility endpoint for Qwen3-30B-A3B Hugging Face model
+ * @access  Public
+ */
+router.post(
+  "/qwen/chat",
+  [
+    body("messages").isArray({ min: 1 }).withMessage("messages must be a non-empty array"),
+    body("messages.*.role").isString().withMessage("Each message must have a role"),
+    body("messages.*.content").isString().withMessage("Each message must have content"),
+    body("maxNewTokens").optional().isInt({ min: 1, max: 512 })
+  ],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const result = await queryQwenAgent({
+      messages: req.body.messages,
+      maxNewTokens: req.body.maxNewTokens || 60
+    });
+    return res.status(200).json(result);
+  })
+);
+
+/**
+ * @route   POST /api/ai/symptom-checker
+ * @desc    AI symptom triage assessment
+ * @access  Public
+ */
 router.post(
   "/symptom-checker",
   [
@@ -15,7 +82,7 @@ router.post(
   ],
   validateRequest,
   asyncHandler(async (req, res) => {
-    const assessment = buildSymptomAssessment({
+    const assessment = await triageAgent.evaluateSymptoms({
       symptoms: req.body.symptoms,
       age: req.body.age || 30
     });
@@ -24,112 +91,340 @@ router.post(
       success: true,
       message: "AI symptom assessment completed",
       assessment,
-      disclaimer:
-        "This tool is informational and not a substitute for professional medical diagnosis."
+      disclaimer: "This tool is informational and not a substitute for professional medical diagnosis."
     });
   })
 );
 
+/**
+ * @route   POST /api/ai/chat
+ * @desc    Multi-agent conversational turn with intent routing & action payloads
+ * @access  Public
+ */
 router.post(
   "/chat",
   [
-    body("message").isString().trim().notEmpty().withMessage("Message is required")
+    body("message").isString().trim().notEmpty().withMessage("Message is required"),
+    body("history").optional().isArray().withMessage("History must be an array")
   ],
   validateRequest,
   asyncHandler(async (req, res) => {
     const userMsg = req.body.message.trim();
-    const lower = userMsg.toLowerCase();
+    const history = req.body.history || [];
 
-    // Check for red flag emergency keywords
-    const redFlags = ["chest pain", "shortness of breath", "unconscious", "seizure", "heavy bleeding", "stroke", "heart attack", "can't breathe"];
-    const matchedRedFlags = redFlags.filter(rf => lower.includes(rf));
-
-    let reply = "";
-    let action = null;
-    let triageLevel = "normal";
-
-    if (matchedRedFlags.length > 0) {
-      triageLevel = "critical";
-      reply = `⚠️ **CRITICAL MEDICAL ALERT**: I detected severe symptoms (${matchedRedFlags.join(", ")}). Please seek immediate emergency medical care or request an urgent ambulance right now!`;
-      action = {
-        label: "🚑 Dispatch Ambulance Now",
-        href: "ambulance-booking.html",
-        variant: "danger"
-      };
-    } else if (lower.includes("symptom") || lower.includes("fever") || lower.includes("headache") || lower.includes("pain") || lower.includes("cough") || lower.includes("sick") || lower.includes("stomach")) {
-      // Extract symptoms roughly
-      const sampleSymptoms = [];
-      if (lower.includes("fever")) sampleSymptoms.push("high fever");
-      if (lower.includes("headache")) sampleSymptoms.push("severe headache");
-      if (lower.includes("cough")) sampleSymptoms.push("persistent cough");
-      if (lower.includes("stomach") || lower.includes("abdominal")) sampleSymptoms.push("abdominal pain");
-      if (lower.includes("vomit")) sampleSymptoms.push("vomiting");
-
-      if (sampleSymptoms.length > 0) {
-        const assessment = buildSymptomAssessment({ symptoms: sampleSymptoms });
-        triageLevel = assessment.triageLevel;
-        reply = `Based on your symptoms (${sampleSymptoms.join(", ")}), the triage assessment is **${triageLevel.toUpperCase()}**. ${assessment.recommendation}`;
-        action = {
-          label: "📅 Consult a Doctor",
-          href: "doctors.html",
-          variant: "primary"
-        };
-      } else {
-        reply = `I can help evaluate your symptoms! Please describe your symptoms (e.g. fever, headache, cough, body pain) or click below to book a doctor consultation.`;
-        action = {
-          label: "🩺 Find & Book Doctor",
-          href: "doctors.html",
-          variant: "primary"
-        };
+    // Optional user authentication via JWT header
+    let currentUser = req.user || null;
+    if (!currentUser && req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+      try {
+        const token = req.headers.authorization.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        currentUser = await User.findById(decoded.id).select("-password");
+      } catch (authErr) {
+        // Non-blocking for public chat queries
       }
-    } else if (lower.includes("appointment") || lower.includes("book") || lower.includes("doctor")) {
-      reply = `You can easily schedule or manage your doctor appointments from the Appointments portal. You can view available specialists, pick date & time slots, and track appointment status.`;
-      action = {
-        label: "📅 Go to Appointments",
-        href: "appointments.html",
-        variant: "primary"
-      };
-    } else if (lower.includes("ambulance") || lower.includes("emergency") || lower.includes("sos")) {
-      reply = `For emergency response, our 24/7 Ambulance SOS service provides live GPS dispatch to nearest hospitals.`;
-      action = {
-        label: "🚑 Open Ambulance Booking",
-        href: "ambulance-booking.html",
-        variant: "danger"
-      };
-    } else if (lower.includes("record") || lower.includes("ehr") || lower.includes("history") || lower.includes("lab")) {
-      reply = `Your electronic medical records (EHR), past visit notes, and lab reports are securely accessible in your Medical Records section.`;
-      action = {
-        label: "📋 View Medical Records",
-        href: "medical-records.html",
-        variant: "primary"
-      };
-    } else if (lower.includes("prescription") || lower.includes("medicine") || lower.includes("refill")) {
-      reply = `Check your active prescriptions, dosage guidelines, and digital Rx files issued by your doctors.`;
-      action = {
-        label: "💊 Open Prescriptions",
-        href: "prescriptions.html",
-        variant: "primary"
-      };
-    } else if (lower.includes("pay") || lower.includes("bill") || lower.includes("balance") || lower.includes("cost") || lower.includes("fee")) {
-      reply = `Manage your clinical bills, outstanding balance, and Razorpay payment history seamlessly.`;
-      action = {
-        label: "💳 Open Billing & Payments",
-        href: "payments.html",
-        variant: "primary"
-      };
-    } else if (lower.includes("hi") || lower.includes("hello") || lower.includes("hey") || lower.includes("help")) {
-      reply = `Hello! I am your **Arogya AI Health Assistant**. How can I help you today? You can ask me about symptom checks, booking doctors, emergency ambulances, or accessing your health records!`;
-    } else {
-      reply = `Thank you for reaching out! I'm your Arogya AI Health Assistant. I can assist with symptom assessment, finding specialists, emergency ambulance requests, and navigating your medical records. What would you like help with?`;
+    }
+
+    const result = await agentOrchestrator.handleUserMessage({
+      message: userMsg,
+      history,
+      user: currentUser
+    });
+
+    // Check if query is asking specifically to explore or browse doctors
+    const isDoctorExploreQuery = /\b(explore doctor|explore doctors|find doctor|find doctors|list doctors|show doctors|all doctors)\b/i.test(userMsg);
+    let doctors = null;
+    let action = result.action;
+
+    if (
+      isDoctorExploreQuery ||
+      (action && action.label && action.label.toLowerCase().includes("explore doctor")) ||
+      (action && action.href === "doctors.html")
+    ) {
+      try {
+        let docs = await User.find({ role: "doctor", isActive: true })
+          .select("name email specialization experienceYears rating reviewCount phone clinicAddress hospitalName")
+          .limit(10)
+          .lean();
+
+        if (!docs || !docs.length) {
+          docs = [
+            {
+              name: "Dr. Priya Sharma",
+              specialization: "General Medicine",
+              hospitalName: "ArogyaPlus Multi-Specialty Hospital",
+              experienceYears: 12,
+              rating: 4.9,
+              phone: "080-23456789"
+            },
+            {
+              name: "Dr. Rajesh Kumar",
+              specialization: "Cardiology",
+              hospitalName: "ArogyaPlus Heart Institute",
+              experienceYears: 16,
+              rating: 4.8,
+              phone: "080-87654321"
+            },
+            {
+              name: "Dr. Ananya Sen",
+              specialization: "Pediatrics & Child Care",
+              hospitalName: "City Children's Hospital",
+              experienceYears: 9,
+              rating: 4.95,
+              phone: "080-45678901"
+            }
+          ];
+        }
+
+        doctors = docs;
+        if (isDoctorExploreQuery || !action || action.href === "doctors.html") {
+          action = {
+            type: "explore_doctors",
+            label: "🩺 Explore Doctors",
+            href: "doctors.html",
+            variant: "primary"
+          };
+        }
+      } catch (err) {
+        // Ignore doctor query errors gracefully
+      }
+    }
+
+    // Persist past user interactions for continuous improvement and personalized care
+    if (currentUser) {
+      try {
+        currentUser.aiInteractions = currentUser.aiInteractions || [];
+        currentUser.aiInteractions.push(
+          {
+            role: "user",
+            content: userMsg,
+            intent: result.intent,
+            timestamp: new Date()
+          },
+          {
+            role: "assistant",
+            content: result.reply,
+            intent: result.intent,
+            triageLevel: result.triageLevel,
+            agent: result.agent,
+            timestamp: new Date(),
+            metadata: doctors ? { doctorCount: doctors.length } : undefined
+          }
+        );
+
+        // Keep last 100 turns for memory retention
+        if (currentUser.aiInteractions.length > 100) {
+          currentUser.aiInteractions = currentUser.aiInteractions.slice(-100);
+        }
+        await currentUser.save();
+
+        // Update long-term memory buffer
+        await AgentMemory.findOneAndUpdate(
+          { user: currentUser._id, key: "recent_ai_turn" },
+          {
+            user: currentUser._id,
+            type: "conversation_context",
+            key: "recent_ai_turn",
+            value: {
+              lastQuery: userMsg,
+              lastReply: result.reply,
+              intent: result.intent,
+              triageLevel: result.triageLevel,
+              updatedAt: new Date()
+            },
+            category: "conversation_context",
+            source: "ai_chat"
+          },
+          { upsert: true, new: true }
+        );
+      } catch (persistErr) {
+        console.warn("AI interaction memory logging warning:", persistErr.message);
+      }
     }
 
     return res.status(200).json({
       success: true,
-      reply,
-      triageLevel,
+      reply: result.reply,
+      agent: result.agent,
+      intent: result.intent,
+      triageLevel: result.triageLevel,
       action,
-      disclaimer: "Arogya AI provides clinical information for reference and does not replace medical advice from a certified physician."
+      doctors,
+      details: result.details || null,
+      disclaimer: "Arogya AI provides clinical information for reference and does not replace certified physician advice."
     });
+  })
+);
+
+/**
+ * @route   GET /api/ai/history
+ * @desc    Get user's past conversational history for continuous context
+ * @access  Public (Authenticated when token provided)
+ */
+router.get(
+  "/history",
+  asyncHandler(async (req, res) => {
+    let currentUser = req.user || null;
+    if (!currentUser && req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+      try {
+        const token = req.headers.authorization.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        currentUser = await User.findById(decoded.id).select("aiInteractions");
+      } catch (authErr) {
+        // Invalid token
+      }
+    }
+
+    if (!currentUser) {
+      return res.status(200).json({ success: true, history: [] });
+    }
+
+    return res.status(200).json({
+      success: true,
+      history: (currentUser.aiInteractions || []).slice(-40)
+    });
+  })
+);
+
+/**
+ * @route   DELETE /api/ai/history
+ * @desc    Clear user's stored AI conversation history
+ * @access  Public (Authenticated when token provided)
+ */
+router.delete(
+  "/history",
+  asyncHandler(async (req, res) => {
+    let currentUser = req.user || null;
+    if (!currentUser && req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+      try {
+        const token = req.headers.authorization.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        currentUser = await User.findById(decoded.id);
+      } catch (authErr) {
+        // Invalid token
+      }
+    }
+
+    if (currentUser) {
+      currentUser.aiInteractions = [];
+      await currentUser.save();
+      await AgentMemory.deleteMany({ user: currentUser._id, category: "conversation_context" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "AI consultation history cleared successfully."
+    });
+  })
+);
+
+/**
+ * @route   POST /api/ai/appointments/smart-book
+ * @desc    Process natural language appointment booking intent with live DB doctor matching
+ * @access  Public
+ */
+router.post(
+  "/appointments/smart-book",
+  [
+    body("prompt").isString().trim().notEmpty().withMessage("Prompt is required")
+  ],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const recommendation = await appointmentAgent.recommendAppointment(req.body.prompt);
+    return res.status(200).json({
+      success: true,
+      recommendation
+    });
+  })
+);
+
+/**
+ * @route   POST /api/ai/appointments/confirm
+ * @desc    Persist a real appointment in MongoDB created via AI assistant
+ * @access  Private (Authenticated Patient)
+ */
+router.post(
+  "/appointments/confirm",
+  protect,
+  [
+    body("doctorId").isMongoId().withMessage("Valid doctorId is required"),
+    body("date").isISO8601().withMessage("Valid date is required"),
+    body("timeSlot").optional().isString(),
+    body("symptoms").optional().isString()
+  ],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const appointment = await appointmentAgent.createRealAppointment({
+      patientId: req.user._id,
+      doctorId: req.body.doctorId,
+      date: req.body.date,
+      timeSlot: req.body.timeSlot || "10:00 AM",
+      symptoms: req.body.symptoms || "Booked via Arogya AI Agent"
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Real appointment booked successfully via AI agent",
+      appointment
+    });
+  })
+);
+
+/**
+ * @route   POST /api/ai/clinical-notes/analyze
+ * @desc    Transform raw doctor notes into structured SOAP note & prescription items
+ * @access  Public
+ */
+router.post(
+  "/clinical-notes/analyze",
+  [
+    body("notes").isString().trim().notEmpty().withMessage("Clinical notes text is required")
+  ],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const analysis = await clinicalNotesAgent.processNotes(req.body.notes);
+    return res.status(200).json(analysis);
+  })
+);
+
+/**
+ * @route   POST /api/ai/clinical-notes/prescribe
+ * @desc    Persist real prescription document generated from AI note analysis
+ * @access  Private (Doctor / Admin)
+ */
+router.post(
+  "/clinical-notes/prescribe",
+  protect,
+  authorize("doctor", "admin", "superadmin"),
+  [
+    body("patientId").isMongoId().withMessage("Valid patientId is required"),
+    body("notes").isString().trim().notEmpty().withMessage("Clinical notes are required")
+  ],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const result = await clinicalNotesAgent.saveRealPrescription({
+      patientId: req.body.patientId,
+      doctorId: req.user._id,
+      rawNotes: req.body.notes
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Prescription generated and saved to clinical records",
+      result
+    });
+  })
+);
+
+/**
+ * @route   POST /api/ai/operations/insights
+ * @desc    Retrieve hospital operational analytics, live bed occupancy, and recommendations
+ * @access  Public
+ */
+router.post(
+  "/operations/insights",
+  asyncHandler(async (req, res) => {
+    const insights = await hospitalOperationsAgent.getOperationalInsights();
+    return res.status(200).json(insights);
   })
 );
 

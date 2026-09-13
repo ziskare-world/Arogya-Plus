@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arogy AI Agent - Autonomous Intelligence & Clinical Governance</title>
+  <link rel="stylesheet" href="agent.css" />
+</head>
+<body>
+  <!-- Sidebar Navigation -->
+  <aside class="agent-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo-icon">AI</div>
+      <div>
+        <div class="sidebar-title">Arogy AI Agent</div>
+        <div class="sidebar-subtitle">Enterprise Autonomous Engine</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item active" data-tab="tab-chat">
+        <span>💬</span> Chat & Execution
+      </a>
+      <a class="nav-item" data-tab="tab-skills">
+        <span>📦</span> Skill Catalog
+      </a>
+      <a class="nav-item" data-tab="tab-workflows">
+        <span>⚡</span> Automation Engine
+      </a>
+      <a class="nav-item" data-tab="tab-approvals">
+        <span>🔒</span> Approvals
+        <span id="nav-approval-badge" class="nav-badge" style="display:none;">0</span>
+      </a>
+      <a class="nav-item" data-tab="tab-helpdesk">
+        <span>🎫</span> Support Tickets
+      </a>
+      <a class="nav-item" data-tab="tab-knowledge">
+        <span>📚</span> Knowledge Base (RAG)
+      </a>
+      <a class="nav-item" data-tab="tab-memory">
+        <span>💾</span> Memory Vault
+      </a>
+      <a class="nav-item" data-tab="tab-health">
+        <span>📊</span> System Telemetry
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div><span class="status-dot"></span> Qwen3 Engine Active</div>
+      <a href="/index" style="color: #94a3b8; text-decoration: none; font-size: 0.75rem;">Exit Portal</a>
+    </div>
+  </aside>
+
+  <!-- Workspace Area -->
+  <main class="agent-workspace">
+    <header class="workspace-header">
+      <h1 id="tab-title" class="workspace-title">Autonomous Chat & Tool Execution</h1>
+      <div class="workspace-actions">
+        <button id="btn-clear-chat" class="btn btn-secondary">Clear Chat</button>
+        <button id="btn-check-health" class="btn btn-primary">Check Model Health</button>
+      </div>
+    </header>
+
+    <!-- Tab 1: Chat Interface -->
+    <section id="tab-chat" class="tab-content active">
+      <div class="chat-container">
+        <div id="chat-history" class="chat-history">
+          <div class="chat-msg agent">
+            <div class="agent-meta">🤖 Arogy AI Agent • Ready</div>
+            <div class="chat-bubble">
+              Welcome! I am <strong>Arogy AI Agent</strong>, powered by Qwen. I orchestrate 15 independent skills: conversational support, help-desk tickets, automated workflows, RAG search, clinical appointments, and telemetry. How may I assist you?
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Pills -->
+        <div class="chat-pills">
+          <button class="chat-pill-btn" data-query="Help me create a support ticket for appointment reschedule">🎫 Create Support Ticket</button>
+          <button class="chat-pill-btn" data-query="Check my symptoms: high fever and severe headache">🩺 Emergency Triage Check</button>
+          <button class="chat-pill-btn" data-query="Search knowledge base for emergency hospital procedures">📚 Search Knowledge Base</button>
+          <button class="chat-pill-btn" data-query="Generate daily clinical activity report">📊 Daily Activity Report</button>
+          <button class="chat-pill-btn" data-query="Check live hospital bed capacity and system status">🏥 Check Hospital Telemetry</button>
+        </div>
+
+        <!-- Chat Input Area -->
+        <form id="chat-form" class="chat-input-area">
+          <input id="chat-input" type="text" placeholder="Type instructions or request an automated action..." autocomplete="off" />
+          <button type="submit" class="btn btn-primary">Send Instruction</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Tab 2: Skill Catalog -->
+    <section id="tab-skills" class="tab-content">
+      <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <p style="color: var(--text-muted);">Dynamic registry of independent, permission-governed skills.</p>
+      </div>
+      <div id="skills-grid" class="grid-cards">
+        <!-- Injected dynamically via JS -->
+      </div>
+    </section>
+
+    <!-- Tab 3: Automation Workflows -->
+    <section id="tab-workflows" class="tab-content">
+      <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <p style="color: var(--text-muted);">Automated, scheduled, and event-driven multi-step JSON workflows.</p>
+        <button id="btn-create-workflow-modal" class="btn btn-primary">+ New Automation Workflow</button>
+      </div>
+      <div id="workflows-grid" class="grid-cards">
+        <!-- Injected dynamically via JS -->
+      </div>
+    </section>
+
+    <!-- Tab 4: Approvals -->
+    <section id="tab-approvals" class="tab-content">
+      <div style="margin-bottom: 20px;">
+        <p style="color: var(--text-muted);">Sensitive operations gated by human approval checkpoints.</p>
+      </div>
+      <div id="approvals-list" class="grid-cards">
+        <!-- Injected dynamically via JS -->
+      </div>
+    </section>
+
+    <!-- Tab 5: Support Tickets -->
+    <section id="tab-helpdesk" class="tab-content">
+      <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <p style="color: var(--text-muted);">Customer support ticketing, priority tracking, and SLA management.</p>
+        <button id="btn-new-ticket" class="btn btn-primary">+ Open Support Ticket</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Ticket #</th>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>SLA Deadline</th>
+            </tr>
+          </thead>
+          <tbody id="tickets-table-body">
+            <!-- Injected dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Tab 6: Knowledge Base (RAG) -->
+    <section id="tab-knowledge" class="tab-content">
+      <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <p style="color: var(--text-muted);">Upload clinical guides, policies, and documents for Retrieval-Augmented Generation.</p>
+        <button id="btn-upload-doc" class="btn btn-primary">+ Ingest Document</button>
+      </div>
+      <div class="card" style="margin-bottom: 24px;">
+        <h3 class="card-title">Test Knowledge Search (RAG)</h3>
+        <div style="display:flex; gap: 12px; margin-top: 12px;">
+          <input id="rag-search-input" type="text" placeholder="Enter clinical or policy question..." style="flex:1; padding: 10px; border: 1px solid var(--border); border-radius: 8px;" />
+          <button id="btn-search-rag" class="btn btn-primary">Search RAG</button>
+        </div>
+        <div id="rag-search-results" style="margin-top: 16px; font-size: 0.9rem; color: #475569;"></div>
+      </div>
+    </section>
+
+    <!-- Tab 7: Memory Vault -->
+    <section id="tab-memory" class="tab-content">
+      <div style="margin-bottom: 20px;">
+        <p style="color: var(--text-muted);">Long-term user preferences and factual memories. You have complete control to inspect or delete any record.</p>
+      </div>
+      <div id="memory-cards" class="grid-cards">
+        <!-- Injected dynamically -->
+      </div>
+    </section>
+
+    <!-- Tab 8: System Telemetry -->
+    <section id="tab-health" class="tab-content">
+      <div id="telemetry-container">
+        <!-- Injected dynamically -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal for Document Ingestion -->
+  <div id="doc-modal" class="modal-overlay">
+    <div class="modal-card">
+      <h3 style="margin-bottom: 16px;">Ingest Document into Knowledge Base</h3>
+      <form id="doc-form">
+        <div style="margin-bottom: 12px;">
+          <label style="display:block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px;">Document Title</label>
+          <input id="doc-title" type="text" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px;" />
+        </div>
+        <div style="margin-bottom: 12px;">
+          <label style="display:block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px;">Category</label>
+          <select id="doc-category" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px;">
+            <option value="clinical">Clinical Protocols</option>
+            <option value="hospital_policy">Hospital Policy</option>
+            <option value="general">General Healthcare</option>
+          </select>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display:block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px;">Text Content</label>
+          <textarea id="doc-content" rows="6" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px;"></textarea>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 8px;">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('doc-modal').classList.remove('active')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Index Document</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="agent.js"></script>
+</body>
+</html>

@@ -18,6 +18,7 @@ const ambulanceRoutes = require("./routes/ambulanceRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const insuranceRoutes = require("./routes/insuranceRoutes");
 const aiRoutes = require("./routes/aiRoutes");
+const agentRoutes = require("./routes/agentRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const doctorRoutes = require("./routes/doctorRoutes");
 const userRoutes = require("./routes/userRoutes");
@@ -187,6 +188,7 @@ app.get(["/super-admin/settings", "/super_admin/settings"], sendUiPage("super-ad
 app.get(["/super-admin/mfa-setup", "/super_admin/mfa-setup"], sendUiPage("super-admin", "mfa-setup.html"));
 // Admin and Super-Admin Storage Drive pages
 app.get(["/admin/storage", "/super-admin/storage", "/super_admin/storage"], sendUiPage("super-admin", "storage.html"));
+app.get(["/agent", "/agent/dashboard", "/agent/dashboard.html"], sendUiPage("agent", "dashboard.html"));
 
 const storageDirectory = path.join(__dirname, "storage");
 app.use("/storage", express.static(storageDirectory));
@@ -264,6 +266,7 @@ app.use("/api/ambulance", ambulanceRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/insurance", insuranceRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/agent", agentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/user", userRoutes);

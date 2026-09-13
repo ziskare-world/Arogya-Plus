@@ -1,0 +1,12 @@
+{
+  "id": "system-monitoring",
+  "name": "System Monitoring",
+  "version": "1.0.0",
+  "description": "Monitors application service health, API endpoints, database connectivity, and telemetry metrics.",
+  "category": "monitoring",
+  "permissions": ["system:read"],
+  "actions": [
+    "check_health",
+    "get_telemetry_metrics"
+  ]
+}

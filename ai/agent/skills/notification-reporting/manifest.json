@@ -1,0 +1,12 @@
+{
+  "id": "notification-reporting",
+  "name": "Notification and Reporting",
+  "version": "1.0.0",
+  "description": "Generates executive summaries, daily clinical reports, and structured notification alerts.",
+  "category": "reporting",
+  "permissions": ["reports:generate"],
+  "actions": [
+    "generate_daily_report",
+    "send_notification_alert"
+  ]
+}

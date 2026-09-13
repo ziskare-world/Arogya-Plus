@@ -46,8 +46,8 @@
                         <button class="btn btn-outline" style="justify-content:center;gap:8px" onclick="location.href='appointments.html'">
                             📅 Book Appointment
                         </button>
-                        <button class="btn btn-outline" style="justify-content:center;gap:8px" onclick="location.href='doctors.html'">
-                            🔍 Find Doctor
+                        <button class="btn btn-outline" style="justify-content:center;gap:8px" onclick="if (window.openAiDoctorExplorer) { window.openAiDoctorExplorer(); } else { location.href='doctors.html'; }">
+                            🩺 Explore Doctors (AI)
                         </button>
                         <button class="btn btn-outline" style="justify-content:center;gap:8px" onclick="location.href='insurance.html'">
                             🛡️ Insurance Claims

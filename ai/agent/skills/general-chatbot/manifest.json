@@ -1,0 +1,13 @@
+{
+  "id": "general-chatbot",
+  "name": "General Chatbot",
+  "version": "1.0.0",
+  "description": "Natural conversation, explanations, summarization, translation, and context-aware responses.",
+  "category": "conversation",
+  "permissions": ["READ_ONLY"],
+  "actions": [
+    "chat",
+    "summarize",
+    "translate"
+  ]
+}

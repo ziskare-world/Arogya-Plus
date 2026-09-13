@@ -1,0 +1,16 @@
+{
+  "id": "document-knowledge",
+  "name": "Document and Knowledge Management (RAG)",
+  "version": "1.0.0",
+  "description": "Document ingestion, chunking, semantic vector search, and Retrieval-Augmented Generation with source citations.",
+  "category": "knowledge",
+  "permissions": [
+    "documents:read",
+    "documents:write"
+  ],
+  "actions": [
+    "ingest_document",
+    "search_knowledge",
+    "ask_document"
+  ]
+}

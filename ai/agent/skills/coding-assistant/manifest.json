@@ -1,0 +1,13 @@
+{
+  "id": "coding-assistant",
+  "name": "Coding and Development Assistant",
+  "version": "1.0.0",
+  "description": "Explains code, reviews syntax, assists with unit tests, debugs errors, and suggests architecture safely.",
+  "category": "development",
+  "permissions": ["READ_ONLY"],
+  "actions": [
+    "explain_code",
+    "review_code",
+    "generate_tests"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "project-management",
+  "name": "Project Management",
+  "version": "1.0.0",
+  "description": "Manages projects, milestones, task dependencies, deadlines, and progress summaries.",
+  "category": "project",
+  "permissions": [
+    "projects:read",
+    "projects:write"
+  ],
+  "actions": [
+    "create_project",
+    "manage_task",
+    "get_project_status"
+  ]
+}

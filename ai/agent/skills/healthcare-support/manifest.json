@@ -1,0 +1,13 @@
+{
+  "id": "healthcare-support",
+  "name": "Healthcare Support",
+  "version": "1.0.0",
+  "description": "Patient portal navigation, real-time doctor appointment booking, ambulance emergency SOS triage, and clinical guidance with medical safety disclaimers.",
+  "category": "healthcare",
+  "permissions": ["healthcare:read", "appointments:write"],
+  "actions": [
+    "triage_symptoms",
+    "book_appointment",
+    "navigate_records"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "finance-payment",
+  "name": "Finance and Payment Support",
+  "version": "1.0.0",
+  "description": "Explains billing procedures, tracks authorized payment records, and explains clinical invoices without storing sensitive card credentials.",
+  "category": "finance",
+  "permissions": ["payments:read"],
+  "actions": [
+    "get_payment_status",
+    "explain_billing"
+  ]
+}

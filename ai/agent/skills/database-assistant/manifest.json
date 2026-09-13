@@ -1,0 +1,12 @@
+{
+  "id": "database-assistant",
+  "name": "Database Assistant",
+  "version": "1.0.0",
+  "description": "Explains database schemas, safely queries authorized statistical records, and inspects collections.",
+  "category": "data",
+  "permissions": ["database:read"],
+  "actions": [
+    "describe_schema",
+    "query_collection_stats"
+  ]
+}

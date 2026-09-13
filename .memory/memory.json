@@ -1,7 +1,7 @@
 {
-  "$schema": "ArogyaPlus High-Speed AI Memory Database",
-  "version": "2.1.0",
-  "last_updated": "2026-08-11T12:25:18.681Z",
+  "schema_type": "ArogyaPlus High-Speed AI Memory Database",
+  "version": "2.2.0",
+  "last_updated": "2026-09-13T05:10:46.730Z",
   "project": {
     "name": "ArogyaPlus",
     "title": "Smart Health Management System",
@@ -283,6 +283,57 @@
     "repo_url": "https://github.com/ziskare-world/Arogya-Plus",
     "recent_commits": [
       {
+        "sha": "c3f8190",
+        "date": "2026-09-13",
+        "message": "feat: add in-chat interactive doctor explorer cards, expandable widescreen AI bot toggle, and persistent user interaction memory",
+        "author": "AI-Assistant"
+      },
+      {
+        "sha": "b5e9821",
+        "date": "2026-09-13",
+        "message": "feat: implement enterprise Arogy AI Agent framework with 15 modular skills, RAG, 5-tier security, and dashboard",
+        "author": "AI-Assistant"
+      },
+      {
+        "sha": "8c3df19",
+        "date": "2026-09-13",
+        "message": "feat: integrate Hugging Face Qwen3-30B-A3B transformers model bridge in ai/qwenBridge.js, Python runner in ai/python/qwen_agent.py, and wire real MongoDB data for appointments, prescriptions, and telemetry",
+        "author": "AI-Assistant",
+        "files_changed": [
+          "ai/python/qwen_agent.py",
+          "ai/qwenBridge.js",
+          "ai/index.js",
+          "ai/agents/talkingAgent.js",
+          "ai/agents/appointmentAgent.js",
+          "ai/agents/hospitalOperationsAgent.js",
+          "ai/agents/clinicalNotesAgent.js",
+          "routes/aiRoutes.js",
+          "tests/ai-agents.test.js",
+          ".memory/memory.json"
+        ]
+      },
+      {
+        "sha": "b4a81cf",
+        "date": "2026-09-13",
+        "message": "feat: implement Hugging Face AI multi-agent architecture in ai/ for conversational talking, triage, smart scheduling, SOAP notes, and hospital telemetry automation",
+        "author": "AI-Assistant",
+        "files_changed": [
+          "ai/huggingfaceClient.js",
+          "ai/agents/talkingAgent.js",
+          "ai/agents/triageAgent.js",
+          "ai/agents/appointmentAgent.js",
+          "ai/agents/clinicalNotesAgent.js",
+          "ai/agents/hospitalOperationsAgent.js",
+          "ai/agents/agentOrchestrator.js",
+          "ai/index.js",
+          "routes/aiRoutes.js",
+          "ui/js/ai-chat-widget.js",
+          "tests/ai-agents.test.js",
+          ".env.example",
+          ".memory/memory.json"
+        ]
+      },
+      {
         "sha": "e7b92c4",
         "date": "2026-08-28",
         "message": "feat: implement Insurance Claims portal, appointment QR check-in pass, balance payment modal, and Emergency SOS banner on Patient Dashboard",
@@ -411,6 +462,16 @@
         "id": "FEAT-013",
         "name": "Patient Insurance Claims Portal, QR Check-in Pass & Online Invoicing Payments",
         "category": "Patient Dashboard"
+      },
+      {
+        "id": "FEAT-014",
+        "name": "Hugging Face AI Multi-Agent & Hospital Automation Subsystem (ai/)",
+        "category": "AI Automation"
+      },
+      {
+        "id": "FEAT-015",
+        "name": "Arogy AI Agent Production Enterprise Framework with 15 Modular Skills, RAG, 5-Tier Security, Workflow Automation, and Web Dashboard",
+        "category": "Enterprise AI Agent"
       }
     ],
     "in_progress": [],

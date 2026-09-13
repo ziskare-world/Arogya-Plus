@@ -1,0 +1,12 @@
+{
+  "id": "web-api-integration",
+  "name": "Web and API Integration",
+  "version": "1.0.0",
+  "description": "Securely interfaces with approved clinical REST APIs, geocoding providers, and route engines.",
+  "category": "integration",
+  "permissions": ["api:call"],
+  "actions": [
+    "geocode_address",
+    "calculate_route_eta"
+  ]
+}

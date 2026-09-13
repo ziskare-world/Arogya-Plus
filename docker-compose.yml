@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  arogy-app:
+    build: .
+    container_name: arogy_ai_agent
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongodb:27017/smart-health-management
+      - JWT_SECRET=arogy_ai_agent_production_jwt_secret_key_2026
+      - AI_MODEL_PROVIDER=huggingface
+      - AI_MODEL_NAME=Qwen/Qwen3-14B
+      - HUGGINGFACE_API_KEY=${HUGGINGFACE_API_KEY}
+    depends_on:
+      - mongodb
+    networks:
+      - arogy-network
+
+  mongodb:
+    image: mongo:7.0
+    container_name: arogy_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - arogy-network
+
+networks:
+  arogy-network:
+    driver: bridge
+
+volumes:
+  mongo_data:

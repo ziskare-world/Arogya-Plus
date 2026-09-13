@@ -1,0 +1,16 @@
+{
+  "id": "email-messaging",
+  "name": "Email and Messaging",
+  "version": "1.0.0",
+  "description": "Drafts, summarizes, and sends provider-independent clinical and administrative emails with mandatory human approval gating.",
+  "category": "communication",
+  "permissions": [
+    "messages:draft",
+    "messages:send"
+  ],
+  "requiresApproval": true,
+  "actions": [
+    "draft_email",
+    "send_email"
+  ]
+}

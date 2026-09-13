@@ -1,0 +1,17 @@
+{
+  "id": "automation-engine",
+  "name": "Automation Engine",
+  "version": "1.0.0",
+  "description": "Workflow automation system executing validated multi-step JSON workflows with scheduled and event triggers.",
+  "category": "automation",
+  "permissions": [
+    "workflows:write",
+    "workflows:execute"
+  ],
+  "actions": [
+    "create_workflow",
+    "execute_workflow",
+    "list_workflows",
+    "toggle_pause"
+  ]
+}

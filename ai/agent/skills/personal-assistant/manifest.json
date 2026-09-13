@@ -1,0 +1,16 @@
+{
+  "id": "personal-assistant",
+  "name": "Personal Assistant",
+  "version": "1.0.0",
+  "description": "Manages reminders, notes, daily agendas, to-do lists, and productivity recommendations.",
+  "category": "productivity",
+  "permissions": [
+    "reminders:write",
+    "notes:write"
+  ],
+  "actions": [
+    "create_reminder",
+    "add_note",
+    "get_daily_summary"
+  ]
+}

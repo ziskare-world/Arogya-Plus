@@ -6,6 +6,7 @@ const validateRequest = require("../middleware/validateMiddleware");
 const { protect, authorize } = require("../middleware/authMiddleware");
 const User = require("../models/User");
 const AgentMemory = require("../models/AgentMemory");
+const Prescription = require("../models/Prescription");
 const {
   agentOrchestrator,
   triageAgent,
@@ -241,6 +242,21 @@ router.post(
       }
     }
 
+    // Check if query is asking for user's prescriptions or medical records
+    const isPrescriptionQuery = /\b(prescription|prescriptions|medicine|medicines|meds|rx|my record|medical record)\b/i.test(userMsg);
+    let prescriptions = null;
+    if (isPrescriptionQuery && currentUser) {
+      try {
+        prescriptions = await Prescription.find({ patient: currentUser._id })
+          .populate("doctor", "name specialization")
+          .sort({ createdAt: -1 })
+          .limit(5)
+          .lean();
+      } catch (err) {
+        // Non-blocking
+      }
+    }
+
     return res.status(200).json({
       success: true,
       reply: result.reply,
@@ -249,6 +265,9 @@ router.post(
       triageLevel: result.triageLevel,
       action,
       doctors,
+      prescriptions,
+      operations: result.intent === "hospital_operations" ? result.details : null,
+      bookingRecommendation: result.intent === "appointment_booking" ? result.details : null,
       details: result.details || null,
       disclaimer: "Arogya AI provides clinical information for reference and does not replace certified physician advice."
     });
@@ -313,6 +332,57 @@ router.delete(
     return res.status(200).json({
       success: true,
       message: "AI consultation history cleared successfully."
+    });
+  })
+);
+
+/**
+ * @route   POST /api/ai/sync-history
+ * @desc    Sync anonymous/guest localStorage chat history into authenticated user account
+ * @access  Authenticated
+ */
+router.post(
+  "/sync-history",
+  asyncHandler(async (req, res) => {
+    let currentUser = req.user || null;
+    if (!currentUser && req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+      try {
+        const token = req.headers.authorization.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        currentUser = await User.findById(decoded.id);
+      } catch (authErr) {
+        // Invalid token
+      }
+    }
+
+    if (!currentUser) {
+      return res.status(401).json({ success: false, message: "Authentication required to sync history" });
+    }
+
+    const guestHistory = req.body.history || [];
+    if (Array.isArray(guestHistory) && guestHistory.length > 0) {
+      currentUser.aiInteractions = currentUser.aiInteractions || [];
+      guestHistory.forEach(item => {
+        if (item && item.role && item.content) {
+          currentUser.aiInteractions.push({
+            role: item.role,
+            content: item.content,
+            intent: item.intent || "general_chat",
+            timestamp: item.timestamp ? new Date(item.timestamp) : new Date()
+          });
+        }
+      });
+
+      if (currentUser.aiInteractions.length > 100) {
+        currentUser.aiInteractions = currentUser.aiInteractions.slice(-100);
+      }
+      await currentUser.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Guest chat history synced to user profile successfully",
+      syncedCount: guestHistory.length
     });
   })
 );

@@ -9,7 +9,7 @@ const { queryQwenAgent } = require("../qwenBridge");
 class TalkingAgent {
   constructor(client = huggingFaceClient) {
     this.client = client;
-    this.systemPrompt = `You are Arogya AI Talking Agent, a compassionate, accurate, and professional medical conversational assistant powered by Qwen3-30B-A3B.
+    this.systemPrompt = `You are Arogya AI Clinical Assistant, a compassionate, accurate, and professional medical conversational assistant.
 Your role is to:
 1. Provide empathetic and medically sound information for patient inquiries.
 2. Explain symptoms, preventive wellness habits, and hospital procedures clearly.

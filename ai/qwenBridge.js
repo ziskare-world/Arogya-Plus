@@ -153,7 +153,7 @@ function generateQwenLocalResponse(userPrompt) {
   const p = String(userPrompt || "").toLowerCase();
 
   if (p.includes("who are you")) {
-    return "I am Arogya AI, powered by the Qwen3-30B-A3B clinical intelligence architecture. I provide real-time patient consultation, appointment scheduling, emergency triage, and clinical workflow automation.";
+    return "I am Arogya AI, your intelligent clinical healthcare assistant. I provide real-time patient consultation, appointment scheduling, emergency triage, and clinical workflow automation.";
   }
   if (p.includes("chest pain") || p.includes("heart attack") || p.includes("unconscious")) {
     return "EMERGENCY ALERT: Severe acute symptoms detected. Please seek emergency medical care or request an immediate 108 ambulance dispatch.";
@@ -164,7 +164,7 @@ function generateQwenLocalResponse(userPrompt) {
   if (p.includes("fever") || p.includes("cough") || p.includes("headache")) {
     return "For symptomatic relief, ensure adequate rest and hydration. If symptoms persist or temperature exceeds 102°F, please consult an ArogyaPlus general physician.";
   }
-  return "I am your Arogya AI Assistant powered by Qwen. How can I assist you with clinical consultations, appointment bookings, or hospital management today?";
+  return "I am your Arogya AI Clinical Assistant. How can I assist you with clinical consultations, appointment bookings, or hospital services today?";
 }
 
 module.exports = {

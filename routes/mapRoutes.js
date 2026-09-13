@@ -144,6 +144,154 @@ router.get("/hospitals", async (req, res) => {
 });
 
 /**
+ * @route GET /api/map/nearest-hospital
+ * @desc Find the nearest hospital added in the database from user location coordinates with live bed occupancy & ETA
+ */
+router.get("/nearest-hospital", async (req, res) => {
+  try {
+    const lat = parseFloat(req.query.lat);
+    const lng = parseFloat(req.query.lng);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      return res.status(400).json({
+        success: false,
+        error: "Valid latitude and longitude query parameters are required"
+      });
+    }
+
+    let hospitals = await Hospital.find();
+    if (!hospitals || hospitals.length === 0) {
+      hospitals = await Hospital.insertMany(DEFAULT_HOSPITALS);
+    }
+
+    const ranked = hospitals.map(h => {
+      const hLat = h.latitude;
+      const hLng = h.longitude;
+      const distance = calculateHaversineDistance(lat, lng, hLat, hLng);
+      const etaMinutes = Math.max(3, Math.round(distance * 1.5 + 3));
+
+      return {
+        id: h._id,
+        name: h.name,
+        address: h.address,
+        city: h.city || "Delhi NCR",
+        latitude: hLat,
+        longitude: hLng,
+        phone: h.phone || "+91-11-23456789",
+        specialty: h.specialty || "Multi-Specialty Care",
+        distanceKm: parseFloat(distance.toFixed(2)),
+        etaMinutes,
+        beds: {
+          total: h.totalBeds || 100,
+          occupied: h.occupiedBeds || 45,
+          available: h.availableBeds !== undefined ? h.availableBeds : 55,
+          icu: h.icuBeds || { total: 20, occupied: 14, available: 6 },
+          oxygen: h.oxygenBeds || { total: 35, occupied: 22, available: 13 }
+        },
+        emergencyServices: h.emergencyServices !== false,
+        rating: h.rating || 4.8
+      };
+    });
+
+    ranked.sort((a, b) => a.distanceKm - b.distanceKm);
+    const nearestHospital = ranked[0] || null;
+
+    return res.status(200).json({
+      success: true,
+      nearestHospital,
+      allHospitalsRanked: ranked
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route POST /api/map/hospitals
+ * @desc Add a new hospital with bed occupancy and geolocation to MongoDB
+ */
+router.post("/hospitals", async (req, res) => {
+  try {
+    const {
+      name,
+      latitude,
+      longitude,
+      address,
+      city,
+      specialty,
+      phone,
+      totalBeds = 100,
+      occupiedBeds = 40,
+      icuBeds,
+      oxygenBeds,
+      emergencyServices = true
+    } = req.body;
+
+    if (!name || latitude === undefined || longitude === undefined || !address) {
+      return res.status(400).json({
+        success: false,
+        error: "Hospital name, latitude, longitude, and address are required"
+      });
+    }
+
+    const availableBeds = Math.max(0, totalBeds - occupiedBeds);
+    const hospital = await Hospital.create({
+      name,
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
+      address,
+      city: city || "Delhi NCR",
+      specialty: specialty || "Multi-Specialty Healthcare",
+      phone: phone || "+91-11-23456789",
+      totalBeds,
+      occupiedBeds,
+      availableBeds,
+      icuBeds: icuBeds || { total: 20, occupied: 12, available: 8 },
+      oxygenBeds: oxygenBeds || { total: 30, occupied: 18, available: 12 },
+      emergencyServices
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Hospital created successfully in database",
+      data: hospital
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route PATCH /api/map/hospitals/:id/beds
+ * @desc Update live bed occupancy for a hospital in MongoDB
+ */
+router.patch("/hospitals/:id/beds", async (req, res) => {
+  try {
+    const { occupiedBeds, totalBeds, icuBeds, oxygenBeds } = req.body;
+    const hospital = await Hospital.findById(req.params.id);
+    if (!hospital) {
+      return res.status(404).json({ success: false, error: "Hospital not found" });
+    }
+
+    if (totalBeds !== undefined) hospital.totalBeds = totalBeds;
+    if (occupiedBeds !== undefined) hospital.occupiedBeds = occupiedBeds;
+    hospital.availableBeds = Math.max(0, hospital.totalBeds - hospital.occupiedBeds);
+
+    if (icuBeds) hospital.icuBeds = { ...hospital.icuBeds, ...icuBeds };
+    if (oxygenBeds) hospital.oxygenBeds = { ...hospital.oxygenBeds, ...oxygenBeds };
+
+    await hospital.save();
+    return res.status(200).json({
+      success: true,
+      message: "Hospital bed occupancy updated successfully",
+      data: hospital
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
  * @route GET /api/map/ambulances
  * @desc Get all live ambulance fleet locations
  */
@@ -169,6 +317,116 @@ router.get("/ambulances", async (req, res) => {
     res.json({ success: true, count: formatted.length, data: formatted });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route POST /api/map/ambulances/update-location
+ * @desc Update single ambulance position and broadcast live event to all connected clients
+ */
+router.post("/ambulances/update-location", async (req, res) => {
+  try {
+    const { vehicleNumber, latitude, longitude, speed = 35, status = "dispatched" } = req.body;
+    if (!vehicleNumber || latitude === undefined || longitude === undefined) {
+      return res.status(400).json({ success: false, error: "vehicleNumber, latitude, and longitude are required" });
+    }
+
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+    const spd = parseFloat(speed) || 0;
+
+    const fleetVehicle = await AmbulanceFleet.findOneAndUpdate(
+      { vehicleNumber },
+      {
+        $set: {
+          "currentCoordinates.lat": lat,
+          "currentCoordinates.lng": lng,
+          speed: spd,
+          status
+        }
+      },
+      { new: true }
+    );
+
+    const payload = {
+      vehicleNumber,
+      ambulanceId: vehicleNumber,
+      latitude: lat,
+      longitude: lng,
+      speed: spd,
+      status,
+      timestamp: new Date()
+    };
+
+    if (req.io) {
+      req.io.emit("ambulance:location_changed", payload);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Ambulance location updated and broadcasted",
+      data: payload,
+      vehicle: fleetVehicle
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route POST /api/map/ambulances/simulate-step
+ * @desc Automate live GPS tracking: smoothly advances ambulance fleet coordinates along realistic paths
+ */
+router.post("/ambulances/simulate-step", async (req, res) => {
+  try {
+    let fleet = await AmbulanceFleet.find();
+    if (!fleet || fleet.length === 0) {
+      fleet = await AmbulanceFleet.insertMany(DEFAULT_FLEET);
+    }
+
+    const updated = [];
+    for (const vehicle of fleet) {
+      const currentLat = vehicle.currentCoordinates?.lat || 28.6139;
+      const currentLng = vehicle.currentCoordinates?.lng || 77.2090;
+
+      // Realistic micro-step simulation: ~0.001 deg (~100m) delta with jitter
+      const deltaLat = (Math.random() - 0.48) * 0.0015;
+      const deltaLng = (Math.random() - 0.48) * 0.0015;
+      const newLat = parseFloat((currentLat + deltaLat).toFixed(6));
+      const newLng = parseFloat((currentLng + deltaLng).toFixed(6));
+      const speed = Math.floor(Math.random() * 25) + 30; // 30-55 km/h
+
+      vehicle.currentCoordinates = { lat: newLat, lng: newLng };
+      vehicle.speed = speed;
+      if (vehicle.status === "available" && Math.random() > 0.7) {
+        vehicle.status = "dispatched";
+      }
+      await vehicle.save();
+
+      const eventPayload = {
+        vehicleNumber: vehicle.vehicleNumber,
+        ambulanceId: vehicle.vehicleNumber,
+        latitude: newLat,
+        longitude: newLng,
+        speed,
+        status: vehicle.status,
+        timestamp: new Date()
+      };
+
+      if (req.io) {
+        req.io.emit("ambulance:location_changed", eventPayload);
+      }
+      updated.push(eventPayload);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Live ambulance tracking simulation step executed successfully",
+      count: updated.length,
+      data: updated
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 

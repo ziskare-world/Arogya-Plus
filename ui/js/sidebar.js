@@ -41,6 +41,17 @@ export function injectSidebar(activePage) {
     existingSidebar.remove();
   }
 
+  // Ensure AI Bot Assistant is active on all pages with sidebar
+  try {
+    import("./ai-chat-widget.js")
+      .then((mod) => {
+        if (mod && typeof mod.initAiChatWidget === "function") {
+          mod.initAiChatWidget();
+        }
+      })
+      .catch(() => {});
+  } catch (e) {}
+
   const isInSubfolder =
     location.pathname.includes("/admin/") ||
     location.pathname.includes("/doctor/") ||

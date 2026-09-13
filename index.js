@@ -278,9 +278,28 @@ io.on("connection", async (socket) => {
   const queue = await getEmergencyQueue();
   socket.emit("emergencyQueue:update", queue);
 
-  // Live ambulance location tracking update
-  socket.on("ambulance:location_update", (data) => {
-    socket.broadcast.emit("ambulance:location_changed", data);
+  // Live ambulance location tracking update with MongoDB persistence & real-time broadcast
+  socket.on("ambulance:location_update", async (data = {}) => {
+    try {
+      const { vehicleNumber, ambulanceId, latitude, longitude, speed, status } = data;
+      const key = vehicleNumber || ambulanceId;
+      if (key && latitude !== undefined && longitude !== undefined) {
+        const AmbulanceFleet = require("./models/AmbulanceFleet");
+        await AmbulanceFleet.findOneAndUpdate(
+          { vehicleNumber: key },
+          {
+            $set: {
+              "currentCoordinates.lat": parseFloat(latitude),
+              "currentCoordinates.lng": parseFloat(longitude),
+              speed: parseFloat(speed) || 0,
+              ...(status ? { status } : {})
+            }
+          }
+        );
+      }
+    } catch (e) {
+      // Non-blocking for high frequency updates
+    }
     io.emit("ambulance:location_changed", data);
   });
 

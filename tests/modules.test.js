@@ -216,4 +216,118 @@ describe("Additional Modules API", () => {
       .send({ relativePath: testFolderName });
     expect(deleteFolderRes.statusCode).toBe(200);
   });
+
+  test("hospital bed occupancy database storage and nearest hospital API work", async () => {
+    // 1. Create a custom hospital with bed counts in MongoDB
+    const createHospRes = await request(app)
+      .post("/api/map/hospitals")
+      .send({
+        name: "Connaught Trauma Care",
+        latitude: 28.6300,
+        longitude: 77.2150,
+        address: "Inner Circle, Connaught Place",
+        city: "New Delhi",
+        totalBeds: 150,
+        occupiedBeds: 90,
+        icuBeds: { total: 30, occupied: 20, available: 10 },
+        oxygenBeds: { total: 50, occupied: 30, available: 20 }
+      });
+
+    expect(createHospRes.statusCode).toBe(201);
+    expect(createHospRes.body.success).toBe(true);
+    expect(createHospRes.body.data.availableBeds).toBe(60);
+    const hospId = createHospRes.body.data._id;
+
+    // 2. Update bed occupancy for the hospital
+    const patchBedRes = await request(app)
+      .patch(`/api/map/hospitals/${hospId}/beds`)
+      .send({
+        occupiedBeds: 100,
+        icuBeds: { occupied: 22, available: 8 }
+      });
+
+    expect(patchBedRes.statusCode).toBe(200);
+    expect(patchBedRes.body.data.occupiedBeds).toBe(100);
+    expect(patchBedRes.body.data.availableBeds).toBe(50);
+    expect(patchBedRes.body.data.icuBeds.available).toBe(8);
+
+    // 3. Find the nearest hospital from a specific user coordinate
+    const nearestRes = await request(app)
+      .get("/api/map/nearest-hospital")
+      .query({ lat: 28.6310, lng: 77.2160 });
+
+    expect(nearestRes.statusCode).toBe(200);
+    expect(nearestRes.body.success).toBe(true);
+    expect(nearestRes.body.nearestHospital).toBeDefined();
+    expect(nearestRes.body.nearestHospital.name).toBe("Connaught Trauma Care");
+    expect(nearestRes.body.nearestHospital.distanceKm).toBeLessThan(1.0);
+    expect(nearestRes.body.nearestHospital.beds.total).toBe(150);
+    expect(nearestRes.body.nearestHospital.beds.available).toBe(50);
+  });
+
+  test("live ambulance tracking simulation and location update work", async () => {
+    // 1. Simulate automated movement step for the ambulance fleet
+    const simRes = await request(app).post("/api/map/ambulances/simulate-step");
+    expect(simRes.statusCode).toBe(200);
+    expect(simRes.body.success).toBe(true);
+    expect(simRes.body.count).toBeGreaterThan(0);
+    expect(simRes.body.data[0].latitude).toBeDefined();
+    expect(simRes.body.data[0].longitude).toBeDefined();
+
+    // 2. Update specific vehicle coordinates
+    const updateLocRes = await request(app)
+      .post("/api/map/ambulances/update-location")
+      .send({
+        vehicleNumber: "DL-01-AMB-101",
+        latitude: 28.6200,
+        longitude: 77.2100,
+        speed: 45,
+        status: "dispatched"
+      });
+
+    expect(updateLocRes.statusCode).toBe(200);
+    expect(updateLocRes.body.success).toBe(true);
+    expect(updateLocRes.body.data.speed).toBe(45);
+
+    // 3. Fetch fleet and verify the updated vehicle coordinates
+    const fleetRes = await request(app).get("/api/map/ambulances");
+    expect(fleetRes.statusCode).toBe(200);
+    const updatedVeh = fleetRes.body.data.find(v => v.vehicleNumber === "DL-01-AMB-101");
+    expect(updatedVeh).toBeDefined();
+    expect(updatedVeh.latitude).toBe(28.6200);
+    expect(updatedVeh.longitude).toBe(77.2100);
+  });
+
+  test("AI sync-history migrates guest local storage conversations into user account", async () => {
+    const patient = await registerAndLogin({
+      name: "Guest Sync Patient",
+      email: "guest.sync@test.com",
+      password: "patient123",
+      role: "patient"
+    });
+
+    const guestHistory = [
+      { role: "user", content: "I have a mild fever since yesterday", intent: "general_chat" },
+      { role: "assistant", content: "Stay hydrated and monitor your temperature.", intent: "clinical_qa" }
+    ];
+
+    const syncRes = await request(app)
+      .post("/api/ai/sync-history")
+      .set("Authorization", `Bearer ${patient.token}`)
+      .send({ history: guestHistory });
+
+    expect(syncRes.statusCode).toBe(200);
+    expect(syncRes.body.success).toBe(true);
+    expect(syncRes.body.syncedCount).toBe(2);
+
+    // Retrieve history and verify synced messages are present
+    const getHistRes = await request(app)
+      .get("/api/ai/history")
+      .set("Authorization", `Bearer ${patient.token}`);
+
+    expect(getHistRes.statusCode).toBe(200);
+    expect(getHistRes.body.history.length).toBeGreaterThanOrEqual(2);
+    expect(getHistRes.body.history[0].content).toBe("I have a mild fever since yesterday");
+  });
 });
+

@@ -61,13 +61,28 @@ window.ArogyaMap = (function () {
       attributionControl: true
     }).setView([lat, lng], zoom);
 
-    // High-performance, unblocked CartoDB Voyager tiles (powered by OpenStreetMap data)
-    // Avoids OSM volunteer-server strict rate-limiting / 403 blocked tile policy
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    // High-performance unblocked CartoDB Voyager tiles with local proxy fallback
+    const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      subdomains: 'abcd',
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a> | ArogyaPlus Clinical GIS'
-    }).addTo(map);
+      subdomains: ['a', 'b', 'c', 'd'],
+      attribution: '&copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a> | ArogyaPlus Clinical GIS',
+      // Safe fallback tile so no broken icon or 403 graphic ever renders
+      errorTileUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" fill="%23f8fafc"><rect width="256" height="256"/><path d="M0 0h256v256H0z" fill="%23f1f5f9" opacity="0.6"/></svg>'
+    });
+
+    // If client network blocks direct CDN tiles, seamlessly fallback to local backend proxy
+    tileLayer.on('tileerror', function (event) {
+      const tile = event.tile;
+      if (tile && !tile._hasFallback) {
+        tile._hasFallback = true;
+        const coords = event.coords;
+        if (coords) {
+          tile.src = `/api/map/tiles/${coords.z}/${coords.x}/${coords.y}.png`;
+        }
+      }
+    });
+
+    tileLayer.addTo(map);
 
     setTimeout(() => {
       try { map.invalidateSize(); } catch (e) {}

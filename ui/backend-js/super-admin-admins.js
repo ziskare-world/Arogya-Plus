@@ -606,9 +606,9 @@ const initializeHospitalMap = async () => {
     });
 
     mapInitialized = true;
-    setMapStatus("OpenStreetMap Ready", "badge-green");
+    setMapStatus("GIS Map Ready", "badge-green");
     if (mapHelpEl) {
-      mapHelpEl.textContent = "100% Free OpenStreetMap & Leaflet active. Click on map to set location.";
+      mapHelpEl.textContent = "High-performance CARTO & Leaflet GIS active. Click on map to set location.";
     }
 
     return true;

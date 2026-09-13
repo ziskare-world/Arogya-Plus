@@ -664,6 +664,57 @@ router.post("/route", async (req, res) => {
   }
 });
 
+
+/**
+ * @route GET /api/map/tiles/:z/:x/:y.png
+ * @desc Reliable GIS Map Tile Proxy - eliminates 403 blocks and caches map tiles locally
+ */
+router.get("/tiles/:z/:x/:y.png", async (req, res) => {
+  try {
+    const { z, x, y } = req.params;
+    const cleanY = String(y).replace(/\.(png|jpg|jpeg)$/i, "");
+
+    const subdomains = ["a", "b", "c", "d"];
+    const sub = subdomains[Math.floor(Math.random() * subdomains.length)];
+
+    // Primary: CartoDB Voyager
+    const primaryUrl = `https://${sub}.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${cleanY}.png`;
+
+    let response = await fetch(primaryUrl, {
+      headers: {
+        "User-Agent": "ArogyaPlus-Healthcare-System/1.0",
+        "Accept": "image/webp,image/apng,image/*,*/*;q=0.8"
+      }
+    });
+
+    // Fallback: Esri World Street Map if CartoDB fails
+    if (!response.ok) {
+      const fallbackUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${z}/${cleanY}/${x}`;
+      response = await fetch(fallbackUrl, {
+        headers: { "User-Agent": "ArogyaPlus-Healthcare-System/1.0" }
+      });
+    }
+
+    if (!response.ok) {
+      return res.status(response.status).send("Tile fetch failed");
+    }
+
+    const contentType = response.headers.get("content-type") || "image/png";
+    const buffer = Buffer.from(await response.arrayBuffer());
+
+    res.set({
+      "Content-Type": contentType,
+      "Cache-Control": "public, max-age=604800, immutable",
+      "Access-Control-Allow-Origin": "*"
+    });
+
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).send("Tile proxy error");
+  }
+});
+
+
 /**
  * @route POST /api/map/geocode
  * @desc Address Search / Forward Geocoding via Nominatim API

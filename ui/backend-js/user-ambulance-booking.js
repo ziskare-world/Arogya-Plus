@@ -75,11 +75,11 @@ async function initLeafletMap() {
   });
 
   if (mapStatusEl) {
-    mapStatusEl.textContent = "OpenStreetMap Active";
+    mapStatusEl.textContent = "Interactive GIS Map Active";
     mapStatusEl.className = "badge badge-green";
   }
   if (mapKeyHelpEl) {
-    mapKeyHelpEl.textContent = "100% Free OpenStreetMap & Leaflet Routing active.";
+    mapKeyHelpEl.textContent = "High-performance CARTO & Leaflet GIS active.";
   }
 
   // Set initial pickup location marker at default location

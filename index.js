@@ -194,10 +194,16 @@ const storageDirectory = path.join(__dirname, "storage");
 app.use("/storage", express.static(storageDirectory));
 app.use(
   express.static(uiDirectory, {
-    maxAge: process.env.NODE_ENV === "production" ? "7d" : "1h",
-    etag: true
+    maxAge: process.env.NODE_ENV === "production" ? "1d" : 0,
+    etag: true,
+    setHeaders: (res, filePath) => {
+      if (process.env.NODE_ENV !== "production" || filePath.endsWith(".js") || filePath.endsWith(".html")) {
+        res.setHeader("Cache-Control", "no-cache, must-revalidate");
+      }
+    }
   })
 );
+
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({

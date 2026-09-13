@@ -28,7 +28,7 @@ const mapRoutes = require("./routes/mapRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const { getEmergencyQueue } = require("./utils/emergencyQueue");
 
-dotenv.config({ path: path.join(__dirname, ".env") });
+dotenv.config();
 
 const resolveOpenRouteServiceApiKey = () => {
   return String(process.env.OPENROUTESERVICE_API_KEY || "").trim();

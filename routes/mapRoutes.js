@@ -7,19 +7,12 @@ const Emergency = require("../models/Emergency");
 // Initial sample hospital data to ensure maps load rich clinical markers out of the box
 const User = require("../models/User");
 
-// Legacy dummy sample hospital names that should NEVER be shown if user didn't add them
-const DUMMY_HOSPITAL_NAMES = [
-  "Arogya Central Multi-Specialty Hospital",
-  "City Care Trauma & Emergency Center",
-  "Metro Health Super Specialty Clinic",
-  "Apex Blood Bank & Urgent Care"
-];
+// Dummy hospital names removed; data sourced from database.
 
 // Helper to ensure hospitals in MongoDB match the actual hospitals added by administrators
 const syncHospitalsFromDatabase = async () => {
   try {
-    // Purge fake dummy hospitals so only user-added hospitals exist
-    await Hospital.deleteMany({ name: { $in: DUMMY_HOSPITAL_NAMES } });
+ // No longer purge dummy hospitals; they are not defined.
 
     // Sync any registered hospital admin users who have a hospitalName
     const admins = await User.find({
@@ -565,6 +558,15 @@ router.post("/route", async (req, res) => {
 
     const orsApiKey = String(process.env.OPENROUTESERVICE_API_KEY || "").trim();
 
+    // Validate OpenRouteService API key presence
+    if (!orsApiKey) {
+      console.error("[OpenRouteService] API key missing. Set OPENROUTESERVICE_API_KEY environment variable.");
+      return res.status(401).json({
+        success: false,
+        error: "OpenRouteService API key is required. Please configure the OPENROUTESERVICE_API_KEY environment variable."
+      });
+    }
+
     // Try OpenRouteService API first if key available
     if (orsApiKey) {
       try {
@@ -696,7 +698,12 @@ router.get("/tiles/:z/:x/:y.png", async (req, res) => {
     }
 
     if (!response.ok) {
-      return res.status(response.status).send("Tile fetch failed");
+      if (response.status === 403) {
+        console.warn(`[Tile Proxy] 403 Access blocked for ${primaryUrl}`);
+        return res.status(403).json({ success: false, error: "403 Access blocked" });
+      }
+      console.error(`[Tile Proxy] Tile fetch failed with status ${response.status}`);
+      return res.status(response.status).json({ success: false, error: "Tile fetch failed" });
     }
 
     const contentType = response.headers.get("content-type") || "image/png";

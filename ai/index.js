@@ -12,6 +12,8 @@ const { HospitalOperationsAgent, hospitalOperationsAgent } = require("./agents/h
 const { AgentOrchestrator, agentOrchestrator } = require("./agents/agentOrchestrator");
 const { queryQwenAgent, DEFAULT_QWEN_MODEL } = require("./qwenBridge");
 
+const { AgentMemorySystem, agentMemorySystem } = require("./agentMemorySystem");
+
 module.exports = {
   HuggingFaceClient,
   huggingFaceClient,
@@ -28,5 +30,7 @@ module.exports = {
   HospitalOperationsAgent,
   hospitalOperationsAgent,
   AgentOrchestrator,
-  agentOrchestrator
+  agentOrchestrator,
+  AgentMemorySystem,
+  agentMemorySystem
 };

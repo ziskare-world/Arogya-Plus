@@ -11,7 +11,8 @@ window.ArogyaHospital = (function () {
       return data.success ? data.data : [];
     } catch (err) {
       console.error('Failed to fetch hospital list:', err);
-      return [];
+    alert('Failed to fetch hospital list');
+    return [];
     }
   }
 

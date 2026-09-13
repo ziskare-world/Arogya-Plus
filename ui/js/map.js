@@ -61,6 +61,27 @@ window.ArogyaMap = (function () {
       attributionControl: true
     }).setView([lat, lng], zoom);
 
+    // Check for OpenRouteService API key and show warning overlay if missing
+    fetch('/api/public-config')
+      .then((resp) => resp.json())
+      .then((cfg) => {
+        if (!cfg.openRouteServiceApiKey) {
+          L.control({ position: 'topright' }).onAdd = function () {
+            const div = L.DomUtil.create('div', 'api-key-warning');
+            div.style.background = 'rgba(255,0,0,0.2)';
+            div.style.color = '#dc2626';
+            div.style.padding = '6px';
+            div.style.borderRadius = '4px';
+            div.style.fontSize = '0.9rem';
+            div.style.fontWeight = 'bold';
+            div.innerHTML = 'OpenRouteService API key required';
+            return div;
+          };
+          L.control({ position: 'topright' }).addTo(map);
+        }
+      })
+      .catch(() => {});
+
     // High-performance unblocked CartoDB Voyager tiles with local proxy fallback
     const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
       maxZoom: 19,

@@ -5,33 +5,28 @@
  */
 
 const AgentMemory = require("../../../models/AgentMemory");
+const { agentMemorySystem } = require("../../agentMemorySystem");
 
 class MemoryManager {
   constructor() {
-    this.sessionCache = new Map(); // short-term session storage
+    this.agentMemorySystem = agentMemorySystem;
+    this.sessionCache = agentMemorySystem.sessionCache; // short-term session storage
   }
 
   /**
    * Appends a message to short-term session memory
    */
   appendSessionMessage(sessionId, message) {
-    if (!sessionId) return;
-    const history = this.sessionCache.get(sessionId) || [];
-    history.push({
-      ...message,
-      timestamp: new Date()
-    });
-    // Keep last 20 messages in active session context
-    if (history.length > 20) history.shift();
-    this.sessionCache.set(sessionId, history);
+    return this.agentMemorySystem.appendWorkingMessage(sessionId, message);
   }
 
   getSessionHistory(sessionId) {
-    return this.sessionCache.get(sessionId) || [];
+    const session = this.agentMemorySystem._ensureSession(sessionId);
+    return session ? session.history : [];
   }
 
   clearSession(sessionId) {
-    this.sessionCache.delete(sessionId);
+    this.agentMemorySystem.clearWorkingSession(sessionId);
   }
 
   /**

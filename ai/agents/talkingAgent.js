@@ -18,12 +18,13 @@ Your role is to:
   }
 
   /**
-   * Conversational turn with conversation history context
+   * Conversational turn with conversation history context & cognitive memory context
    * @param {string} userMessage
    * @param {Array<{role: string, content: string}>} [history=[]]
+   * @param {Object} [memoryContext=null]
    * @returns {Promise<{reply: string, provider: string}>}
    */
-  async chat(userMessage, history = []) {
+  async chat(userMessage, history = [], memoryContext = null) {
     const text = String(userMessage || "").trim();
     if (!text) {
       return {
@@ -32,8 +33,13 @@ Your role is to:
       };
     }
 
+    let dynamicSystemPrompt = this.systemPrompt;
+    if (memoryContext && memoryContext.contextPromptBlock) {
+      dynamicSystemPrompt += `\n${memoryContext.contextPromptBlock}\nUse the above recalled memory facts seamlessly without repeating them verbatim unless clinically relevant.`;
+    }
+
     const messages = [
-      { role: "system", content: this.systemPrompt },
+      { role: "system", content: dynamicSystemPrompt },
       ...history.slice(-4),
       { role: "user", content: text }
     ];

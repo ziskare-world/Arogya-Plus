@@ -10,14 +10,8 @@ async function run() {
     await mongoose.connect(process.env.MONGO_URI);
     console.log("Connected to MongoDB:", process.env.MONGO_URI);
 
-    const dummyNames = [
-      "Arogya Central Multi-Specialty Hospital",
-      "City Care Trauma & Emergency Center",
-      "Metro Health Super Specialty Clinic",
-      "Apex Blood Bank & Urgent Care"
-    ];
-
-    const delRes = await Hospital.deleteMany({ name: { $in: dummyNames } });
+    // Dummy hospital names removed; no need to delete placeholder entries.
+    const delRes = { deletedCount: 0 };
     console.log("Deleted dummy hospitals:", delRes.deletedCount);
 
     const admins = await User.find({

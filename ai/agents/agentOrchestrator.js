@@ -9,6 +9,7 @@ const { appointmentAgent } = require("./appointmentAgent");
 const { clinicalNotesAgent } = require("./clinicalNotesAgent");
 const { hospitalOperationsAgent } = require("./hospitalOperationsAgent");
 const { selfLearningEngine } = require("../selfLearningEngine");
+const { agentMemorySystem } = require("../agentMemorySystem");
 
 class AgentOrchestrator {
   constructor() {
@@ -18,6 +19,7 @@ class AgentOrchestrator {
     this.clinicalNotesAgent = clinicalNotesAgent;
     this.hospitalOperationsAgent = hospitalOperationsAgent;
     this.selfLearningEngine = selfLearningEngine;
+    this.agentMemorySystem = agentMemorySystem;
   }
 
   /**
@@ -149,9 +151,22 @@ class AgentOrchestrator {
    * @param {Object} [params.user={}]
    * @returns {Promise<Object>}
    */
-  async handleUserMessage({ message, history = [], user = {} }) {
+  async handleUserMessage({ message, history = [], user = {}, sessionId = null }) {
     const intent = this.classifyIntent(message);
     const userId = user?._id || user?.id || null;
+
+    // Retrieve multi-tier cognitive memory context across working, semantic, episodic, and procedural tiers
+    let memoryContext = null;
+    try {
+      memoryContext = await this.agentMemorySystem.recallContext({
+        userId,
+        sessionId,
+        message,
+        intent
+      });
+    } catch (memErr) {
+      console.warn("[AgentOrchestrator] Memory recall notice:", memErr.message);
+    }
 
     // Retrieve learned profile insights for user personalization
     let learnedProfile = null;
@@ -468,7 +483,7 @@ class AgentOrchestrator {
 
       case "conversational_talking":
       default: {
-        const { reply, provider } = await this.talkingAgent.chat(message, history);
+        const { reply, provider } = await this.talkingAgent.chat(message, history, memoryContext);
         responseResult = {
           agent: "TalkingAgent",
           intent,
@@ -489,7 +504,30 @@ class AgentOrchestrator {
       }
     }
 
-    // 8. Self-Learning Memory Synthesis: learn from this turn in background
+    // 8. Multi-Tier Memory Ingestion: ingest turn across working, semantic, episodic, and procedural tiers
+    this.agentMemorySystem
+      .ingestTurn({
+        userId,
+        sessionId,
+        userMessage: message,
+        botReply: responseResult.reply,
+        intent: responseResult.intent,
+        triageLevel: responseResult.triageLevel,
+        action: responseResult.action?.label || null,
+        details: responseResult.details || null
+      })
+      .catch((err) => console.warn("[AgentMemorySystem] Ingest turn notice:", err.message));
+
+    // Attach recalled memory context metadata for API & UI inspection
+    responseResult.memoryContext = memoryContext
+      ? {
+          recalledCount: (memoryContext.pinnedFacts?.length || 0) + (memoryContext.relevantFacts?.length || 0),
+          pinnedFacts: (memoryContext.pinnedFacts || []).map((f) => ({ key: f.key, value: f.value, category: f.category })),
+          relevantFacts: (memoryContext.relevantFacts || []).map((f) => ({ key: f.key, value: f.value, category: f.category }))
+        }
+      : null;
+
+    // 9. Self-Learning Memory Synthesis: learn from this turn in background
     if (userId) {
       this.selfLearningEngine
         .learnFromTurn({

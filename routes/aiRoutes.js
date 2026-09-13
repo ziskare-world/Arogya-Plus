@@ -15,7 +15,8 @@ const {
   hospitalOperationsAgent,
   huggingFaceClient,
   queryQwenAgent,
-  DEFAULT_QWEN_MODEL
+  DEFAULT_QWEN_MODEL,
+  agentMemorySystem
 } = require("../ai");
 
 const router = express.Router();
@@ -128,7 +129,8 @@ router.post(
     const result = await agentOrchestrator.handleUserMessage({
       message: userMsg,
       history,
-      user: currentUser
+      user: currentUser,
+      sessionId: req.body.sessionId || null
     });
 
     // Check if query is asking specifically to explore or browse doctors
@@ -260,6 +262,7 @@ router.post(
       prescriptions,
       suggestions: result.suggestions || null,
       learningProfile: result.learningProfile || null,
+      memoryContext: result.memoryContext || null,
       operations: result.intent === "hospital_operations" ? result.details : null,
       bookingRecommendation: result.intent === "appointment_booking" ? result.details : null,
       details: result.details || null,
@@ -418,6 +421,216 @@ router.post(
       success: true,
       message: "Guest chat history synced to user profile successfully",
       syncedCount: guestHistory.length
+    });
+  })
+);
+
+// =========================================================================
+// 🧠 AI AGENT COGNITIVE MEMORY MANAGEMENT APIS
+// =========================================================================
+
+/**
+ * Helper to resolve user from auth token in memory routes
+ */
+const resolveAuthUser = async (req) => {
+  if (req.user) return req.user;
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    try {
+      const token = authHeader.split(" ")[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      return await User.findById(decoded.id).select("-password");
+    } catch (e) {
+      return null;
+    }
+  }
+  return null;
+};
+
+/**
+ * @route   GET /api/ai/memory
+ * @desc    Retrieve categorized multi-tier memories (Pinned, Preferences, Facts, Episodes, Reflection)
+ * @access  Authenticated
+ */
+router.get(
+  "/memory",
+  asyncHandler(async (req, res) => {
+    const user = await resolveAuthUser(req);
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Authentication required to access memory store." });
+    }
+
+    const allMemories = await AgentMemory.find({ user: user._id })
+      .sort({ pinned: -1, importance: -1, updatedAt: -1 })
+      .lean();
+
+    const categorized = {
+      pinned: allMemories.filter((m) => m.pinned),
+      preferences: allMemories.filter((m) => !m.pinned && m.category === "preference"),
+      facts: allMemories.filter((m) => !m.pinned && m.tier === "semantic" && m.category !== "preference"),
+      episodes: allMemories.filter((m) => m.tier === "episodic"),
+      reflection: allMemories.find((m) => m.tier === "procedural" && m.key === "cognitive_reflection_summary")?.value || null
+    };
+
+    return res.status(200).json({
+      success: true,
+      count: allMemories.length,
+      memories: categorized,
+      rawList: allMemories
+    });
+  })
+);
+
+/**
+ * @route   POST /api/ai/memory
+ * @desc    Add a user preference or semantic fact manually
+ * @access  Authenticated
+ */
+router.post(
+  "/memory",
+  [
+    body("key").isString().trim().notEmpty().withMessage("Memory key is required"),
+    body("value").notEmpty().withMessage("Memory value is required"),
+    body("category").optional().isString(),
+    body("importance").optional().isInt({ min: 1, max: 5 }),
+    body("pinned").optional().isBoolean()
+  ],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const user = await resolveAuthUser(req);
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Authentication required to save memory." });
+    }
+
+    const saved = await agentMemorySystem.rememberFact({
+      userId: user._id,
+      key: req.body.key,
+      value: req.body.value,
+      category: req.body.category || "preference",
+      importance: req.body.importance || 3,
+      pinned: req.body.pinned || false,
+      source: "user_manual_entry"
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Memory fact stored successfully.",
+      memory: saved
+    });
+  })
+);
+
+/**
+ * @route   PUT /api/ai/memory/:id
+ * @desc    Update an existing memory item or toggle its pinned status
+ * @access  Authenticated
+ */
+router.put(
+  "/memory/:id",
+  asyncHandler(async (req, res) => {
+    const user = await resolveAuthUser(req);
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Authentication required." });
+    }
+
+    const memory = await AgentMemory.findOne({ _id: req.params.id, user: user._id });
+    if (!memory) {
+      return res.status(404).json({ success: false, message: "Memory item not found." });
+    }
+
+    if (req.body.value !== undefined) memory.value = req.body.value;
+    if (req.body.category !== undefined) memory.category = req.body.category;
+    if (req.body.importance !== undefined) memory.importance = Math.min(5, Math.max(1, req.body.importance));
+    if (req.body.pinned !== undefined) memory.pinned = Boolean(req.body.pinned);
+
+    memory.lastAccessedAt = new Date();
+    await memory.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Memory updated successfully.",
+      memory
+    });
+  })
+);
+
+/**
+ * @route   DELETE /api/ai/memory/:id
+ * @desc    Delete a specific memory item (Right to be Forgotten)
+ * @access  Authenticated
+ */
+router.delete(
+  "/memory/:id",
+  asyncHandler(async (req, res) => {
+    const user = await resolveAuthUser(req);
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Authentication required." });
+    }
+
+    const deleted = await agentMemorySystem.forgetMemory(user._id, req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: "Memory item not found or already deleted." });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Memory deleted successfully."
+    });
+  })
+);
+
+/**
+ * @route   DELETE /api/ai/memory/all
+ * @desc    Wipe all memories for user account
+ * @access  Authenticated
+ */
+router.delete(
+  "/memory/clear/all",
+  asyncHandler(async (req, res) => {
+    const user = await resolveAuthUser(req);
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Authentication required." });
+    }
+
+    const wipedCount = await agentMemorySystem.wipeUserMemories(user._id);
+    return res.status(200).json({
+      success: true,
+      message: "All agent memories have been cleared.",
+      wipedCount
+    });
+  })
+);
+
+/**
+ * @route   GET /api/ai/memory/summary
+ * @desc    Get high-level AI cognitive summary of user health profile
+ * @access  Authenticated
+ */
+router.get(
+  "/memory/summary",
+  asyncHandler(async (req, res) => {
+    const user = await resolveAuthUser(req);
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Authentication required." });
+    }
+
+    const memories = await AgentMemory.find({ user: user._id }).lean();
+    const pinned = memories.filter((m) => m.pinned);
+    const preferences = memories.filter((m) => m.category === "preference");
+    const allergies = memories.filter((m) => m.key.startsWith("allergy_") || (m.tags && m.tags.includes("allergy")));
+    const chronic = memories.filter((m) => m.key.startsWith("chronic_condition_") || (m.tags && m.tags.includes("chronic_condition")));
+    const reflection = memories.find((m) => m.key === "cognitive_reflection_summary")?.value || null;
+
+    return res.status(200).json({
+      success: true,
+      summary: {
+        totalMemories: memories.length,
+        pinnedCount: pinned.length,
+        criticalAllergies: allergies.map((a) => a.value),
+        chronicConditions: chronic.map((c) => c.value),
+        keyPreferences: preferences.map((p) => ({ key: p.key, value: p.value })),
+        reflection: reflection || { topSpecialty: "General Healthcare", preferredFacility: "Arogya Central Clinical Hub" }
+      }
     });
   })
 );

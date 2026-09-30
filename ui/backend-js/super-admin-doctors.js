@@ -108,7 +108,7 @@ const renderDoctors = () => {
               🗑️ Delete
             </button>
           </div>
-          <button class="btn btn-ghost btn-full btn-sm" style="margin-top:6px;font-size:.74rem" data-action="profile" data-name="${escapeHtml(doctor.name || "Doctor")}">View Details</button>
+          <button class="btn btn-ghost btn-full btn-sm" style="margin-top:6px;font-size:.74rem" onclick="window.openDoctorDetailsModal('${docId}')">View Details</button>
         </div>`;
     })
     .join("");
@@ -315,6 +315,165 @@ const setupDeleteDoctorEvents = () => {
   }
 };
 
+window.openDoctorDetailsModal = async (doctorId) => {
+  const modal = document.getElementById("view-doctor-modal");
+  const bodyEl = document.getElementById("doctor-details-body");
+  const actionsEl = document.getElementById("doctor-modal-actions");
+  const titleEl = document.getElementById("vdoc-title");
+
+  if (modal) modal.style.display = "flex";
+  if (bodyEl) {
+    bodyEl.innerHTML = `
+      <div style="text-align:center;padding:40px 20px;color:var(--text-400)">
+        <div style="font-size:2rem;margin-bottom:8px">⏳</div>
+        <div>Loading doctor clinical record & profile...</div>
+      </div>`;
+  }
+  if (actionsEl) actionsEl.innerHTML = "";
+
+  try {
+    const res = await apiRequest(`/api/admin/doctors/${doctorId}`);
+    if (!res.success || !res.doctor) {
+      throw new Error(res.message || "Failed to load doctor profile");
+    }
+
+    const doc = res.doctor;
+    const isBlocked = doc.isActive === false;
+    const stats = doc.stats || {};
+    const recent = doc.recentAppointments || [];
+    const rating = Number(doc.rating || 4.9).toFixed(1);
+    const reviews = Number(doc.reviewCount || 18);
+
+    if (titleEl) titleEl.textContent = `Dr. ${doc.name} - Profile Details`;
+
+    if (bodyEl) {
+      bodyEl.innerHTML = `
+        <div style="display:flex;align-items:center;gap:18px;background:var(--bg-800);border:1px solid var(--border);border-radius:var(--r-md);padding:18px;margin-bottom:18px">
+          <div class="doc-avatar" style="width:68px;height:68px;font-size:28px;margin:0;background:${!isBlocked ? "rgba(37,99,235,0.15)" : "rgba(239,68,68,0.15)"};border-color:${!isBlocked ? "var(--green)" : "var(--red)"}">
+            ${escapeHtml(initials(doc.name))}
+          </div>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <h3 style="margin:0;font-size:1.2rem;color:var(--text-100)">${escapeHtml(doc.name)}</h3>
+              ${!isBlocked ? '<span class="badge badge-green">🟢 Active & Online</span>' : '<span class="badge badge-red">🚫 Access Blocked</span>'}
+              ${doc.isAvailable !== false ? '<span class="badge badge-blue">Available</span>' : '<span class="badge badge-yellow">Offline</span>'}
+            </div>
+            <div style="font-size:.85rem;color:var(--cyan);font-weight:600;margin-top:2px">
+              ${escapeHtml(doc.specialization || "Clinical Specialist")} · <span style="color:var(--text-400);font-weight:400">${escapeHtml(doc.qualification || "MBBS, MD")}</span>
+            </div>
+            <div style="font-size:.76rem;color:var(--text-400);margin-top:4px;display:flex;gap:16px;flex-wrap:wrap">
+              <span>🏥 ${escapeHtml(doc.hospitalName || "General Healthcare")}</span>
+              <span>⭐ ${rating} / 5.0 (${reviews} reviews)</span>
+              <span>🆔 <code style="color:var(--cyan)">${escapeHtml(doc._id)}</code></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:12px;margin-bottom:18px">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;text-align:center">
+            <div style="font-size:1.25rem;font-weight:700;color:var(--blue)">${stats.totalAppointments ?? 0}</div>
+            <div style="font-size:.68rem;color:var(--text-500);text-transform:uppercase;margin-top:2px">Total Consults</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;text-align:center">
+            <div style="font-size:1.25rem;font-weight:700;color:var(--green)">${stats.completedAppointments ?? 0}</div>
+            <div style="font-size:.68rem;color:var(--text-500);text-transform:uppercase;margin-top:2px">Completed</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;text-align:center">
+            <div style="font-size:1.25rem;font-weight:700;color:var(--cyan)">${stats.totalPatients ?? 0}</div>
+            <div style="font-size:.68rem;color:var(--text-500);text-transform:uppercase;margin-top:2px">Patients</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;text-align:center">
+            <div style="font-size:1.25rem;font-weight:700;color:var(--yellow)">₹${doc.consultationFee ?? 500}</div>
+            <div style="font-size:.68rem;color:var(--text-500);text-transform:uppercase;margin-top:2px">Consult Fee</div>
+          </div>
+        </div>
+
+        <!-- Information Columns -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;margin-bottom:18px">
+          <div>
+            <div style="font-size:.72rem;color:var(--text-500);text-transform:uppercase;font-weight:600">Contact & Location</div>
+            <div style="font-size:.84rem;color:var(--text-200);margin-top:6px">📧 <strong>Email:</strong> ${escapeHtml(doc.email || "-")}</div>
+            <div style="font-size:.84rem;color:var(--text-200);margin-top:4px">📞 <strong>Phone:</strong> ${escapeHtml(doc.phone || "-")}</div>
+            <div style="font-size:.84rem;color:var(--text-200);margin-top:4px">🏢 <strong>Clinic/OPD:</strong> ${escapeHtml(doc.clinicAddress || "Main OPD")}</div>
+          </div>
+          <div>
+            <div style="font-size:.72rem;color:var(--text-500);text-transform:uppercase;font-weight:600">Practice & Credentials</div>
+            <div style="font-size:.84rem;color:var(--text-200);margin-top:6px">🎓 <strong>Qualification:</strong> ${escapeHtml(doc.qualification || "MBBS, MD")}</div>
+            <div style="font-size:.84rem;color:var(--text-200);margin-top:4px">⏳ <strong>Experience:</strong> ${doc.experienceYears || doc.experience || 0} Years</div>
+            <div style="font-size:.84rem;color:var(--text-200);margin-top:4px">📅 <strong>Joined Platform:</strong> ${new Date(doc.createdAt).toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "numeric" })}</div>
+          </div>
+        </div>
+
+        <!-- Recent Appointments Table -->
+        <div>
+          <div style="font-size:.82rem;font-weight:700;color:var(--text-200);margin-bottom:8px">📋 Recent Consultations</div>
+          ${
+            recent.length
+              ? `
+            <div class="table-wrap" style="border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden">
+              <table style="width:100%;font-size:.8rem;border-collapse:collapse">
+                <thead>
+                  <tr style="background:var(--bg-800);border-bottom:1px solid var(--border)">
+                    <th style="padding:8px 12px;text-align:left">Patient</th>
+                    <th style="padding:8px 12px;text-align:left">Date & Time</th>
+                    <th style="padding:8px 12px;text-align:left">Reason</th>
+                    <th style="padding:8px 12px;text-align:left">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${recent
+                    .map(
+                      (apt) => `
+                    <tr style="border-bottom:1px solid var(--border)">
+                      <td style="padding:8px 12px">
+                        <strong>${escapeHtml(apt.patient?.name || "Patient")}</strong>
+                        <div style="font-size:.72rem;color:var(--text-500)">${escapeHtml(apt.patient?.phone || "")}</div>
+                      </td>
+                      <td style="padding:8px 12px">${new Date(apt.appointmentDate).toLocaleDateString("en-IN", { month: "short", day: "numeric" })}</td>
+                      <td style="padding:8px 12px;color:var(--text-400)">${escapeHtml(apt.reason || "General Consultation")}</td>
+                      <td style="padding:8px 12px">
+                        <span class="badge ${apt.status === "completed" ? "badge-green" : apt.status === "cancelled" ? "badge-red" : "badge-blue"}">
+                          ${escapeHtml(apt.status)}
+                        </span>
+                      </td>
+                    </tr>`
+                    )
+                    .join("")}
+                </tbody>
+              </table>
+            </div>`
+              : `<div style="font-size:.8rem;color:var(--text-500);padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);text-align:center">No consultation records recorded yet for this doctor.</div>`
+          }
+        </div>
+      `;
+    }
+
+    if (actionsEl) {
+      actionsEl.innerHTML = `
+        <button class="btn btn-outline btn-sm" style="color:${!isBlocked ? 'var(--yellow)' : 'var(--green)'};border-color:${!isBlocked ? 'var(--yellow)' : 'var(--green)'}" onclick="window.toggleDoctorAccess('${doc._id}', ${!isBlocked}, '${escapeHtml(doc.name)}');window.closeDoctorDetailsModal();">
+          ${!isBlocked ? '🚫 Block Access' : '✅ Unblock Access'}
+        </button>
+        <button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red)" onclick="window.closeDoctorDetailsModal();window.openDeleteDoctorModal('${doc._id}', '${escapeHtml(doc.name)}');">
+          🗑️ Delete Doctor
+        </button>
+      `;
+    }
+  } catch (err) {
+    if (bodyEl) {
+      bodyEl.innerHTML = `
+        <div style="text-align:center;padding:30px;color:var(--red)">
+          <div>⚠️ Failed to load doctor details: ${escapeHtml(err.message)}</div>
+        </div>`;
+    }
+  }
+};
+
+window.closeDoctorDetailsModal = () => {
+  const modal = document.getElementById("view-doctor-modal");
+  if (modal) modal.style.display = "none";
+};
+
 const init = async () => {
   const session = ensureSession({
     allowedRoles: ["super-admin"],
@@ -324,15 +483,6 @@ const init = async () => {
 
   setupModalEvents();
   setupDeleteDoctorEvents();
-
-  if (gridEl) {
-    gridEl.addEventListener("click", (event) => {
-      const button = event.target.closest("button[data-action='profile'][data-name]");
-      if (!button) return;
-      event.stopPropagation();
-      toast(`${button.getAttribute("data-name")} profile details will be available soon`, "info");
-    });
-  }
 
   try {
     await loadDoctors();

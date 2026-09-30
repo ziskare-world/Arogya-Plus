@@ -701,6 +701,51 @@ router.get(
   })
 );
 
+router.get(
+  "/doctors/:id",
+  protect,
+  authorize("admin", "super-admin"),
+  [param("id").isMongoId().withMessage("Valid doctor id is required")],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const doctor = await User.findOne({
+      _id: req.params.id,
+      role: "doctor"
+    }).select("-password");
+
+    if (!doctor) {
+      return res.status(404).json({ success: false, message: "Doctor not found" });
+    }
+
+    // Aggregate statistics
+    const [totalAppointments, completedAppointments, pendingAppointments, uniquePatientIds, recentAppointments] =
+      await Promise.all([
+        Appointment.countDocuments({ doctor: doctor._id }),
+        Appointment.countDocuments({ doctor: doctor._id, status: "completed" }),
+        Appointment.countDocuments({ doctor: doctor._id, status: "pending" }),
+        Appointment.distinct("patient", { doctor: doctor._id }),
+        Appointment.find({ doctor: doctor._id })
+          .populate("patient", "name email phone bloodGroup")
+          .sort({ appointmentDate: -1 })
+          .limit(6)
+      ]);
+
+    return res.status(200).json({
+      success: true,
+      doctor: {
+        ...doctor.toObject(),
+        stats: {
+          totalAppointments,
+          completedAppointments,
+          pendingAppointments,
+          totalPatients: uniquePatientIds.length
+        },
+        recentAppointments
+      }
+    });
+  })
+);
+
 router.patch(
   "/doctors/:id",
   protect,

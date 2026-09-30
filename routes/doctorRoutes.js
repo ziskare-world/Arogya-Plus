@@ -508,4 +508,24 @@ router.patch(
   })
 );
 
+router.get(
+  "/:id",
+  protect,
+  [param("id").isMongoId().withMessage("Valid doctor id is required")],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const doctor = await User.findOne({ _id: req.params.id, role: "doctor" })
+      .select("-password -totpSecret");
+
+    if (!doctor) {
+      return res.status(404).json({ success: false, message: "Doctor not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      doctor
+    });
+  })
+);
+
 module.exports = router;

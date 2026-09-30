@@ -228,6 +228,30 @@
         </div>
     </div>
 
+    <!-- DOCTOR DETAILS LIGHTBOX MODAL -->
+    <div id="view-doctor-modal" class="lightbox-modal" style="display:none">
+        <div class="lightbox-content" style="max-width:680px;width:100%;max-height:90vh;overflow-y:auto">
+            <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:18px">
+                <div style="display:flex;align-items:center;gap:10px">
+                    <span style="font-size:1.4rem">👨‍⚕️</span>
+                    <h3 style="margin:0;font-size:1.25rem" id="vdoc-title">Doctor Details</h3>
+                </div>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="closeDoctorDetailsModal()" style="font-size:1.2rem">✕</button>
+            </div>
+
+            <div id="doctor-details-body">
+                <div style="text-align:center;padding:30px;color:var(--text-400)">Loading doctor details...</div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);padding-top:16px;margin-top:20px;flex-wrap:wrap;gap:10px" id="doctor-details-footer">
+                <div style="display:flex;gap:8px" id="doctor-modal-actions">
+                    <!-- Dynamic block & delete buttons injected here -->
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="closeDoctorDetailsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="../backend-js/super-admin-doctors.js"></script>
 </body>
 

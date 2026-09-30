@@ -7,6 +7,7 @@ const Payment = require("../models/Payment");
 const Appointment = require("../models/Appointment");
 const { protect, authorize } = require("../middleware/authMiddleware");
 const validateRequest = require("../middleware/validateMiddleware");
+const { logAudit } = require("../utils/auditLogger");
 
 const router = express.Router();
 
@@ -27,6 +28,7 @@ router.get(
     const filter = isAdminUser ? {} : { user: req.user._id };
 
     const payments = await Payment.find(filter)
+      .populate("user", "name email phone")
       .populate({
         path: "appointment",
         populate: {
@@ -63,6 +65,11 @@ router.post(
   validateRequest,
   asyncHandler(async (req, res) => {
     const amount = Number(req.body.amount);
+    const patientLabel = String(req.body.patientLabel || "").trim();
+    const notes = String(req.body.notes || "").trim();
+    const method = String(req.body.method || "card").trim();
+    const hospital = req.user.hospital || req.body.hospital || null;
+    const hospitalName = req.user.hospitalName || req.body.hospitalName || "";
 
     let serviceDescription = req.body.description || "Clinical Medical Care & Diagnostic Services";
     if (req.body.appointmentId) {
@@ -91,7 +98,12 @@ router.post(
         razorpayOrderId: mockOrderId,
         invoiceNumber,
         serviceDescription,
-        status: "created"
+        status: "created",
+        patientLabel,
+        notes,
+        method,
+        hospital,
+        hospitalName
       });
 
       return res.status(201).json({
@@ -123,13 +135,79 @@ router.post(
       razorpayOrderId: order.id,
       invoiceNumber,
       serviceDescription,
-      status: "created"
+      status: "created",
+      patientLabel,
+      notes,
+      method,
+      hospital,
+      hospitalName
     });
 
     return res.status(201).json({
       success: true,
       message: "Payment order created",
       order,
+      payment
+    });
+  })
+);
+
+router.post(
+  "/record-payment",
+  protect,
+  authorize("admin", "super-admin"),
+  [
+    body("amount").isFloat({ gt: 0 }).withMessage("Amount must be greater than zero"),
+    body("patientLabel").trim().notEmpty().withMessage("Patient name/label is required")
+  ],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const amount = Number(req.body.amount);
+    const patientLabel = String(req.body.patientLabel).trim();
+    const method = String(req.body.method || "Cash").trim();
+    const notes = String(req.body.notes || "").trim();
+    const serviceDescription = req.body.description || "In-Hospital Clinical Services";
+    const hospital = req.user.hospital || req.body.hospital || null;
+    const hospitalName = req.user.hospitalName || req.body.hospitalName || "";
+
+    const timestamp = Date.now();
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${timestamp.toString().slice(-5)}${Math.floor(10 + Math.random() * 90)}`;
+    const baseAmount = Math.round((amount / 1.18) * 100) / 100;
+    const taxAmount = Math.round((amount - baseAmount) * 100) / 100;
+
+    const payment = await Payment.create({
+      user: req.user._id,
+      amount,
+      taxAmount,
+      currency: "INR",
+      razorpayOrderId: `OFFLINE-${timestamp}`,
+      razorpayPaymentId: `OFFLINE-PAY-${timestamp}`,
+      razorpaySignature: "OFFLINE-RECORD",
+      invoiceNumber,
+      serviceDescription,
+      status: "verified",
+      patientLabel,
+      notes,
+      method,
+      hospital,
+      hospitalName
+    });
+
+    await logAudit({
+      action: "PAYMENT_RECORDED",
+      category: "PAYMENT",
+      severity: "info",
+      details: `Direct payment of INR ${amount} recorded for ${patientLabel} via ${method}. Invoice: ${invoiceNumber}`,
+      actor: { id: req.user._id, name: req.user.name, role: req.user.role, email: req.user.email },
+      targetId: payment._id,
+      hospital,
+      hospitalName,
+      req
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Payment successfully recorded and verified",
       payment
     });
   })
@@ -146,7 +224,7 @@ router.post(
   ],
   validateRequest,
   asyncHandler(async (req, res) => {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, method } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, method, patientLabel, notes } = req.body;
 
     let isSignatureValid = false;
     if (!hasRazorpayKeys) {
@@ -178,7 +256,25 @@ router.post(
     } else if (!payment.method) {
       payment.method = "Razorpay / Unified Payments";
     }
+    if (patientLabel && !payment.patientLabel) {
+      payment.patientLabel = patientLabel;
+    }
+    if (notes && !payment.notes) {
+      payment.notes = notes;
+    }
     await payment.save();
+
+    await logAudit({
+      action: "PAYMENT_VERIFIED",
+      category: "PAYMENT",
+      severity: "info",
+      details: `Payment of INR ${payment.amount} verified for ${payment.patientLabel || "Patient"}. Invoice: ${payment.invoiceNumber}`,
+      actor: { id: req.user._id, name: req.user.name, role: req.user.role, email: req.user.email },
+      targetId: payment._id,
+      hospital: payment.hospital,
+      hospitalName: payment.hospitalName,
+      req
+    });
 
     return res.status(200).json({
       success: true,

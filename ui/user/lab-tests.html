@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Arogya Plus - Diagnostic Lab Tests</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <div class="app-layout">
+        <div class="main-area">
+            <div id="topbar-container"></div>
+
+            <main class="page-content">
+                <div class="page-header flex-between">
+                    <div>
+                        <h2>🧪 Diagnostic Pathology & Lab Tests</h2>
+                        <p style="color:var(--text-400);font-size:0.88rem;">Book NABL-accredited diagnostic tests, routine blood work, and download verified digital clinical reports</p>
+                    </div>
+                    <div style="display:flex;gap:10px;">
+                        <button class="btn btn-outline" id="tab-btn-catalog" onclick="switchTab('catalog')">🔬 Available Tests</button>
+                        <button class="btn btn-primary" id="tab-btn-my" onclick="switchTab('my')">📑 My Lab Reports (<span id="my-bookings-count">0</span>)</button>
+                    </div>
+                </div>
+
+                <!-- VIEW 1: TEST CATALOG -->
+                <div id="tab-catalog-content">
+                    <div class="card" style="margin-bottom:20px;padding:16px;">
+                        <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;">
+                            <div style="flex:1;min-width:240px;">
+                                <input type="text" id="test-search" class="form-input" placeholder="🔍 Search test name (e.g. CBC, Lipid, Thyroid, X-Ray)..." style="width:100%" oninput="onSearchTest(this.value)" />
+                            </div>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;" id="category-pills">
+                                <button class="btn btn-sm btn-primary cat-pill" onclick="filterCategory('All', this)">All</button>
+                                <button class="btn btn-sm btn-ghost cat-pill" onclick="filterCategory('Hematology', this)">Hematology</button>
+                                <button class="btn btn-sm btn-ghost cat-pill" onclick="filterCategory('Biochemistry', this)">Biochemistry</button>
+                                <button class="btn btn-sm btn-ghost cat-pill" onclick="filterCategory('Radiology', this)">Radiology</button>
+                                <button class="btn btn-sm btn-ghost cat-pill" onclick="filterCategory('Cardiology', this)">Cardiology</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="test-cards-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(310px, 1fr));gap:18px;">
+                        <div style="text-align:center;padding:40px;color:var(--text-400);grid-column:1 / -1;">Loading diagnostic tests...</div>
+                    </div>
+                </div>
+
+                <!-- VIEW 2: MY BOOKINGS & REPORTS -->
+                <div id="tab-my-content" style="display:none;">
+                    <div class="card">
+                        <div class="card-header flex-between">
+                            <div class="card-title">My Lab Appointments & Reports</div>
+                            <button class="btn btn-ghost btn-sm" onclick="loadMyBookings()">🔄 Refresh</button>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Report ID</th>
+                                        <th>Investigation</th>
+                                        <th>Category</th>
+                                        <th>Date & Slot</th>
+                                        <th>Collection Type</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="my-bookings-tbody">
+                                    <tr>
+                                        <td colspan="7" style="text-align:center;color:var(--text-400);padding:30px;">Loading your reports...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- BOOK TEST MODAL -->
+    <div id="book-test-modal" class="modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+        <div class="card modal-card" style="max-width:540px;width:100%;max-height:90vh;overflow-y:auto;background:var(--card-bg, #1e293b);border:1px solid var(--border-color, #334155);box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);border-radius:12px;padding:24px;">
+            <div class="flex-between" style="margin-bottom:16px;border-bottom:1px solid var(--border-color, #334155);padding-bottom:12px;">
+                <h3 style="margin:0;font-size:1.2rem;font-weight:700;">📅 Schedule Diagnostic Test</h3>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="closeBookModal()" style="font-size:1.2rem;">✕</button>
+            </div>
+            <form id="book-test-form" onsubmit="submitBookTest(event)" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <input type="hidden" id="modal-test-id" />
+                <div style="grid-column:1 / -1;background:var(--bg-panel, #0f172a);padding:12px 14px;border-radius:8px;border:1px solid var(--border-color, #334155);">
+                    <div style="font-size:1rem;font-weight:700;color:var(--blue);" id="modal-test-name">Test Name</div>
+                    <div style="font-size:0.83rem;color:var(--text-400);margin-top:3px;" id="modal-test-details">Price: ₹0 • Turnaround: 24h</div>
+                </div>
+
+                <div>
+                    <label class="form-label" style="display:block;margin-bottom:4px;font-size:.85rem;font-weight:600;">Preferred Date *</label>
+                    <input type="date" id="book-date" class="form-input" required style="width:100%;" />
+                </div>
+                <div>
+                    <label class="form-label" style="display:block;margin-bottom:4px;font-size:.85rem;font-weight:600;">Time Slot</label>
+                    <select id="book-slot" class="form-input" style="width:100%;">
+                        <option value="08:00 AM - 09:00 AM (Fasting Preferred)">08:00 AM - 09:00 AM (Fasting)</option>
+                        <option value="09:00 AM - 10:00 AM" selected>09:00 AM - 10:00 AM</option>
+                        <option value="11:00 AM - 12:00 PM">11:00 AM - 12:00 PM</option>
+                        <option value="02:00 PM - 03:00 PM">02:00 PM - 03:00 PM</option>
+                        <option value="04:00 PM - 05:00 PM">04:00 PM - 05:00 PM</option>
+                    </select>
+                </div>
+
+                <div style="grid-column:1 / -1;">
+                    <label class="form-label" style="display:block;margin-bottom:4px;font-size:.85rem;font-weight:600;">Sample Collection Preference</label>
+                    <select id="book-collection" class="form-input" onchange="toggleAddressField(this.value)" style="width:100%;">
+                        <option value="lab_visit" selected>🏥 In-Clinic Visit (Hospital Diagnostic Suite)</option>
+                        <option value="home_collection">🏠 Home Phlebotomy Sample Collection</option>
+                    </select>
+                </div>
+
+                <div id="home-address-row" style="grid-column:1 / -1;display:none;">
+                    <label class="form-label" style="display:block;margin-bottom:4px;font-size:.85rem;font-weight:600;">Home Address for Sample Collection</label>
+                    <input type="text" id="book-address" class="form-input" placeholder="e.g. Flat 302, Green Valley Apartments" style="width:100%;" />
+                </div>
+
+                <div style="grid-column:1 / -1;">
+                    <label class="form-label" style="display:block;margin-bottom:4px;font-size:.85rem;font-weight:600;">Special Instructions / Clinical Symptoms</label>
+                    <input type="text" id="book-notes" class="form-input" placeholder="e.g. Routine annual monitoring, prescribed by doctor" style="width:100%;" />
+                </div>
+
+                <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:10px;margin-top:10px;">
+                    <button type="button" class="btn btn-ghost" onclick="closeBookModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-booking">Confirm Booking</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="../backend-js/user-lab-tests.js"></script>
+</body>
+
+</html>

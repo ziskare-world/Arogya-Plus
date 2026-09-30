@@ -59,6 +59,8 @@ router.post(
     const appointment = await Appointment.create({
       patient: req.user._id,
       doctor: doctor._id,
+      hospital: doctor.hospital || null,
+      hospitalName: doctor.hospitalName || "",
       appointmentDate,
       reason,
       consultationType: normalizeConsultationType(consultationType, { reason, notes }),

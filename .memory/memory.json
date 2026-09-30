@@ -1,7 +1,7 @@
 {
   "schema_type": "ArogyaPlus High-Speed AI Memory Database",
-  "version": "2.2.0",
-  "last_updated": "2026-09-13T05:28:22.828Z",
+  "version": "2.3.0",
+  "last_updated": "2026-09-30T06:41:27.027Z",
   "project": {
     "name": "ArogyaPlus",
     "title": "Smart Health Management System",
@@ -65,7 +65,8 @@
           "department",
           "isAvailable",
           "fcmToken",
-          "createdAt"
+          "createdAt",
+          "hospital"
         ]
       },
       {
@@ -85,7 +86,9 @@
           "status",
           "symptoms",
           "prescription",
-          "meetLink"
+          "meetLink",
+          "hospital",
+          "hospitalName"
         ]
       },
       {
@@ -110,7 +113,9 @@
           "priority",
           "status",
           "assignedDoctor",
-          "createdBy"
+          "createdBy",
+          "hospital",
+          "hospitalName"
         ]
       },
       {
@@ -150,7 +155,8 @@
           "driverPhone",
           "status",
           "speed",
-          "currentCoordinates"
+          "currentCoordinates",
+          "hospital"
         ]
       },
       {
@@ -282,6 +288,30 @@
     "remote": "origin/main",
     "repo_url": "https://github.com/ziskare-world/Arogya-Plus",
     "recent_commits": [
+      {
+        "sha": "clean-decouple-ai-production",
+        "date": "2026-09-30",
+        "message": "refactor: completely decouple all AI subsystems (ai/, ai-model/, ai-service/, routes/aiRoutes.js, agent routes & models), implement Multi-Hospital schema support (BACKLOG-002), and ensure clean 100% production test pass",
+        "author": "Antigravity-Assistant"
+      },
+      {
+        "sha": "ai-model-folder-export",
+        "date": "2026-09-13",
+        "message": "feat: create ai-model/ folder with local model weights, reusable ArogyaModel class in model_loader.py, and 4 reuse examples in example_usage.py",
+        "author": "AI-Assistant"
+      },
+      {
+        "sha": "hf-token-configured",
+        "date": "2026-09-13",
+        "message": "feat: configure authenticated Hugging Face Hub token in .env and ai-service/.env with git-ignore protection and pass 100% test suites",
+        "author": "AI-Assistant"
+      },
+      {
+        "sha": "qwen-hf-integration",
+        "date": "2026-09-13",
+        "message": "feat: verify Hugging Face Qwen model suite, add persistent FastAPI microservice in ai-service/, Node.js HTTP bridge, help-desk skills, frontend status badge & retry, and comprehensive automated test suites",
+        "author": "AI-Assistant"
+      },
       {
         "sha": "fix-hosp-name-doc-dedup",
         "date": "2026-09-13",
@@ -479,35 +509,18 @@
         "category": "GIS Mapping"
       },
       {
-        "id": "FEAT-012",
-        "name": "Floating AI Bot Assistant & Interactive Triage Chat Widget",
-        "category": "AI Healthcare"
-      },
-      {
         "id": "FEAT-013",
         "name": "Patient Insurance Claims Portal, QR Check-in Pass & Online Invoicing Payments",
         "category": "Patient Dashboard"
       },
       {
-        "id": "FEAT-014",
-        "name": "Hugging Face AI Multi-Agent & Hospital Automation Subsystem (ai/)",
-        "category": "AI Automation"
-      },
-      {
-        "id": "FEAT-015",
-        "name": "Arogy AI Agent Production Enterprise Framework with 15 Modular Skills, RAG, 5-Tier Security, Workflow Automation, and Web Dashboard",
-        "category": "Enterprise AI Agent"
+        "id": "BACKLOG-002",
+        "name": "Multi-Hospital & Multi-Branch Support",
+        "category": "Architecture"
       }
     ],
     "in_progress": [],
     "pending": [
-      {
-        "id": "BACKLOG-002",
-        "name": "Multi-Hospital & Multi-Branch Support",
-        "priority": "High",
-        "category": "Architecture",
-        "description": "Add hospitalId reference field to User, Appointment, and Ambulance Fleet schemas to manage multiple medical facilities."
-      },
       {
         "id": "BACKLOG-003",
         "name": "Patient Lab Test Booking & PDF Report Generation",
@@ -548,6 +561,12 @@
       "title": "100% Free OpenStreetMap & Leaflet GIS Ecosystem Replacement",
       "status": "Accepted",
       "summary": "Replaced Google Maps with free OpenStreetMap, Leaflet.js, Leaflet Routing Machine, OpenRouteService/OSRM, Overpass API, and Nominatim API."
+    },
+    {
+      "id": "ADR-005",
+      "title": "Clean Decoupling of AI Subsystems for Re-architecting",
+      "status": "Accepted",
+      "summary": "Decoupled and removed all AI routes, models, microservices, and widgets to prepare codebase for a clean, modular re-architecture of AI capabilities."
     }
   ],
   "ai_directives": {

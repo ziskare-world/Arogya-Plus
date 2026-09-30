@@ -42,17 +42,6 @@ export function injectSidebar(activePage) {
     existingSidebar.remove();
   }
 
-  // Ensure AI Bot Assistant is active on all pages with sidebar
-  try {
-    import("./ai-chat-widget.js")
-      .then((mod) => {
-        if (mod && typeof mod.initAiChatWidget === "function") {
-          mod.initAiChatWidget();
-        }
-      })
-      .catch(() => {});
-  } catch (e) {}
-
   const isInSubfolder =
     location.pathname.includes("/admin/") ||
     location.pathname.includes("/doctor/") ||
@@ -111,6 +100,7 @@ export function injectSidebar(activePage) {
       { href: "dashboard.html", icon: "home", label: "Home" },
       { href: "appointments.html", icon: "calendar", label: "My Appointments" },
       { href: "doctors.html", icon: "search", label: "Find Doctor" },
+      { href: "lab-tests.html", icon: "report", label: "Diagnostic Lab" },
       { href: "ambulance-booking.html", icon: "ambulance", label: "Ambulance Booking" },
       { href: "medical-records.html", icon: "records", label: "My Medical Records" },
       { href: "prescriptions.html", icon: "prescription", label: "Prescriptions" },

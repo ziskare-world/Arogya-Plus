@@ -109,17 +109,15 @@ const renderLogs = (logs) => {
     .join("");
 };
 
-const setInfrastructureHealth = ({ emergencies, appointments }) => {
-  const totalAppointments = Math.max(1, appointments.length);
-  const emergencyLoad = Math.round((emergencies.length / totalAppointments) * 100);
-  const dbCpu = Math.max(12, Math.min(78, 20 + emergencyLoad));
-  const gatewayLoad = Math.max(22, Math.min(92, 45 + Math.round(totalAppointments / 25)));
+const setInfrastructureHealth = (telemetry) => {
+  const cpuPercent = telemetry?.cpu?.usagePercent || 22;
+  const memPercent = telemetry?.memory?.usedPercent || 45;
 
-  if (progressValueEls[0]) progressValueEls[0].textContent = `${dbCpu}%`;
-  if (progressValueEls[1]) progressValueEls[1].textContent = `${gatewayLoad}%`;
+  if (progressValueEls[0]) progressValueEls[0].textContent = `${cpuPercent}%`;
+  if (progressValueEls[1]) progressValueEls[1].textContent = `${memPercent}%`;
 
-  if (progressTrackEls[0]) progressTrackEls[0].style.width = `${dbCpu}%`;
-  if (progressTrackEls[1]) progressTrackEls[1].style.width = `${gatewayLoad}%`;
+  if (progressTrackEls[0]) progressTrackEls[0].style.width = `${cpuPercent}%`;
+  if (progressTrackEls[1]) progressTrackEls[1].style.width = `${memPercent}%`;
 };
 
 const loadDashboard = async () => {
@@ -128,7 +126,8 @@ const loadDashboard = async () => {
     apiRequest("/api/admin/users"),
     apiRequest("/api/appointments"),
     apiRequest("/api/emergency/queue"),
-    apiRequest("/api/payment/my")
+    apiRequest("/api/payment/my"),
+    apiRequest("/api/admin/telemetry")
   ]);
 
   const dashboard = requests[0].status === "fulfilled" ? requests[0].value.stats || {} : {};
@@ -136,6 +135,7 @@ const loadDashboard = async () => {
   const appointments = requests[2].status === "fulfilled" ? requests[2].value.appointments || [] : [];
   const emergencies = requests[3].status === "fulfilled" ? requests[3].value.queue || [] : [];
   const payments = requests[4].status === "fulfilled" ? requests[4].value.payments || [] : [];
+  const telemetry = requests[5].status === "fulfilled" ? requests[5].value.telemetry || {} : {};
 
   const failed = requests.find((item) => item.status === "rejected");
   if (failed) {
@@ -154,6 +154,7 @@ const loadDashboard = async () => {
   if (statEls[2]) statEls[2].textContent = "99.9%";
   if (statEls[3]) statEls[3].textContent = formatMoneyCompact(verifiedRevenue);
 
+  setInfrastructureHealth(telemetry);
   renderLogs(buildLogs({ admins, appointments, emergencies, payments }));
 };
 

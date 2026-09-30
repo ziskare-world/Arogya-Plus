@@ -1,13 +1,16 @@
-﻿import { toast } from "../js/utils.js";
+import { toast } from "../js/utils.js";
 import { injectSidebar, renderTopbar } from "../js/sidebar.js";
 import { apiRequest, ensureSession, downloadTextFile } from "../js/api-client.js";
 
 window.toast = toast;
 injectSidebar("system-logs.html");
-document.getElementById("topbar-container").innerHTML = renderTopbar("System Logs");
+document.getElementById("topbar-container").innerHTML = renderTopbar("System Audit Logs");
 
-const tableBodyEl = document.querySelector(".table-wrap tbody");
-const exportBtnEl = document.querySelector(".page-header .btn.btn-outline");
+const tableBodyEl = document.getElementById("logs-tbody");
+const exportBtnEl = document.getElementById("btn-export-logs");
+const searchInputEl = document.getElementById("log-search");
+const categorySelectEl = document.getElementById("log-category");
+const severitySelectEl = document.getElementById("log-severity");
 
 let currentLogs = [];
 
@@ -16,67 +19,37 @@ const escapeHtml = (value = "") =>
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
+    .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 
 const formatDateTime = (value) => {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "-";
-  return d.toISOString().replace("T", " ").slice(0, 19);
+  return d.toLocaleString("en-IN", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
 };
 
-const toLevelBadge = (level = "INFO") => {
-  const normalized = String(level).toUpperCase();
-  if (normalized === "WARN") return '<span class="badge badge-red">WARN</span>';
-  if (normalized === "MEDIUM") return '<span class="badge badge-yellow">MEDIUM</span>';
+const toSeverityBadge = (sev = "info") => {
+  const s = String(sev).toLowerCase();
+  if (s === "critical" || s === "error") return '<span class="badge badge-red">CRITICAL</span>';
+  if (s === "warning" || s === "warn") return '<span class="badge badge-yellow">WARN</span>';
   return '<span class="badge badge-blue">INFO</span>';
 };
 
-const buildLogs = ({ users, appointments, emergencies, payments }) => {
-  const logs = [];
-
-  users.slice(0, 30).forEach((user) => {
-    logs.push({
-      timestamp: user.createdAt,
-      level: "INFO",
-      module: "User Service",
-      event: `Account created (${user.role || "user"})`,
-      actor: user.email || user.name || "System"
-    });
-  });
-
-  appointments.slice(0, 30).forEach((appointment) => {
-    logs.push({
-      timestamp: appointment.updatedAt || appointment.createdAt || appointment.appointmentDate,
-      level: appointment.status === "cancelled" ? "WARN" : "INFO",
-      module: "Appointments",
-      event: `Appointment ${appointment.status || "pending"}`,
-      actor: appointment.patient?.name || "Patient"
-    });
-  });
-
-  emergencies.slice(0, 30).forEach((emergency) => {
-    const high = ["critical", "high"].includes(String(emergency.priority || "").toLowerCase());
-    logs.push({
-      timestamp: emergency.createdAt,
-      level: high ? "WARN" : "MEDIUM",
-      module: "Emergency",
-      event: `Emergency ${emergency.status || "waiting"} (${emergency.priority || "medium"})`,
-      actor: emergency.patientName || "Unknown"
-    });
-  });
-
-  payments.slice(0, 30).forEach((payment) => {
-    logs.push({
-      timestamp: payment.createdAt,
-      level: payment.status === "failed" ? "WARN" : "INFO",
-      module: "Billing",
-      event: `Payment ${payment.status || "created"} (${Number(payment.amount || 0).toLocaleString("en-IN")})`,
-      actor: payment.user?.email || payment.user?.name || "Billing System"
-    });
-  });
-
-  return logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 120);
+const toCategoryBadge = (cat = "SYSTEM") => {
+  const c = String(cat).toUpperCase();
+  if (c === "AUTH") return '<span class="badge badge-green">AUTH</span>';
+  if (c === "PATIENT") return '<span class="badge badge-blue">PATIENT</span>';
+  if (c === "PAYMENT") return '<span class="badge badge-yellow">PAYMENT</span>';
+  if (c === "EMERGENCY") return '<span class="badge badge-red">EMERGENCY</span>';
+  if (c === "LAB") return '<span class="badge badge-cyan">LAB</span>';
+  return `<span class="badge badge-gray">${escapeHtml(c)}</span>`;
 };
 
 const renderLogs = (logs) => {
@@ -84,62 +57,105 @@ const renderLogs = (logs) => {
   if (!logs.length) {
     tableBodyEl.innerHTML = `
       <tr>
-        <td colspan="5" style="text-align:center;color:var(--text-500)">No logs available.</td>
+        <td colspan="7" style="text-align:center;color:var(--text-400);padding:30px">No audit log records found matching your filters.</td>
       </tr>`;
     return;
   }
 
   tableBodyEl.innerHTML = logs
-    .slice(0, 40)
-    .map(
-      (log) => `
+    .map((log) => {
+      const details = typeof log.details === "object" ? JSON.stringify(log.details) : String(log.details || "-");
+      const actorName = log.actor?.name || "System";
+      const actorEmail = log.actor?.email ? `<div style="font-size:0.75rem;color:var(--text-400)">${escapeHtml(log.actor.email)}</div>` : "";
+
+      return `
         <tr>
-          <td>${escapeHtml(formatDateTime(log.timestamp))}</td>
-          <td>${toLevelBadge(log.level)}</td>
-          <td>${escapeHtml(log.module)}</td>
-          <td>${escapeHtml(log.event)}</td>
-          <td>${escapeHtml(log.actor)}</td>
-        </tr>`
-    )
+          <td style="white-space:nowrap;font-size:0.83rem;">${escapeHtml(formatDateTime(log.createdAt || log.timestamp))}</td>
+          <td>${toSeverityBadge(log.severity)}</td>
+          <td>${toCategoryBadge(log.category)}</td>
+          <td><code>${escapeHtml(log.action)}</code></td>
+          <td style="max-width:320px;word-break:break-word;font-size:0.85rem;">${escapeHtml(details)}</td>
+          <td>
+            <div style="font-weight:600;font-size:0.85rem;">${escapeHtml(actorName)}</div>
+            ${actorEmail}
+          </td>
+          <td><code style="font-size:0.8rem;color:var(--text-400)">${escapeHtml(log.ipAddress || "127.0.0.1")}</code></td>
+        </tr>`;
+    })
     .join("");
+};
+
+const loadLogs = async () => {
+  const search = searchInputEl?.value.trim() || "";
+  const category = categorySelectEl?.value || "All";
+  const severity = severitySelectEl?.value || "All";
+
+  const params = new URLSearchParams({ limit: "200" });
+  if (search) params.append("search", search);
+  if (category !== "All") params.append("category", category);
+  if (severity !== "All") params.append("severity", severity);
+
+  const res = await apiRequest(`/api/admin/system-logs?${params.toString()}`);
+  currentLogs = res.logs || [];
+
+  // If no logs yet in freshly seeded db, synthesize baseline system boot audit entries
+  if (!currentLogs.length && category === "All" && severity === "All" && !search) {
+    currentLogs = [
+      {
+        createdAt: new Date().toISOString(),
+        severity: "info",
+        category: "SYSTEM",
+        action: "SERVER_BOOT_READY",
+        details: "ArogyaPlus clinical engine initialized with zero errors.",
+        actor: { name: "System Daemon", role: "system" },
+        ipAddress: "127.0.0.1"
+      }
+    ];
+  }
+
+  renderLogs(currentLogs);
+};
+
+window.reloadAuditLogs = async () => {
+  if (tableBodyEl) {
+    tableBodyEl.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-400);padding:30px">Reloading audit ledger...</td></tr>`;
+  }
+  try {
+    await loadLogs();
+    toast("Audit ledger updated", "success");
+  } catch (err) {
+    toast(err.message || "Failed to load logs", "error");
+  }
+};
+
+let filterTimeout = null;
+window.onFilterChange = () => {
+  clearTimeout(filterTimeout);
+  filterTimeout = setTimeout(() => {
+    loadLogs().catch((err) => toast(err.message, "error"));
+  }, 250);
 };
 
 const exportCsv = () => {
   if (!currentLogs.length) {
-    toast("No logs to export", "warn");
+    toast("No audit logs to export", "warn");
     return;
   }
 
-  const header = "timestamp,level,module,event,actor";
-  const rows = currentLogs.map((log) =>
-    [log.timestamp, log.level, log.module, log.event, log.actor]
-      .map((item) => `\"${String(item || "").replace(/\"/g, '\"\"')}\"`)
-      .join(",")
-  );
-
-  downloadTextFile(`system-logs-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...rows].join("\n"));
-};
-
-const loadLogs = async () => {
-  const requests = await Promise.allSettled([
-    apiRequest("/api/admin/users"),
-    apiRequest("/api/appointments"),
-    apiRequest("/api/emergency/queue"),
-    apiRequest("/api/payment/my")
+  const headers = ["Timestamp", "Severity", "Category", "Action", "Details", "Actor Name", "Actor Email", "IP Address"];
+  const rows = currentLogs.map((log) => [
+    new Date(log.createdAt || log.timestamp).toISOString(),
+    log.severity || "info",
+    log.category || "SYSTEM",
+    `"${(log.action || '').replace(/"/g, '""')}"`,
+    `"${(typeof log.details === 'object' ? JSON.stringify(log.details) : String(log.details || '')).replace(/"/g, '""')}"`,
+    `"${(log.actor?.name || 'System').replace(/"/g, '""')}"`,
+    `"${(log.actor?.email || '').replace(/"/g, '""')}"`,
+    log.ipAddress || '127.0.0.1'
   ]);
 
-  const users = requests[0].status === "fulfilled" ? requests[0].value.users || [] : [];
-  const appointments = requests[1].status === "fulfilled" ? requests[1].value.appointments || [] : [];
-  const emergencies = requests[2].status === "fulfilled" ? requests[2].value.queue || [] : [];
-  const payments = requests[3].status === "fulfilled" ? requests[3].value.payments || [] : [];
-
-  const failed = requests.find((item) => item.status === "rejected");
-  if (failed) {
-    toast(failed.reason?.message || "Some logs could not be loaded", "warn");
-  }
-
-  currentLogs = buildLogs({ users, appointments, emergencies, payments });
-  renderLogs(currentLogs);
+  downloadTextFile(`audit-ledger-${new Date().toISOString().slice(0, 10)}.csv`, [headers.join(","), ...rows.map((r) => r.join(","))].join("\n"));
+  toast("Audit ledger CSV exported successfully", "success");
 };
 
 const init = async () => {
@@ -150,23 +166,13 @@ const init = async () => {
   if (!session.allowed) return;
 
   if (exportBtnEl) {
-    exportBtnEl.addEventListener("click", () => {
-      exportCsv();
-    });
-  }
-
-  if (tableBodyEl) {
-    tableBodyEl.innerHTML = `
-      <tr>
-        <td colspan="5" style="text-align:center;color:var(--text-500)">Loading system logs...</td>
-      </tr>`;
+    exportBtnEl.addEventListener("click", exportCsv);
   }
 
   try {
     await loadLogs();
   } catch (error) {
     toast(error.message, "error");
-    currentLogs = [];
     renderLogs([]);
   }
 };

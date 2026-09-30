@@ -25,6 +25,11 @@ const ambulanceSchema = new mongoose.Schema(
       required: [true, "Hospital location is required"],
       trim: true
     },
+    hospital: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Hospital",
+      default: null
+    },
     hospitalName: {
       type: String,
       trim: true

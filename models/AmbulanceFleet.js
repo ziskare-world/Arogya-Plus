@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 
 const ambulanceFleetSchema = new mongoose.Schema(
   {
+    hospital: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Hospital",
+      default: null
+    },
     hospitalName: {
       type: String,
       required: [true, "Hospital name is required"],

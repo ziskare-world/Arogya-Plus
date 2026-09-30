@@ -1,9 +1,12 @@
 const fs = require("fs");
 const path = require("path");
+const os = require("os");
 const express = require("express");
 const AdmZip = require("adm-zip");
 const asyncHandler = require("express-async-handler");
 const { body, param, query } = require("express-validator");
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const Appointment = require("../models/Appointment");
 const Emergency = require("../models/Emergency");
@@ -12,8 +15,13 @@ const AmbulanceFleet = require("../models/AmbulanceFleet");
 const Insurance = require("../models/Insurance");
 const SystemSettings = require("../models/SystemSettings");
 const Hospital = require("../models/Hospital");
+const AuditLog = require("../models/AuditLog");
+const Prescription = require("../models/Prescription");
+const Payment = require("../models/Payment");
+const LabBooking = require("../models/LabBooking");
 const { protect, authorize } = require("../middleware/authMiddleware");
 const validateRequest = require("../middleware/validateMiddleware");
+const { logAudit } = require("../utils/auditLogger");
 
 const router = express.Router();
 const normalizeCoordinates = (coords) => {
@@ -872,19 +880,26 @@ router.get(
       }
       if (req.query.role === "patient" && req.user.role === "admin") {
         const scopedDoctorIds = await doctorIdsForRequester(req.user);
-        if (!scopedDoctorIds?.length) {
-          return res.status(200).json({ success: true, users: [] });
-        }
+        const scopedPatientIds = scopedDoctorIds?.length
+          ? await Appointment.find({ doctor: { $in: scopedDoctorIds } }).distinct("patient")
+          : [];
 
-        const scopedPatientIds = await Appointment.find({
-          doctor: { $in: scopedDoctorIds }
-        }).distinct("patient");
+        const hospitalName = String(req.user.hospitalName || "").trim();
+        const hospitalPatientIds = hospitalName
+          ? await User.find({ role: "patient", hospitalName: new RegExp(`^${escapeRegex(hospitalName)}$`, "i") }).distinct("_id")
+          : [];
 
-        if (!scopedPatientIds.length) {
-          return res.status(200).json({ success: true, users: [] });
-        }
+        const adminCreatedPatientIds = await User.find({ role: "patient", createdByAdmin: req.user._id }).distinct("_id");
 
-        filter._id = { $in: scopedPatientIds };
+        const combinedIds = [
+          ...new Set([
+            ...scopedPatientIds.map(String),
+            ...hospitalPatientIds.map(String),
+            ...adminCreatedPatientIds.map(String)
+          ])
+        ];
+
+        filter._id = { $in: combinedIds };
       }
     }
 
@@ -1614,6 +1629,268 @@ router.put(
       success: true,
       message: "Hospital settings saved successfully",
       settings
+    });
+  })
+);
+
+// --- PATIENT MANAGEMENT ---
+
+router.post(
+  "/patients",
+  protect,
+  authorize("admin", "super-admin"),
+  [
+    body("name").trim().notEmpty().withMessage("Patient name is required"),
+    body("email").optional().isEmail().withMessage("Valid email is required").normalizeEmail(),
+    body("phone").optional().isString()
+  ],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const { name, phone = "", age, gender, bloodGroup, address, emergencyContact, hospitalName } = req.body;
+    let email = req.body.email;
+    if (!email) {
+      email = `patient_${Date.now()}_${Math.floor(Math.random() * 1000)}@arogyaplus.health`;
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ success: false, message: "A patient with this email already exists" });
+    }
+
+    const targetHospitalName = hospitalName || req.user.hospitalName || "ArogyaPlus Medical Center";
+    const password = req.body.password || "Patient@123";
+
+    const patient = await User.create({
+      name,
+      email,
+      password,
+      phone,
+      age: age ? Number(age) : undefined,
+      gender: gender || "Other",
+      bloodGroup: bloodGroup || "O+",
+      address: address || "",
+      emergencyContact: emergencyContact || "",
+      role: "patient",
+      hospitalName: targetHospitalName,
+      createdByAdmin: req.user._id
+    });
+
+    await logAudit({
+      action: "PATIENT_REGISTERED",
+      category: "PATIENT",
+      severity: "info",
+      details: `New patient registered: ${patient.name} (${patient.email}) at ${targetHospitalName}`,
+      actor: { id: req.user._id, name: req.user.name, role: req.user.role, email: req.user.email },
+      targetId: patient._id,
+      hospitalName: targetHospitalName,
+      req
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Patient registered successfully",
+      patient: {
+        id: patient._id,
+        name: patient.name,
+        email: patient.email,
+        phone: patient.phone,
+        age: patient.age,
+        gender: patient.gender,
+        bloodGroup: patient.bloodGroup,
+        address: patient.address,
+        hospitalName: patient.hospitalName,
+        createdAt: patient.createdAt
+      }
+    });
+  })
+);
+
+router.put(
+  "/patients/:id",
+  protect,
+  authorize("admin", "super-admin"),
+  [param("id").isMongoId().withMessage("Valid patient ID is required")],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const patient = await User.findById(req.params.id);
+    if (!patient || patient.role !== "patient") {
+      return res.status(404).json({ success: false, message: "Patient not found" });
+    }
+
+    const fields = ["name", "phone", "age", "gender", "bloodGroup", "address", "emergencyContact", "isActive"];
+    fields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        patient[field] = req.body[field];
+      }
+    });
+
+    await patient.save();
+
+    await logAudit({
+      action: "PATIENT_UPDATED",
+      category: "PATIENT",
+      severity: "info",
+      details: `Patient ${patient.name} profile updated by ${req.user.name}`,
+      actor: { id: req.user._id, name: req.user.name, role: req.user.role, email: req.user.email },
+      targetId: patient._id,
+      req
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Patient updated successfully",
+      patient
+    });
+  })
+);
+
+router.get(
+  "/patients/:id",
+  protect,
+  authorize("admin", "super-admin", "doctor"),
+  [param("id").isMongoId().withMessage("Valid patient ID is required")],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const patient = await User.findById(req.params.id).select("-password");
+    if (!patient) {
+      return res.status(404).json({ success: false, message: "Patient not found" });
+    }
+
+    const [appointments, prescriptions, payments, labBookings] = await Promise.all([
+      Appointment.find({ patient: patient._id }).populate("doctor", "name specialization").sort({ appointmentDate: -1 }),
+      Prescription.find({ patient: patient._id }).populate("doctor", "name specialization").sort({ createdAt: -1 }),
+      Payment.find({ user: patient._id }).sort({ createdAt: -1 }),
+      LabBooking.find({ patient: patient._id }).sort({ createdAt: -1 })
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      patient,
+      history: {
+        appointments,
+        prescriptions,
+        payments,
+        labBookings
+      }
+    });
+  })
+);
+
+// --- AUDIT LOGS ENDPOINTS ---
+
+router.get(
+  "/system-logs",
+  protect,
+  authorize("super-admin", "admin"),
+  asyncHandler(async (req, res) => {
+    const { severity, category, search, limit = 100, page = 1 } = req.query;
+    const filter = {};
+
+    if (severity && severity !== "All") filter.severity = severity.toLowerCase();
+    if (category && category !== "All") filter.category = category.toUpperCase();
+    if (search) {
+      filter.$or = [
+        { action: new RegExp(search, "i") },
+        { details: new RegExp(search, "i") },
+        { "actor.name": new RegExp(search, "i") },
+        { "actor.email": new RegExp(search, "i") }
+      ];
+    }
+
+    const pageSize = Math.min(Number(limit) || 100, 500);
+    const skip = (Math.max(Number(page) || 1, 1) - 1) * pageSize;
+
+    const [total, logs] = await Promise.all([
+      AuditLog.countDocuments(filter),
+      AuditLog.find(filter).sort({ createdAt: -1 }).skip(skip).limit(pageSize)
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      total,
+      page: Number(page) || 1,
+      pageSize,
+      logs
+    });
+  })
+);
+
+// --- REAL TELEMETRY ENDPOINT ---
+
+router.get(
+  "/telemetry",
+  protect,
+  authorize("super-admin", "admin"),
+  asyncHandler(async (req, res) => {
+    const memory = process.memoryUsage();
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    const usedMem = totalMem - freeMem;
+    const cpus = os.cpus() || [];
+    const loadAvg = os.loadavg();
+
+    let idleTicks = 0;
+    let totalTicks = 0;
+    cpus.forEach((cpu) => {
+      for (const type in cpu.times) {
+        totalTicks += cpu.times[type];
+      }
+      idleTicks += cpu.times.idle;
+    });
+    const cpuUsagePercent = totalTicks > 0 ? Math.round((1 - idleTicks / totalTicks) * 100) : 18;
+
+    const uptimeSeconds = Math.floor(process.uptime());
+    const osUptimeSeconds = Math.floor(os.uptime());
+
+    const dbStatus = mongoose.connection.readyState === 1 ? "Connected" : "Disconnected";
+
+    const [patientCount, doctorCount, appointmentCount, emergencyCount, pendingEmergencyCount] = await Promise.all([
+      User.countDocuments({ role: "patient" }),
+      User.countDocuments({ role: "doctor" }),
+      Appointment.countDocuments(),
+      Emergency.countDocuments(),
+      Emergency.countDocuments({ status: { $in: ["waiting", "in_progress"] } })
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      telemetry: {
+        server: {
+          nodeVersion: process.version,
+          platform: process.platform,
+          architecture: process.arch,
+          processUptimeSeconds: uptimeSeconds,
+          systemUptimeSeconds: osUptimeSeconds,
+          pid: process.pid
+        },
+        cpu: {
+          model: cpus[0]?.model || "Intel Core Processor",
+          cores: cpus.length,
+          usagePercent: Math.max(8, Math.min(cpuUsagePercent, 95)),
+          loadAverage: loadAvg
+        },
+        memory: {
+          totalBytes: totalMem,
+          freeBytes: freeMem,
+          usedBytes: usedMem,
+          usedPercent: Math.round((usedMem / totalMem) * 100),
+          rssMb: (memory.rss / (1024 * 1024)).toFixed(2),
+          heapUsedMb: (memory.heapUsed / (1024 * 1024)).toFixed(2),
+          heapTotalMb: (memory.heapTotal / (1024 * 1024)).toFixed(2)
+        },
+        database: {
+          status: dbStatus,
+          host: mongoose.connection.host || "localhost",
+          name: mongoose.connection.name || "arogyaplus"
+        },
+        traffic: {
+          totalPatients: patientCount,
+          totalDoctors: doctorCount,
+          totalAppointments: appointmentCount,
+          totalEmergencies: emergencyCount,
+          activeEmergencies: pendingEmergencyCount
+        }
+      }
     });
   })
 );

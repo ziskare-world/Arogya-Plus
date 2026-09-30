@@ -24,6 +24,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true
     },
+    hospital: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Hospital",
+      default: null
+    },
     hospitalName: {
       type: String,
       trim: true
@@ -146,29 +151,7 @@ const userSchema = new mongoose.Schema(
     totpSecret: {
       type: String,
       default: null
-    },
-    aiInteractions: [
-      {
-        role: {
-          type: String,
-          enum: ["user", "assistant", "system"],
-          required: true
-        },
-        content: {
-          type: String,
-          required: true,
-          trim: true
-        },
-        intent: String,
-        triageLevel: String,
-        agent: String,
-        timestamp: {
-          type: Date,
-          default: Date.now
-        },
-        metadata: mongoose.Schema.Types.Mixed
-      }
-    ]
+    }
   },
   { timestamps: true }
 );

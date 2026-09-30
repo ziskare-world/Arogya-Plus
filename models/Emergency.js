@@ -45,6 +45,15 @@ const emergencySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User"
     },
+    hospital: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Hospital",
+      default: null
+    },
+    hospitalName: {
+      type: String,
+      trim: true
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

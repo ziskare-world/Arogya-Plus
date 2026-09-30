@@ -332,6 +332,15 @@ const openAddPatientModal = () => {
   }
 };
 
+window.refreshEmergencyQueue = async function() {
+  try {
+    await loadQueue();
+    toast("Emergency queue reloaded from live server", "success");
+  } catch (err) {
+    toast("Failed to reload emergency queue", "error");
+  }
+};
+
 window.toast = function emergencyToast(message, type = "info") {
   toast(message, type);
   if (message === "Refreshed") {

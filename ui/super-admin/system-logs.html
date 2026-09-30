@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>Arogya Plus - System Logs</title>
+    <title>Arogya Plus - System Audit Logs</title>
     <link rel="stylesheet" href="../css/global.css" />
     <link rel="stylesheet" href="../css/dashboard.css" />
 </head>
@@ -15,36 +15,64 @@
         <div class="main-area">
             <div id="topbar-container"></div>
             <main class="page-content">
-                <div class="page-header">
-                    <h2>System Audit Logs</h2>
-                    <button class="btn btn-outline" onclick="toast('Exporting logs...','info')">Export CSV</button>
+                <div class="page-header flex-between">
+                    <div>
+                        <h2>System Audit Logs & Security Traces</h2>
+                        <p style="color:var(--text-400);font-size:0.88rem">Immutable real-time audit ledger tracking security, patient registrations, clinical care, and transactions</p>
+                    </div>
+                    <div style="display:flex;gap:10px">
+                        <button class="btn btn-outline" id="btn-export-logs">📥 Export CSV</button>
+                        <button class="btn btn-secondary" onclick="reloadAuditLogs()">🔄 Refresh</button>
+                    </div>
                 </div>
-                <div class="card" style="margin-top:20px">
+
+                <!-- FILTER BAR -->
+                <div class="card" style="margin-bottom:20px;padding:16px;">
+                    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;">
+                        <div style="flex:1;min-width:240px;">
+                            <input type="text" id="log-search" class="form-input" placeholder="🔍 Search action, details, actor, IP..." style="width:100%" oninput="onFilterChange()" />
+                        </div>
+                        <div>
+                            <select id="log-category" class="form-input" onchange="onFilterChange()" style="min-width:140px">
+                                <option value="All">All Categories</option>
+                                <option value="AUTH">AUTH</option>
+                                <option value="PATIENT">PATIENT</option>
+                                <option value="APPOINTMENT">APPOINTMENT</option>
+                                <option value="EMERGENCY">EMERGENCY</option>
+                                <option value="PAYMENT">PAYMENT</option>
+                                <option value="LAB">LAB</option>
+                                <option value="SYSTEM">SYSTEM</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="log-severity" class="form-input" onchange="onFilterChange()" style="min-width:130px">
+                                <option value="All">All Severities</option>
+                                <option value="info">Info</option>
+                                <option value="warning">Warning</option>
+                                <option value="critical">Critical</option>
+                                <option value="error">Error</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
                     <div class="table-wrap">
                         <table>
                             <thead>
                                 <tr>
                                     <th>Timestamp</th>
-                                    <th>Level</th>
-                                    <th>Module</th>
-                                    <th>Event</th>
+                                    <th>Severity</th>
+                                    <th>Category</th>
+                                    <th>Action</th>
+                                    <th>Event Details</th>
                                     <th>Actor</th>
+                                    <th>IP Address</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="logs-tbody">
                                 <tr>
-                                    <td>2026-02-21 12:05:42</td>
-                                    <td><span class="badge badge-blue">INFO</span></td>
-                                    <td>Auth Service</td>
-                                    <td>Successful Login: super-admin@arogyaplus.com</td>
-                                    <td>System</td>
-                                </tr>
-                                <tr>
-                                    <td>2026-02-21 11:58:12</td>
-                                    <td><span class="badge badge-red">WARN</span></td>
-                                    <td>DB Cluster</td>
-                                    <td>High latency detected in primary node</td>
-                                    <td>MonitoringAgent</td>
+                                    <td colspan="7" style="text-align:center;color:var(--text-400);padding:30px">Loading audit ledger...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -57,4 +85,3 @@
 </body>
 
 </html>
-

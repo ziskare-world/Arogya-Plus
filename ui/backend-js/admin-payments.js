@@ -249,14 +249,50 @@ window.showPayForm = function showPayForm() {
   }
 };
 
+window.exportPaymentsCsv = function exportPaymentsCsv() {
+  if (!payments.length) {
+    toast("No transaction records to export", "info");
+    return;
+  }
+
+  const headers = ["Invoice / TXN ID", "Patient", "Amount (INR)", "Method", "Description", "Date", "Status"];
+  const rows = payments.map((p) => {
+    const meta = getMeta(p);
+    const patientName = p.patientLabel || meta.patientLabel || p.user?.name || "Hospital Patient";
+    const method = p.method || meta.method || "Unified Gateway";
+    const desc = p.serviceDescription || p.notes || meta.desc || "Clinical Care";
+    const date = new Date(p.createdAt).toLocaleDateString("en-IN");
+    return [
+      `"${p.invoiceNumber || p.razorpayOrderId || p._id}"`,
+      `"${patientName.replace(/"/g, '""')}"`,
+      p.amount || 0,
+      `"${method.replace(/"/g, '""')}"`,
+      `"${desc.replace(/"/g, '""')}"`,
+      `"${date}"`,
+      `"${p.status || 'verified'}"`
+    ];
+  });
+
+  const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `hospital_payments_${new Date().toISOString().slice(0, 10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  toast("Transactions CSV exported successfully", "success");
+};
+
 window.addPayment = async function addPayment() {
   const patientLabel = String(patientInputEl?.value || "").trim();
   const amount = Number(amountInputEl?.value || 0);
-  const method = String(methodInputEl?.value || "").trim() || "Online";
-  const desc = String(descInputEl?.value || "").trim() || "Payment";
+  const method = String(methodInputEl?.value || "").trim() || "Cash";
+  const desc = String(descInputEl?.value || "").trim() || "Hospital Consultation & Care";
 
   if (!patientLabel || !amount) {
-    toast("Fill required fields", "error");
+    toast("Please enter patient name and payment amount", "error");
     return;
   }
   if (amount <= 0) {
@@ -265,30 +301,18 @@ window.addPayment = async function addPayment() {
   }
 
   try {
-    const orderData = await apiRequest("/api/payment/create-order", {
+    await apiRequest("/api/payment/record-payment", {
       method: "POST",
-      body: JSON.stringify({ amount })
+      body: JSON.stringify({
+        amount,
+        patientLabel,
+        method,
+        description: desc,
+        notes: desc
+      })
     });
 
-    const orderId = orderData.order?.id || orderData.payment?.razorpayOrderId || "";
-    if (orderId) {
-      paymentMeta[orderId] = { patientLabel, method, desc };
-      saveMeta();
-    }
-
-    if (paymentConfig.mockMode && orderId) {
-      await apiRequest("/api/payment/verify", {
-        method: "POST",
-        body: JSON.stringify({
-          razorpay_order_id: orderId,
-          razorpay_payment_id: `mock_payment_${Date.now()}`,
-          razorpay_signature: "mock_signature"
-        })
-      });
-      toast(`Payment of ${formatMoney(amount)} processed for ${patientLabel}`, "success");
-    } else {
-      toast(`Payment order created for ${patientLabel}`, "success");
-    }
+    toast(`Payment of ${formatMoney(amount)} successfully recorded for ${patientLabel}`, "success");
 
     if (patientInputEl) patientInputEl.value = "";
     if (amountInputEl) amountInputEl.value = "";

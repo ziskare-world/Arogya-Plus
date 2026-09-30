@@ -17,14 +17,13 @@ const emergencyRoutes = require("./routes/emergencyRoutes");
 const ambulanceRoutes = require("./routes/ambulanceRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const insuranceRoutes = require("./routes/insuranceRoutes");
-const aiRoutes = require("./routes/aiRoutes");
-const agentRoutes = require("./routes/agentRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const doctorRoutes = require("./routes/doctorRoutes");
 const userRoutes = require("./routes/userRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const authPageRoutes = require("./routes/authPageRoutes");
 const mapRoutes = require("./routes/mapRoutes");
+const labRoutes = require("./routes/labRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const { getEmergencyQueue } = require("./utils/emergencyQueue");
 
@@ -169,6 +168,7 @@ app.get(["/user/ambulance-booking", "/user/ambulance-booking.html"], sendUiPage(
 app.get(["/user/medical-records", "/user/medical-records.html"], sendUiPage("user", "medical-records.html"));
 app.get(["/user/payments", "/user/payments.html"], sendUiPage("user", "payments.html"));
 app.get(["/user/prescriptions", "/user/prescriptions.html"], sendUiPage("user", "prescriptions.html"));
+app.get(["/user/lab-tests", "/user/lab-tests.html"], sendUiPage("user", "lab-tests.html"));
 app.get(["/user/profile", "/user/profile.html"], sendUiPage("user", "profile.html"));
 app.get("/video-consultation", sendUiPage("shared", "video-consultation.html"));
 app.get("/doctor/video-consultation", sendUiPage("shared", "video-consultation.html"));
@@ -185,10 +185,10 @@ app.get(["/super-admin/patients", "/super_admin/patients"], sendUiPage("super-ad
 app.get(["/super-admin/payments", "/super_admin/payments"], sendUiPage("super-admin", "payments.html"));
 app.get(["/super-admin/reports", "/super_admin/reports"], sendUiPage("super-admin", "reports.html"));
 app.get(["/super-admin/settings", "/super_admin/settings"], sendUiPage("super-admin", "settings.html"));
+app.get(["/super-admin/system-logs", "/super_admin/system-logs", "/super-admin/system-logs.html"], sendUiPage("super-admin", "system-logs.html"));
 app.get(["/super-admin/mfa-setup", "/super_admin/mfa-setup"], sendUiPage("super-admin", "mfa-setup.html"));
 // Admin and Super-Admin Storage Drive pages
 app.get(["/admin/storage", "/super-admin/storage", "/super_admin/storage"], sendUiPage("super-admin", "storage.html"));
-app.get(["/agent", "/agent/dashboard", "/agent/dashboard.html"], sendUiPage("agent", "dashboard.html"));
 
 const storageDirectory = path.join(__dirname, "storage");
 app.use("/storage", express.static(storageDirectory));
@@ -271,13 +271,12 @@ app.use("/api/emergency", emergencyRoutes);
 app.use("/api/ambulance", ambulanceRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/insurance", insuranceRoutes);
-app.use("/api/ai", aiRoutes);
-app.use("/api/agent", agentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/map", mapRoutes);
+app.use("/api/lab-tests", labRoutes);
 
 io.on("connection", async (socket) => {
   console.log(`Socket connected: ${socket.id}`);
@@ -494,7 +493,7 @@ const getLocalNetworkIp = () => {
   return "127.0.0.1";
 };
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 2835;
 if (process.env.NODE_ENV !== "test") {
   server.listen(PORT, "0.0.0.0", () => {
     const networkIp = getLocalNetworkIp();

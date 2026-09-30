@@ -78,32 +78,16 @@ describe("Additional Modules API", () => {
     expect(reviewResponse.body.claim.status).toBe("approved");
   });
 
-  test("AI symptom checker returns triage", async () => {
-    const response = await request(app).post("/api/ai/symptom-checker").send({
+  test("clinical symptom assessment utility detects critical symptoms", () => {
+    const { buildSymptomAssessment } = require("../utils/symptomChecker");
+    const assessment = buildSymptomAssessment({
       symptoms: ["chest pain", "shortness of breath"],
       age: 52
     });
 
-    expect(response.statusCode).toBe(200);
-    expect(response.body.assessment.triageLevel).toBe("critical");
-  });
-
-  test("AI chat assistant endpoint handles queries and emergency alerts", async () => {
-    const normalRes = await request(app).post("/api/ai/chat").send({
-      message: "How do I book an appointment with a doctor?"
-    });
-
-    expect(normalRes.statusCode).toBe(200);
-    expect(normalRes.body.success).toBe(true);
-    expect(normalRes.body.action.href).toBe("appointments.html");
-
-    const criticalRes = await request(app).post("/api/ai/chat").send({
-      message: "I am having severe chest pain and shortness of breath"
-    });
-
-    expect(criticalRes.statusCode).toBe(200);
-    expect(criticalRes.body.triageLevel).toBe("critical");
-    expect(criticalRes.body.action.href).toBe("ambulance-booking.html");
+    expect(assessment.triageLevel).toBe("critical");
+    expect(assessment.matchedRedFlags).toContain("chest pain");
+    expect(assessment.matchedRedFlags).toContain("shortness of breath");
   });
 
   test("payment API works in mock mode", async () => {
@@ -298,36 +282,5 @@ describe("Additional Modules API", () => {
     expect(updatedVeh.longitude).toBe(77.2100);
   });
 
-  test("AI sync-history migrates guest local storage conversations into user account", async () => {
-    const patient = await registerAndLogin({
-      name: "Guest Sync Patient",
-      email: "guest.sync@test.com",
-      password: "patient123",
-      role: "patient"
-    });
-
-    const guestHistory = [
-      { role: "user", content: "I have a mild fever since yesterday", intent: "general_chat" },
-      { role: "assistant", content: "Stay hydrated and monitor your temperature.", intent: "clinical_qa" }
-    ];
-
-    const syncRes = await request(app)
-      .post("/api/ai/sync-history")
-      .set("Authorization", `Bearer ${patient.token}`)
-      .send({ history: guestHistory });
-
-    expect(syncRes.statusCode).toBe(200);
-    expect(syncRes.body.success).toBe(true);
-    expect(syncRes.body.syncedCount).toBe(2);
-
-    // Retrieve history and verify synced messages are present
-    const getHistRes = await request(app)
-      .get("/api/ai/history")
-      .set("Authorization", `Bearer ${patient.token}`);
-
-    expect(getHistRes.statusCode).toBe(200);
-    expect(getHistRes.body.history.length).toBeGreaterThanOrEqual(2);
-    expect(getHistRes.body.history[0].content).toBe("I have a mild fever since yesterday");
-  });
 });
 

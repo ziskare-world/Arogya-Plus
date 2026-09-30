@@ -174,7 +174,6 @@ ArogyaPlus/
 │   └── User.js                      # Central user account schema (Bcrypt hashed)
 ├── routes/
 │   ├── adminRoutes.js               # Admin & Super-Admin management endpoints
-│   ├── aiRoutes.js                  # AI symptom checker diagnostic route
 │   ├── ambulanceRoutes.js           # Ambulance dispatch & fleet management routes
 │   ├── appointmentRoutes.js         # Appointment booking & status lifecycle routes
 │   ├── authPageRoutes.js            # HTML page route navigation handlers
@@ -399,12 +398,6 @@ ArogyaPlus integrates a high-performance **Socket.IO** engine for real-time stat
 | `PATCH` | `/api/ambulance/requests/:id/assign` | Admin / Super Admin | Assign fleet ambulance & doctor to request |
 | `PATCH` | `/api/ambulance/requests/:id/location` | Admin / Super Admin | Update live ambulance coordinates & ETA |
 | `PATCH` | `/api/ambulance/requests/:id/status` | Admin / Super Admin | Update dispatch status (`dispatched`, `arrived`, etc.) |
-
-### AI Diagnostic Symptom Checker (`/api/ai`)
-
-| Method | Endpoint Path | Auth / Role | Description |
-|---|---|---|---|
-| `POST` | `/api/ai/symptom-checker` | Public | Submit symptom array & age for AI triage assessment |
 
 ### Payments & Invoicing (`/api/payment`)
 

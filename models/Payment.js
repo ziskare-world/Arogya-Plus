@@ -51,6 +51,22 @@ const paymentSchema = new mongoose.Schema(
     taxAmount: {
       type: Number,
       default: 0
+    },
+    patientLabel: {
+      type: String,
+      trim: true
+    },
+    notes: {
+      type: String,
+      trim: true
+    },
+    hospital: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Hospital"
+    },
+    hospitalName: {
+      type: String,
+      trim: true
     }
   },
   { timestamps: true }

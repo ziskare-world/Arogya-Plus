@@ -12,7 +12,7 @@ beforeAll(async () => {
 
   mongoServer = await MongoMemoryServer.create({
     instance: {
-      launchTimeoutMS: 60000
+      launchTimeout: 120000
     }
   });
   process.env.MONGO_URI = mongoServer.getUri();

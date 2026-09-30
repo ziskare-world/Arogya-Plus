@@ -83,18 +83,32 @@ const renderDoctors = () => {
       const patientCount = Number(doctor.totalPatients || 0) || Math.floor(Math.random() * 70 + 40);
       const rating = 4.2 + Math.min(0.8, patientCount / 150);
 
+      const docId = String(doctor._id || doctor.id || "");
+      const isBlocked = doctor.isActive === false;
+
       return `
-        <div class="doctor-card" data-doctor-id="${escapeHtml(doctor._id || doctor.id || "")}">
-          <div class="doc-avatar" style="background:${doctor.isActive ? "rgba(37,99,235,0.15)" : "rgba(148,163,184,0.15)"};border-color:${doctor.isActive ? "var(--green)" : "var(--border)"}">${escapeHtml(initials(doctor.name))}</div>
+        <div class="doctor-card" data-doctor-id="${escapeHtml(docId)}">
+          <div class="doc-avatar" style="background:${!isBlocked ? "rgba(37,99,235,0.15)" : "rgba(239,68,68,0.15)"};border-color:${!isBlocked ? "var(--green)" : "var(--red)"}">${escapeHtml(initials(doctor.name))}</div>
           <div style="font-weight:700;font-size:.95rem;color:var(--text-100)">${escapeHtml(doctor.name || "Unknown Doctor")}</div>
           <div style="font-size:.8rem;color:var(--cyan);font-weight:600;margin-top:2px">${escapeHtml(specialization)}</div>
           <div style="font-size:.76rem;color:var(--text-400);margin-top:2px">🏥 ${escapeHtml(hospital)}</div>
-          <div style="margin-top:6px">${doctor.isActive ? '<span class="badge badge-green">Online</span>' : '<span class="badge badge-red">Offline</span>'}</div>
+          <div style="font-size:.68rem;color:var(--text-500);font-family:monospace;margin-top:3px">ID: ${escapeHtml(docId)}</div>
+          <div style="margin-top:6px">
+            ${!isBlocked ? '<span class="badge badge-green">🟢 Active</span>' : '<span class="badge badge-red">🚫 Access Blocked</span>'}
+          </div>
           <div class="doc-stat">
             <div><div class="ds-val">${expYears} yrs</div><div class="ds-lbl">Experience</div></div>
             <div><div class="ds-val">${patientCount}</div><div class="ds-lbl">Patients</div></div>
           </div>
-          <button class="btn btn-outline btn-full btn-sm" style="margin-top:14px" data-action="profile" data-name="${escapeHtml(doctor.name || "Doctor")}">View Details</button>
+          <div style="display:flex;gap:6px;margin-top:14px">
+            <button class="btn btn-outline btn-sm" style="flex:1;font-size:.75rem;color:${!isBlocked ? 'var(--yellow)' : 'var(--green)'};border-color:${!isBlocked ? 'var(--yellow)' : 'var(--green)'}" onclick="window.toggleDoctorAccess('${docId}', ${!isBlocked}, '${escapeHtml(doctor.name)}')">
+              ${!isBlocked ? '🚫 Block Access' : '✅ Unblock Access'}
+            </button>
+            <button class="btn btn-outline btn-sm" style="font-size:.75rem;color:var(--red);border-color:var(--red)" onclick="window.openDeleteDoctorModal('${docId}', '${escapeHtml(doctor.name)}')">
+              🗑️ Delete
+            </button>
+          </div>
+          <button class="btn btn-ghost btn-full btn-sm" style="margin-top:6px;font-size:.74rem" data-action="profile" data-name="${escapeHtml(doctor.name || "Doctor")}">View Details</button>
         </div>`;
     })
     .join("");
@@ -239,6 +253,68 @@ const setupModalEvents = () => {
   }
 };
 
+let doctorToDelete = null;
+
+window.toggleDoctorAccess = async (doctorId, currentActive, doctorName) => {
+  const nextActive = !currentActive;
+  const actionText = nextActive ? "restore access for" : "BLOCK access for";
+  if (!confirm(`Are you sure you want to ${actionText} Dr. ${doctorName}?`)) {
+    return;
+  }
+
+  try {
+    const res = await apiRequest(`/api/admin/users/${doctorId}/toggle-active`, {
+      method: "PATCH",
+      body: JSON.stringify({ isActive: nextActive })
+    });
+    toast(res.message || "Doctor access updated", "success");
+    await loadDoctors();
+  } catch (err) {
+    toast(err.message || "Failed to update doctor access", "error");
+  }
+};
+
+window.openDeleteDoctorModal = (doctorId, doctorName) => {
+  doctorToDelete = { id: doctorId, name: doctorName };
+  const modal = document.getElementById("delete-doctor-modal");
+  const nameText = document.getElementById("delete-doc-name-text");
+  const idText = document.getElementById("delete-doc-id-text");
+  if (nameText) nameText.textContent = doctorName;
+  if (idText) idText.textContent = doctorId;
+  if (modal) modal.style.display = "flex";
+};
+
+window.closeDeleteDoctorModal = () => {
+  doctorToDelete = null;
+  const modal = document.getElementById("delete-doctor-modal");
+  if (modal) modal.style.display = "none";
+};
+
+const setupDeleteDoctorEvents = () => {
+  const confirmBtn = document.getElementById("confirm-delete-doctor-btn");
+  if (confirmBtn) {
+    confirmBtn.addEventListener("click", async () => {
+      if (!doctorToDelete) return;
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = "Deleting...";
+
+      try {
+        const res = await apiRequest(`/api/admin/doctors/${doctorToDelete.id}`, {
+          method: "DELETE"
+        });
+        toast(res.message || "Doctor deleted successfully", "success");
+        window.closeDeleteDoctorModal();
+        await loadDoctors();
+      } catch (err) {
+        toast(err.message || "Failed to delete doctor", "error");
+      } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = "Delete Doctor";
+      }
+    });
+  }
+};
+
 const init = async () => {
   const session = ensureSession({
     allowedRoles: ["super-admin"],
@@ -247,6 +323,7 @@ const init = async () => {
   if (!session.allowed) return;
 
   setupModalEvents();
+  setupDeleteDoctorEvents();
 
   if (gridEl) {
     gridEl.addEventListener("click", (event) => {

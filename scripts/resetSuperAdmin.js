@@ -24,7 +24,6 @@ const resetSuperAdmin = async () => {
       user.mfaEnabled = false;
       user.totpVerified = false;
       user.totpSecret = null;
-      user.passkeys = [];
       user.isActive = true;
       user.role = "super-admin";
       await user.save();
@@ -40,8 +39,7 @@ const resetSuperAdmin = async () => {
         isActive: true,
         mfaEnabled: false,
         totpVerified: false,
-        totpSecret: null,
-        passkeys: []
+        totpSecret: null
       });
       console.log("✅ Super Admin account created successfully!");
     }

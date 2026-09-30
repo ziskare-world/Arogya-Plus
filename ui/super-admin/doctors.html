@@ -210,6 +210,24 @@
         </div>
     </div>
 
+    <!-- DELETE DOCTOR CONFIRMATION MODAL -->
+    <div id="delete-doctor-modal" class="lightbox-modal">
+        <div class="lightbox-content" style="width:420px;text-align:center">
+            <div style="font-size:3rem;margin-bottom:12px">⚠️</div>
+            <h3 style="margin:0 0 8px 0;color:var(--text-100)">Delete Doctor Account</h3>
+            <p style="font-size:.88rem;color:var(--text-400);line-height:1.5;margin-bottom:16px">
+                Are you sure you want to permanently delete Doctor <strong id="delete-doc-name-text" style="color:var(--red)"></strong> (ID: <code id="delete-doc-id-text" style="color:var(--cyan)"></code>)?
+            </p>
+            <p style="font-size:.78rem;color:var(--text-500);background:rgba(239,68,68,0.08);padding:10px;border-radius:var(--r-md);border:1px solid rgba(239,68,68,0.2);margin-bottom:20px">
+                All associated appointments will be safely cancelled and this doctor's portal access will be permanently revoked.
+            </p>
+            <div style="display:flex;justify-content:center;gap:12px">
+                <button type="button" class="btn btn-ghost" onclick="closeDeleteDoctorModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirm-delete-doctor-btn" style="background:var(--red);border-color:var(--red)">Delete Doctor</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="../backend-js/super-admin-doctors.js"></script>
 </body>
 

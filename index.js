@@ -273,6 +273,7 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/insurance", insuranceRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/doctors", doctorRoutes);
+app.use("/api/doctor", doctorRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/map", mapRoutes);

@@ -76,9 +76,8 @@ router.post(
       return res.status(401).json({ success: false, message: "Invalid email or password" });
     }
 
-    const hasPasskey = Boolean(user.passkeys && user.passkeys.length > 0);
     const hasTotp = Boolean(user.totpVerified && user.totpSecret);
-    const mfaEnabled = Boolean(user.mfaEnabled && (hasPasskey || hasTotp));
+    const mfaEnabled = Boolean(user.mfaEnabled && hasTotp);
 
     const token = generateToken(user._id);
     return res.status(200).json({
@@ -91,7 +90,6 @@ router.post(
         email: user.email,
         role: user.role,
         mfaEnabled,
-        hasPasskey,
         hasTotp
       }
     });
@@ -180,55 +178,21 @@ router.get(
   })
 );
 
-router.post(
-  "/passkey/register",
-  protect,
-  asyncHandler(async (req, res) => {
-    const { credentialId, deviceType = "Biometric Passkey" } = req.body;
-    const user = await User.findById(req.user._id);
-
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
-    const credId = credentialId || `passkey_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-
-    if (!user.passkeys) user.passkeys = [];
-    user.passkeys.push({
-      credentialId: credId,
-      deviceType,
-      counter: 0,
-      createdAt: new Date()
-    });
-    user.mfaEnabled = true;
-
-    await user.save();
-
-    return res.status(201).json({
-      success: true,
-      message: "Biometric passkey registered successfully",
-      passkey: { credentialId: credId, deviceType },
-      passkeys: user.passkeys
-    });
-  })
-);
-
 router.get(
-  "/passkey/my",
+  ["/mfa/status", "/passkey/my"],
   protect,
   asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id).select("passkeys mfaEnabled totpVerified");
+    const user = await User.findById(req.user._id).select("mfaEnabled totpVerified");
     return res.status(200).json({
       success: true,
-      passkeys: user?.passkeys || [],
-      mfaEnabled: Boolean(user?.mfaEnabled || (user?.passkeys && user.passkeys.length > 0) || user?.totpVerified),
+      mfaEnabled: Boolean(user?.mfaEnabled || user?.totpVerified),
       totpVerified: Boolean(user?.totpVerified)
     });
   })
 );
 
 router.get(
-  "/passkey/totp-setup",
+  ["/mfa/totp-setup", "/passkey/totp-setup"],
   protect,
   asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id);
@@ -254,7 +218,7 @@ router.get(
 );
 
 router.post(
-  "/passkey/verify-totp",
+  ["/mfa/verify-totp", "/passkey/verify-totp"],
   protect,
   asyncHandler(async (req, res) => {
     const { code } = req.body;
@@ -296,7 +260,7 @@ router.post(
 );
 
 router.post(
-  "/passkey/toggle-mfa",
+  ["/mfa/toggle", "/passkey/toggle-mfa"],
   protect,
   asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id);
@@ -311,49 +275,6 @@ router.post(
       success: true,
       message: `Multi-Factor Authentication ${user.mfaEnabled ? "Enabled" : "Disabled"}`,
       mfaEnabled: user.mfaEnabled
-    });
-  })
-);
-
-router.post(
-  "/passkey/login",
-  asyncHandler(async (req, res) => {
-    const { credentialId, email } = req.body;
-
-    let user = null;
-    if (credentialId) {
-      user = await User.findOne({ "passkeys.credentialId": credentialId });
-    }
-
-    if (!user && email) {
-      user = await User.findOne({ email: String(email).toLowerCase().trim() });
-    }
-
-    if (!user) {
-      user = await User.findOne({ "passkeys.0": { $exists: true } });
-    }
-
-    if (!user) {
-      user = await User.findOne({ isActive: true });
-    }
-
-    if (!user) {
-      return res.status(404).json({ success: false, message: "No account found matching this Passkey" });
-    }
-
-    const token = generateToken(user._id);
-
-    return res.status(200).json({
-      success: true,
-      message: "Biometric Passkey authentication successful",
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        hospitalName: user.hospitalName
-      }
     });
   })
 );
@@ -407,7 +328,6 @@ const handleTotpLoginReq = async (req, res) => {
   });
 };
 
-router.post("/passkey/login-totp", asyncHandler(handleTotpLoginReq));
-router.post("/login/totp", asyncHandler(handleTotpLoginReq));
+router.post(["/mfa/login-totp", "/passkey/login-totp", "/login/totp"], asyncHandler(handleTotpLoginReq));
 
 module.exports = router;

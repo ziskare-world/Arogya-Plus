@@ -209,6 +209,24 @@
         </div>
     </div>
 
+    <!-- DELETE PATIENT MODAL -->
+    <div id="delete-patient-modal" class="modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+        <div class="card modal-card" style="max-width:440px;width:100%;background:var(--card-bg, #1e293b);border:1px solid var(--border-color, #334155);box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);border-radius:12px;padding:24px;text-align:center;">
+            <div style="font-size:3rem;margin-bottom:12px">⚠️</div>
+            <h3 style="margin:0 0 8px 0;font-size:1.2rem;font-weight:700;">Delete Patient Record</h3>
+            <p style="font-size:.88rem;color:var(--text-400);line-height:1.5;margin-bottom:14px">
+                Are you sure you want to permanently delete patient <strong id="delete-pat-name-text" style="color:var(--red)"></strong> (ID: <code id="delete-pat-id-text" style="color:var(--cyan)"></code>)?
+            </p>
+            <p style="font-size:.78rem;color:var(--text-500);background:rgba(239,68,68,0.08);padding:10px;border-radius:8px;border:1px solid rgba(239,68,68,0.2);margin-bottom:20px">
+                All associated appointments will be safely marked as cancelled and this patient account will be permanently removed.
+            </p>
+            <div style="display:flex;justify-content:center;gap:12px">
+                <button type="button" class="btn btn-ghost" onclick="closeDeletePatientModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirm-delete-patient-btn" style="background:var(--red);border-color:var(--red)">Delete Patient</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="../backend-js/super-admin-patients.js"></script>
 </body>
 

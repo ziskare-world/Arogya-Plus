@@ -918,17 +918,38 @@ router.patch(
   ],
   validateRequest,
   asyncHandler(async (req, res) => {
+    if (req.user._id.toString() === req.params.id) {
+      return res.status(400).json({ success: false, message: "Cannot alter active status of your own account" });
+    }
+
     const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
+    if (user.role === "super-admin" && req.user.role !== "super-admin") {
+      return res.status(403).json({ success: false, message: "Only Super Admins can alter Super Admin access" });
+    }
+
     user.isActive = req.body.isActive;
     await user.save();
 
+    const isDoctor = user.role === "doctor";
+    const actionLabel = user.isActive ? "UNBLOCKED" : "BLOCKED";
+    const auditAction = isDoctor ? `DOCTOR_${actionLabel}` : `USER_${actionLabel}`;
+
+    await logAudit({
+      action: auditAction,
+      category: isDoctor ? "DOCTOR" : "PATIENT",
+      severity: user.isActive ? "info" : "warning",
+      details: `${isDoctor ? "Doctor" : "User"} ${user.name} (${user.email}, ID: ${user._id}) access was ${user.isActive ? "restored / unblocked" : "blocked by administrator"}.`,
+      targetId: user._id,
+      req
+    });
+
     return res.status(200).json({
       success: true,
-      message: "User active status updated",
+      message: `${isDoctor ? "Doctor" : "User"} ${user.name} access has been ${user.isActive ? "restored (unblocked)" : "blocked"}`,
       user: {
         id: user._id,
         name: user.name,
@@ -936,6 +957,95 @@ router.patch(
         role: user.role,
         isActive: user.isActive
       }
+    });
+  })
+);
+
+router.delete(
+  "/users/:id",
+  protect,
+  authorize("admin", "super-admin"),
+  [param("id").isMongoId().withMessage("Valid user id is required")],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    if (req.user._id.toString() === req.params.id) {
+      return res.status(400).json({ success: false, message: "Cannot delete your own account" });
+    }
+
+    const targetUser = await User.findById(req.params.id);
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: "Account not found" });
+    }
+
+    if (targetUser.role === "super-admin" && req.user.role !== "super-admin") {
+      return res.status(403).json({ success: false, message: "Only Super Admins can delete Super Admin accounts" });
+    }
+
+    const isDoctor = targetUser.role === "doctor";
+
+    // Cascade cancellation of pending/active appointments
+    if (isDoctor) {
+      await Appointment.updateMany(
+        { doctor: targetUser._id, status: { $in: ["pending", "confirmed"] } },
+        { $set: { status: "cancelled", notes: "Cancelled: Doctor removed by administrator" } }
+      );
+    } else {
+      await Appointment.updateMany(
+        { patient: targetUser._id, status: { $in: ["pending", "confirmed"] } },
+        { $set: { status: "cancelled", notes: "Cancelled: Patient account deleted by administrator" } }
+      );
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+
+    await logAudit({
+      action: isDoctor ? "DOCTOR_DELETED" : "USER_DELETED",
+      category: isDoctor ? "DOCTOR" : "PATIENT",
+      severity: "warning",
+      details: `${isDoctor ? "Doctor" : "User"} ${targetUser.name} (${targetUser.email}, ID: ${targetUser._id}) was permanently deleted from the system.`,
+      targetId: targetUser._id,
+      req
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `${isDoctor ? "Doctor" : "User"} ${targetUser.name} has been permanently deleted`
+    });
+  })
+);
+
+router.delete(
+  "/doctors/:id",
+  protect,
+  authorize("admin", "super-admin"),
+  [param("id").isMongoId().withMessage("Valid doctor id is required")],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const doctor = await User.findOne({ _id: req.params.id, role: "doctor" });
+    if (!doctor) {
+      return res.status(404).json({ success: false, message: "Doctor not found" });
+    }
+
+    // Cancel pending/confirmed appointments
+    await Appointment.updateMany(
+      { doctor: doctor._id, status: { $in: ["pending", "confirmed"] } },
+      { $set: { status: "cancelled", notes: "Cancelled: Doctor removed by administrator" } }
+    );
+
+    await User.findByIdAndDelete(doctor._id);
+
+    await logAudit({
+      action: "DOCTOR_DELETED",
+      category: "DOCTOR",
+      severity: "warning",
+      details: `Doctor ${doctor.name} (${doctor.email}, ID: ${doctor._id}, Hospital: ${doctor.hospitalName || "General"}) was permanently deleted.`,
+      targetId: doctor._id,
+      req
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Doctor ${doctor.name} has been permanently deleted`
     });
   })
 );

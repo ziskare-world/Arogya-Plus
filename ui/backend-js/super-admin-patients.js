@@ -24,6 +24,7 @@ const formatPatientCode = (id = "") => `PAT-${String(id).replace(/[^a-zA-Z0-9]/g
 
 const toBadge = (status = "") => {
   const normalized = String(status).toLowerCase();
+  if (normalized === "blocked") return '<span class="badge badge-red">🚫 Blocked</span>';
   if (normalized === "critical") return '<span class="badge badge-red">Critical</span>';
   if (normalized === "discharged" || normalized === "inactive") return '<span class="badge badge-blue">Discharged</span>';
   return '<span class="badge badge-green">Active</span>';
@@ -55,12 +56,12 @@ const getPatientAppointments = (patientId) =>
     .sort((a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate));
 
 const computePatientStatus = (patient) => {
+  if (patient.isActive === false) return "blocked";
   const inEmergency = activeEmergencies.some(
     (emergency) =>
       String(emergency.patientName || "").trim().toLowerCase() === String(patient.name || "").trim().toLowerCase()
   );
   if (inEmergency) return "critical";
-  if (patient.isActive === false) return "discharged";
   return "active";
 };
 
@@ -119,9 +120,15 @@ const renderPatients = (patients) => {
           <td><span style="font-size:0.85rem">${escapeHtml(patient.hospitalName || "Central Medical")}</span></td>
           <td>${toBadge(status)}</td>
           <td>
-            <div style="display:flex;gap:6px">
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
               <button class="btn btn-ghost btn-sm" onclick="openPatientView('${id}')">View</button>
               <button class="btn btn-ghost btn-sm" onclick="openPatientEdit('${id}')">Edit</button>
+              <button class="btn btn-outline btn-sm" style="font-size:.74rem;color:${patient.isActive !== false ? 'var(--yellow)' : 'var(--green)'};border-color:${patient.isActive !== false ? 'var(--yellow)' : 'var(--green)'}" onclick="window.togglePatientAccess('${id}', ${patient.isActive !== false}, '${escapeHtml(patient.name)}')">
+                ${patient.isActive !== false ? '🚫 Block' : '✅ Unblock'}
+              </button>
+              <button class="btn btn-outline btn-sm" style="font-size:.74rem;color:var(--red);border-color:var(--red)" onclick="window.openDeletePatientModal('${id}', '${escapeHtml(patient.name)}')">
+                🗑️ Delete
+              </button>
             </div>
           </td>
         </tr>`;
@@ -369,12 +376,80 @@ window.exportPatientsCsv = () => {
   toast("Patients CSV downloaded successfully", "success");
 };
 
+let patientToDelete = null;
+
+window.togglePatientAccess = async (patientId, currentActive, patientName) => {
+  const nextActive = !currentActive;
+  const actionText = nextActive ? "restore access for" : "BLOCK access for";
+  if (!confirm(`Are you sure you want to ${actionText} patient ${patientName}?`)) {
+    return;
+  }
+
+  try {
+    const res = await apiRequest(`/api/admin/users/${patientId}/toggle-active`, {
+      method: "PATCH",
+      body: JSON.stringify({ isActive: nextActive })
+    });
+    toast(res.message || "Patient access updated", "success");
+    await loadData();
+    renderStats();
+    renderPatients(allPatients);
+  } catch (err) {
+    toast(err.message || "Failed to update patient access", "error");
+  }
+};
+
+window.openDeletePatientModal = (patientId, patientName) => {
+  patientToDelete = { id: patientId, name: patientName };
+  const modal = document.getElementById("delete-patient-modal");
+  const nameText = document.getElementById("delete-pat-name-text");
+  const idText = document.getElementById("delete-pat-id-text");
+  if (nameText) nameText.textContent = patientName;
+  if (idText) idText.textContent = patientId;
+  if (modal) modal.style.display = "flex";
+};
+
+window.closeDeletePatientModal = () => {
+  patientToDelete = null;
+  const modal = document.getElementById("delete-patient-modal");
+  if (modal) modal.style.display = "none";
+};
+
+const setupDeletePatientEvents = () => {
+  const confirmBtn = document.getElementById("confirm-delete-patient-btn");
+  if (confirmBtn) {
+    confirmBtn.addEventListener("click", async () => {
+      if (!patientToDelete) return;
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = "Deleting...";
+
+      try {
+        const res = await apiRequest(`/api/admin/users/${patientToDelete.id}`, {
+          method: "DELETE"
+        });
+        toast(res.message || "Patient deleted successfully", "success");
+        window.closeDeletePatientModal();
+        await loadData();
+        renderStats();
+        renderPatients(allPatients);
+      } catch (err) {
+        toast(err.message || "Failed to delete patient", "error");
+      } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = "Delete Patient";
+      }
+    });
+  }
+};
+
 const init = async () => {
   const session = ensureSession({
     allowedRoles: ["super-admin"],
     onDenied: () => toast("Please login as super-admin", "error")
   });
   if (!session.allowed) return;
+
+  setupDeletePatientEvents();
 
   if (tableBodyEl) {
     tableBodyEl.innerHTML = `
@@ -394,3 +469,4 @@ const init = async () => {
 };
 
 init();
+

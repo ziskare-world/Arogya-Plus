@@ -266,7 +266,7 @@
       const data = await parseApiResponse(response);
 
       const mfaEnabled = Boolean(
-        data.user && (data.user.mfaEnabled || data.user.hasPasskey || data.user.hasTotp)
+        data.user && (data.user.mfaEnabled || data.user.hasTotp)
       );
 
       if (mfaEnabled) {
@@ -276,21 +276,13 @@
         const mfaSection = document.getElementById("mfa-section");
         if (mfaSection) mfaSection.style.display = "flex";
 
-        // Show passkey button ONLY if user has passkey enabled
-        const passkeyBtn = document.getElementById("login-passkey-btn");
-        if (passkeyBtn) {
-          passkeyBtn.style.display = data.user.hasPasskey ? "block" : "none";
-        }
-
-        // Show 6-digit code container ONLY if user has TOTP enabled (or by default if 2FA active)
         const totpContainer = document.getElementById("totp-login-container");
         const totpInput = document.getElementById("totp-code-input");
-        const showTotp = Boolean(data.user.hasTotp || !data.user.hasPasskey);
 
         if (totpContainer) {
-          totpContainer.style.display = showTotp ? "flex" : "none";
+          totpContainer.style.display = "flex";
         }
-        if (totpInput && showTotp) {
+        if (totpInput) {
           totpInput.value = "";
           totpInput.focus();
         }
@@ -314,60 +306,6 @@
       if (submitButton) {
         submitButton.disabled = false;
         submitButton.textContent = "Sign In";
-      }
-    }
-  };
-
-  const handlePasskeyLogin = async () => {
-    const passkeyBtn = document.getElementById("login-passkey-btn");
-    const messageBox = document.getElementById("formMessage");
-
-    if (passkeyBtn) {
-      passkeyBtn.disabled = true;
-      passkeyBtn.textContent = "Scanning Biometric Sensor / Fingerprint...";
-    }
-    setMessage(messageBox, "Requesting Passkey authentication...", "info");
-
-    const email = document.getElementById("email")?.value?.trim();
-
-    try {
-      const response = await fetch(`${API_BASE}/passkey/login-options?email=${encodeURIComponent(email)}`);
-      const options = await parseApiResponse(response);
-
-      const assertion = await navigator.credentials.get({ publicKey: options });
-
-      const authResponse = await fetch(`${API_BASE}/passkey/login-verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: assertion.id,
-          rawId: btoa(String.fromCharCode(...new Uint8Array(assertion.rawId))),
-          response: {
-            authenticatorData: btoa(String.fromCharCode(...new Uint8Array(assertion.response.authenticatorData))),
-            clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(assertion.response.clientDataJSON))),
-            signature: btoa(String.fromCharCode(...new Uint8Array(assertion.response.signature))),
-            userHandle: assertion.response.userHandle ? btoa(String.fromCharCode(...new Uint8Array(assertion.response.userHandle))) : null
-          }
-        })
-      });
-
-      const data = await parseApiResponse(authResponse);
-
-      storeAuthSession(data);
-      try {
-        localStorage.setItem("arogya_ai_auto_open", "true");
-      } catch (e) {}
-
-      setMessage(messageBox, "Passkey verified! Opening dashboard...", "success");
-      setTimeout(() => {
-        window.location.href = redirectByRole(data.user?.role);
-      }, 500);
-    } catch (error) {
-      setMessage(messageBox, error.message, "error");
-    } finally {
-      if (passkeyBtn) {
-        passkeyBtn.disabled = false;
-        passkeyBtn.textContent = "🔑 Verify with Biometric Passkey / Fingerprint";
       }
     }
   };
@@ -481,11 +419,6 @@
         setMessage(document.getElementById("formMessage"), notice, "success");
         sessionStorage.removeItem(NOTICE_KEY);
       }
-    }
-
-    const passkeyBtn = document.getElementById("login-passkey-btn");
-    if (passkeyBtn) {
-      passkeyBtn.addEventListener("click", handlePasskeyLogin);
     }
 
     const loginTotpBtn = document.getElementById("login-totp-btn");

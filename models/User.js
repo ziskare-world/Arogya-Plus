@@ -131,15 +131,6 @@ const userSchema = new mongoose.Schema(
       default: 0,
       min: 0
     },
-    passkeys: [
-      {
-        credentialId: String,
-        publicKey: String,
-        counter: { type: Number, default: 0 },
-        deviceType: { type: String, default: "Biometric Passkey" },
-        createdAt: { type: Date, default: Date.now }
-      }
-    ],
     mfaEnabled: {
       type: Boolean,
       default: false

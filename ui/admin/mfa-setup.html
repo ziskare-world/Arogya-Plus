@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>Arogya Plus - Passkey & Multi-Factor Auth Setup</title>
+    <title>Arogya Plus - Multi-Factor Authentication Setup</title>
     <link rel="stylesheet" href="../css/global.css" />
     <link rel="stylesheet" href="../css/dashboard.css" />
     <style>
@@ -82,8 +82,8 @@
             <main class="page-content" style="padding:24px">
                 <div class="page-header">
                     <div>
-                        <h2>🛡️ Passkey & Multi-Factor Authentication (MFA)</h2>
-                        <p>Configure FIDO2 Passkeys, Authenticator TOTP apps, and emergency backup codes for two-step security.</p>
+                        <h2>🛡️ Multi-Factor Authentication (MFA)</h2>
+                        <p>Configure Authenticator TOTP apps and emergency backup codes for two-step security.</p>
                     </div>
                 </div>
 
@@ -97,7 +97,7 @@
                                 <span class="badge badge-green" id="mfa-status-badge">🟢 MFA Active</span>
                             </div>
                             <p style="font-size:.82rem;color:var(--text-400);margin-top:4px" id="mfa-status-desc">
-                                Your account is protected with FIDO2 Biometric Passkeys and 2-Step Authentication.
+                                Your account is protected with 2-Step Authenticator Verification.
                             </p>
                         </div>
                     </div>
@@ -109,35 +109,6 @@
 
                 <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(340px, 1fr));gap:20px">
                     
-                    <!-- FIDO2 / WebAuthn Biometric Passkey Card -->
-                    <div class="mfa-card">
-                        <div style="display:flex;align-items:center;gap:14px">
-                            <div class="mfa-icon-box">🔑</div>
-                            <div>
-                                <h3 style="margin:0;font-size:1.1rem">FIDO2 / WebAuthn Biometric Passkey</h3>
-                                <div style="font-size:.76rem;color:var(--text-400)">Fingerprint, FaceID, Windows Hello & YubiKey</div>
-                            </div>
-                        </div>
-
-                        <p style="font-size:.82rem;color:var(--text-300);line-height:1.5">
-                            Passkeys provide fast, passwordless cryptographic security using your device's built-in biometric sensor or hardware security key.
-                        </p>
-
-                        <div style="background:var(--bg-800);border:1px solid var(--border);border-radius:var(--r-md);padding:12px">
-                            <div style="font-size:.78rem;font-weight:600;color:var(--text-200);margin-bottom:6px">Registered Passkeys</div>
-                            <div id="registered-passkeys-list" style="display:flex;flex-direction:column;gap:8px">
-                                <div style="display:flex;justify-content:space-between;align-items:center;font-size:.78rem;color:var(--text-300)">
-                                    <span>💻 Windows Hello / Touch ID (Primary)</span>
-                                    <span class="badge badge-green">Active</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button class="btn btn-primary btn-sm" id="register-passkey-btn" style="width:100%">
-                            ➕ Register New Biometric Passkey
-                        </button>
-                    </div>
-
                     <!-- Authenticator App (TOTP QR Code) Card -->
                     <div class="mfa-card">
                         <div style="display:flex;align-items:center;gap:14px">

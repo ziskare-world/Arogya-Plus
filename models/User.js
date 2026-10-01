@@ -1,6 +1,78 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
+const familyMemberSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "Family member name is required"],
+      trim: true
+    },
+    relationship: {
+      type: String,
+      enum: ["Father", "Mother", "Spouse", "Child", "Son", "Daughter", "Brother", "Sister", "Grandparent", "Other"],
+      required: [true, "Relationship is required"],
+      default: "Other"
+    },
+    age: {
+      type: Number,
+      min: 0,
+      max: 130
+    },
+    gender: {
+      type: String,
+      enum: ["male", "female", "other"],
+      default: "other"
+    },
+    bloodGroup: {
+      type: String,
+      enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Unknown"],
+      default: "Unknown"
+    },
+    phone: {
+      type: String,
+      trim: true
+    },
+    address: {
+      type: String,
+      trim: true
+    },
+    city: {
+      type: String,
+      trim: true
+    },
+    coordinates: {
+      lat: {
+        type: Number,
+        min: -90,
+        max: 90
+      },
+      lng: {
+        type: Number,
+        min: -180,
+        max: 180
+      }
+    },
+    medicalHistory: [
+      {
+        type: String,
+        trim: true
+      }
+    ],
+    allergies: [
+      {
+        type: String,
+        trim: true
+      }
+    ],
+    isEmergencyContact: {
+      type: Boolean,
+      default: false
+    }
+  },
+  { timestamps: true }
+);
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -23,6 +95,66 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: String,
       trim: true
+    },
+    age: {
+      type: Number,
+      min: 0,
+      max: 130
+    },
+    gender: {
+      type: String,
+      enum: ["male", "female", "other"]
+    },
+    bloodGroup: {
+      type: String,
+      enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Unknown"],
+      default: "Unknown"
+    },
+    address: {
+      type: String,
+      trim: true
+    },
+    city: {
+      type: String,
+      trim: true
+    },
+    coordinates: {
+      lat: {
+        type: Number,
+        min: -90,
+        max: 90
+      },
+      lng: {
+        type: Number,
+        min: -180,
+        max: 180
+      }
+    },
+    medicalHistory: [
+      {
+        type: String,
+        trim: true
+      }
+    ],
+    allergies: [
+      {
+        type: String,
+        trim: true
+      }
+    ],
+    isProfileComplete: {
+      type: Boolean,
+      default: false
+    },
+    familyMembers: {
+      type: [familyMemberSchema],
+      validate: [
+        function(val) {
+          return !val || val.length <= 5;
+        },
+        "A profile can contain a maximum of 5 family members"
+      ],
+      default: []
     },
     hospital: {
       type: mongoose.Schema.Types.ObjectId,

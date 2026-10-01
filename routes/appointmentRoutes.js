@@ -49,7 +49,19 @@ router.post(
   ],
   validateRequest,
   asyncHandler(async (req, res) => {
-    const { doctorId, appointmentDate, reason, notes, consultationType } = req.body;
+    const {
+      doctorId,
+      appointmentDate,
+      reason,
+      notes,
+      consultationType,
+      bookedFor = "self",
+      familyMemberId = null,
+      patientDetails = null,
+      locationType = "current",
+      patientLocation = null,
+      aiTriage = null
+    } = req.body;
 
     const doctor = await User.findOne({ _id: doctorId, role: "doctor", isActive: true });
     if (!doctor) {
@@ -65,12 +77,24 @@ router.post(
       reason,
       consultationType: normalizeConsultationType(consultationType, { reason, notes }),
       notes,
+      bookedFor: bookedFor === "family" ? "family" : "self",
+      familyMemberId: familyMemberId || null,
+      patientDetails: patientDetails || {
+        name: req.user.name,
+        phone: req.user.phone
+      },
+      locationType: locationType || "current",
+      patientLocation: patientLocation || {
+        address: req.user.address || "",
+        city: req.user.city || ""
+      },
+      aiTriage: aiTriage || undefined,
       tokenNumber: generateAppointmentToken()
     });
 
     const populated = await Appointment.findById(appointment._id)
-      .populate("patient", "name email")
-      .populate("doctor", "name email");
+      .populate("patient", "name email phone")
+      .populate("doctor", "name email phone specialization consultationFee clinicAddress hospitalName");
 
     return res.status(201).json({
       success: true,

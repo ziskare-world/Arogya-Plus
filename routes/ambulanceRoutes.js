@@ -371,6 +371,13 @@ router.post(
     try {
       booking = await Ambulance.create({
         requestedBy: req.user._id,
+        bookedFor: req.body.bookedFor === "family" ? "family" : "self",
+        familyMemberId: req.body.familyMemberId || null,
+        patientDetails: req.body.patientDetails || {
+          name: req.user.name,
+          phone: req.user.phone
+        },
+        locationType: req.body.locationType || (req.body.bookedFor === "family" ? "remote_saved" : "current"),
         pickupLocation,
         problemDescription,
         pickupCoordinates: pickupCoords,
@@ -387,6 +394,14 @@ router.post(
         vehicleNumber: assignedAmbulanceUnit?.vehicleNumber,
         etaMinutes,
         ambulanceCoordinates,
+        aiDispatch: {
+          autoDispatched: Boolean(assignedAmbulanceUnit),
+          dispatchReason: assignedAmbulanceUnit
+            ? "Automated fleet assignment based on proximity and doctor availability"
+            : "Manual request queued",
+          severityScore: req.body.priority === "critical" ? 9 : 6,
+          priority: req.body.priority || "high"
+        },
         lastLocationUpdatedAt: ambulanceCoordinates ? new Date() : undefined
       });
     } catch (error) {

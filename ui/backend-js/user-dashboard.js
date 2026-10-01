@@ -80,6 +80,54 @@
             renderRecentActivity(data.recentActivity || []);
         };
 
+        const checkProfileStatus = async () => {
+            try {
+                const status = await apiRequest('/api/user/profile-status');
+                const banner = document.getElementById('profile-setup-banner');
+                const badge = document.getElementById('banner-pct-badge');
+                const subtext = document.getElementById('banner-subtext');
+
+                if (banner && (!status.isProfileComplete || status.familyMemberCount === 0)) {
+                    banner.style.display = 'block';
+                    if (badge) {
+                        badge.textContent = `${status.completionPercentage || 0}% Complete`;
+                    }
+                    if (subtext) {
+                        if (status.familyMemberCount === 0) {
+                            subtext.textContent = 'Add up to 5 family member profiles (parents, children, spouse) to book doctors & dispatch ambulances for them anywhere!';
+                        } else {
+                            subtext.textContent = `You have added ${status.familyMemberCount}/5 family members. Complete missing profile details for full remote healthcare access.`;
+                        }
+                    }
+                }
+            } catch (e) {
+                // Non-critical, ignore
+            }
+        };
+
+        const setupAiAssistant = () => {
+            const input = document.getElementById('ai-quick-symptoms');
+            const btn = document.getElementById('ai-quick-match-btn');
+
+            if (!btn || !input) return;
+
+            const handleMatch = () => {
+                const symptoms = input.value.trim();
+                if (!symptoms) {
+                    toast('Please enter symptoms or a condition', 'warning');
+                    input.focus();
+                    return;
+                }
+                sessionStorage.setItem('arogya_ai_query', symptoms);
+                window.location.href = `appointments.html?symptoms=${encodeURIComponent(symptoms)}&ai=1`;
+            };
+
+            btn.addEventListener('click', handleMatch);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') handleMatch();
+            });
+        };
+
         const init = async () => {
             const session = ensureSession({
                 allowedRoles: ['patient'],
@@ -88,9 +136,12 @@
 
             if (!session.allowed) return;
 
+            setupAiAssistant();
+
             try {
                 const data = await apiRequest('/api/user/dashboard');
                 renderDashboard(data, session.user);
+                await checkProfileStatus();
             } catch (error) {
                 toast(error.message, 'error');
             }

@@ -19,11 +19,35 @@ const ratingSubmitBtnEl = document.getElementById("rating-submit-btn");
 const ratingStarsEl = document.getElementById("rating-stars");
 const ratingValueLabelEl = document.getElementById("rating-value-label");
 
+// Family & Location Elements
+const targetSelfRadio = document.getElementById("target-self");
+const targetFamilyRadio = document.getElementById("target-family");
+const familySelectWrapper = document.getElementById("family-select-wrapper");
+const familyMemberSelect = document.getElementById("family-member-select");
+const familyMemberSummary = document.getElementById("family-member-summary");
+const locCurrentRadio = document.getElementById("loc-current");
+const locFamilyRadio = document.getElementById("loc-family");
+const locFamilyLabel = document.getElementById("loc-family-label");
+const locCustomRadio = document.getElementById("loc-custom");
+const customLocationFields = document.getElementById("custom-location-fields");
+const customAddressInput = document.getElementById("custom-location-address");
+const customCityInput = document.getElementById("custom-location-city");
+const locationActiveBadge = document.getElementById("location-active-badge");
+
+// AI Elements
+const aiSymptomInput = document.getElementById("ai-symptom-input");
+const aiMatchDoctorBtn = document.getElementById("ai-match-doctor-btn");
+const aiMatchResult = document.getElementById("ai-match-result");
+
 let doctors = [];
 let appointments = [];
+let familyMembers = [];
+let activeUser = null;
 let ratingModalAppointmentId = "";
 let ratingModalSelectedValue = 5;
 let ratingModalSubmitting = false;
+let currentPatientCoords = null;
+let lastAiTriage = null;
 
 const statusBadge = (status) => {
   const normalized = String(status || "").toLowerCase();
@@ -98,36 +122,26 @@ const openRatingModal = (appointment) => {
 const submitRatingFromModal = async () => {
   const appointmentId = normalizeId(ratingModalAppointmentId);
   if (!appointmentId) return;
-  if (!Number.isInteger(ratingModalSelectedValue) || ratingModalSelectedValue < 1 || ratingModalSelectedValue > 5) {
-    toast("Please select a rating from 1 to 5", "error");
-    return;
+
+  ratingModalSubmitting = true;
+  if (ratingSubmitBtnEl) {
+    ratingSubmitBtnEl.disabled = true;
+    ratingSubmitBtnEl.textContent = "Submitting...";
   }
 
-  const review = String(ratingReviewInputEl?.value || "").trim();
-
   try {
-    ratingModalSubmitting = true;
-    if (ratingSubmitBtnEl) {
-      ratingSubmitBtnEl.disabled = true;
-      ratingSubmitBtnEl.textContent = "Submitting...";
-    }
-
-    await apiRequest(`/api/appointments/${appointmentId}/rating`, {
+    await apiRequest(`/api/appointments/${appointmentId}/rate`, {
       method: "PATCH",
       body: JSON.stringify({
         rating: ratingModalSelectedValue,
-        review
+        review: String(ratingReviewInputEl?.value || "").trim()
       })
     });
-
-    toast("Doctor rating submitted", "success");
+    toast("Thank you for your rating!", "success");
     closeRatingModal();
-    window.setTimeout(() => {
-      window.location.reload();
-    }, 600);
-    return;
+    await loadAppointments();
   } catch (error) {
-    toast(error.message || "Failed to submit rating", "error");
+    toast(error.message, "error");
   } finally {
     ratingModalSubmitting = false;
     if (ratingSubmitBtnEl) {
@@ -138,13 +152,17 @@ const submitRatingFromModal = async () => {
 };
 
 const openUserVideoPanel = (appointment) => {
-  const appointmentId = String(appointment?._id || appointment?.id || "").trim();
+  const appointmentId = normalizeId(appointment?._id || appointment?.id);
   if (!appointmentId) {
-    toast("Appointment ID is missing", "error");
+    toast("Appointment details not found", "error");
     return;
   }
 
-  const params = new URLSearchParams({ role: "user", appointmentId });
+  const params = new URLSearchParams({
+    appointmentId,
+    token: appointment?.tokenNumber || ""
+  });
+
   const doctorName = String(appointment?.doctor?.name || "").trim();
   if (doctorName) {
     params.set("doctor", doctorName);
@@ -172,7 +190,9 @@ const renderDoctorOptions = () => {
   doctorSelect.innerHTML = doctors
     .map((doctor) => {
       const spec = doctor.specialization ? ` - ${doctor.specialization}` : "";
-      return `<option value="${doctor._id}">${doctor.name}${spec}</option>`;
+      const fee = doctor.consultationFee ? ` (₹${doctor.consultationFee})` : "";
+      const rating = doctor.rating ? ` [★ ${doctor.rating}]` : "";
+      return `<option value="${doctor._id}">${doctor.name}${spec}${fee}${rating}</option>`;
     })
     .join("");
 };
@@ -212,27 +232,263 @@ if (qrModalEl) {
   });
 }
 
+// ==========================================
+// FAMILY MEMBER & REMOTE LOCATION MANAGEMENT
+// ==========================================
+const loadFamilyMembers = async () => {
+  try {
+    const data = await apiRequest("/api/user/family-members");
+    familyMembers = data.familyMembers || [];
+    renderFamilyOptions();
+  } catch (e) {
+    familyMembers = [];
+  }
+};
+
+const renderFamilyOptions = () => {
+  if (!familyMemberSelect) return;
+  if (!familyMembers.length) {
+    familyMemberSelect.innerHTML = '<option value="">No family profiles found. Click "+ Add New Family Member" above.</option>';
+    return;
+  }
+
+  familyMemberSelect.innerHTML = '<option value="">-- Choose family member --</option>' +
+    familyMembers.map((m) => {
+      const blood = m.bloodGroup && m.bloodGroup !== "Unknown" ? ` [${m.bloodGroup}]` : "";
+      const loc = m.city || m.address || "Remote Location";
+      return `<option value="${m._id}">${m.name} (${m.relationship})${blood} - 📍 ${loc}</option>`;
+    }).join("");
+};
+
+const updateLocationBadge = () => {
+  const mode = document.querySelector('input[name="location-mode"]:checked')?.value || "current";
+  if (mode === "current") {
+    locationActiveBadge.innerHTML = '📍 Using <strong>current browser location</strong> for doctor distance calculation.';
+  } else if (mode === "remote_saved") {
+    const selectedMember = getSelectedFamilyMember();
+    const loc = selectedMember?.address || selectedMember?.city || "Family member saved address";
+    locationActiveBadge.innerHTML = `🏠 Using family member's remote address: <strong>${loc}</strong>`;
+  } else if (mode === "custom_remote") {
+    const addr = customAddressInput?.value.trim();
+    const city = customCityInput?.value.trim();
+    const display = [addr, city].filter(Boolean).join(", ") || "Custom remote location";
+    locationActiveBadge.innerHTML = `🗺️ Using custom remote place: <strong>${display}</strong>`;
+  }
+};
+
+const getSelectedFamilyMember = () => {
+  const memberId = familyMemberSelect?.value;
+  if (!memberId) return null;
+  return familyMembers.find((m) => String(m._id) === String(memberId)) || null;
+};
+
+// Target change: Myself vs Family
+document.querySelectorAll('input[name="booking-target"]').forEach((radio) => {
+  radio.addEventListener("change", () => {
+    const isFamily = targetFamilyRadio?.checked;
+    if (familySelectWrapper) {
+      familySelectWrapper.style.display = isFamily ? "block" : "none";
+    }
+    if (locFamilyLabel) {
+      locFamilyLabel.style.display = isFamily ? "flex" : "none";
+    }
+
+    if (isFamily) {
+      if (familyMembers.length && familyMemberSelect) {
+        if (!familyMemberSelect.value && familyMembers[0]) {
+          familyMemberSelect.value = familyMembers[0]._id;
+          familyMemberSelect.dispatchEvent(new Event("change"));
+        }
+      }
+    } else {
+      if (locCurrentRadio) locCurrentRadio.checked = true;
+      if (customLocationFields) customLocationFields.style.display = "none";
+      if (familyMemberSummary) familyMemberSummary.style.display = "none";
+      updateLocationBadge();
+    }
+  });
+});
+
+familyMemberSelect?.addEventListener("change", () => {
+  const member = getSelectedFamilyMember();
+  if (!member) {
+    if (familyMemberSummary) familyMemberSummary.style.display = "none";
+    return;
+  }
+
+  if (familyMemberSummary) {
+    familyMemberSummary.style.display = "block";
+    const blood = member.bloodGroup && member.bloodGroup !== "Unknown" ? member.bloodGroup : "N/A";
+    familyMemberSummary.innerHTML = `
+      <div style="font-weight:700;color:var(--text-1)">${member.name} (${member.relationship})</div>
+      <div class="muted" style="margin-top:2px">
+        Age: ${member.age || "N/A"} • Gender: ${member.gender || "N/A"} • Blood Group: <span style="color:#ef4444;font-weight:600">${blood}</span>
+      </div>
+      <div style="margin-top:2px;font-size:0.8rem">
+        📍 Remote Address: <strong>${member.address || member.city || "Not specified"}</strong>
+      </div>
+    `;
+  }
+
+  // Auto-switch to family saved address
+  if (locFamilyRadio) {
+    locFamilyRadio.checked = true;
+    if (customLocationFields) customLocationFields.style.display = "none";
+    updateLocationBadge();
+  }
+});
+
+// Location mode toggle
+document.querySelectorAll('input[name="location-mode"]').forEach((radio) => {
+  radio.addEventListener("change", () => {
+    const mode = radio.value;
+    if (customLocationFields) {
+      customLocationFields.style.display = mode === "custom_remote" ? "grid" : "none";
+    }
+    updateLocationBadge();
+  });
+});
+
+customAddressInput?.addEventListener("input", updateLocationBadge);
+customCityInput?.addEventListener("input", updateLocationBadge);
+
+// ==========================================
+// AI SMART DOCTOR MATCHING
+// ==========================================
+const runAiDoctorMatch = async () => {
+  const symptoms = aiSymptomInput?.value.trim();
+  if (!symptoms) {
+    toast("Please enter your symptoms or disease", "warning");
+    aiSymptomInput?.focus();
+    return;
+  }
+
+  aiMatchDoctorBtn.disabled = true;
+  aiMatchDoctorBtn.innerHTML = "<span>🤖 Analyzing...</span>";
+
+  // Determine patient coordinates
+  let coords = null;
+  const isFamily = targetFamilyRadio?.checked;
+  const locMode = document.querySelector('input[name="location-mode"]:checked')?.value || "current";
+
+  if (locMode === "remote_saved" && isFamily) {
+    const member = getSelectedFamilyMember();
+    if (member?.coordinates?.lat && member?.coordinates?.lng) {
+      coords = member.coordinates;
+    }
+  } else if (locMode === "current") {
+    coords = currentPatientCoords;
+  }
+
+  const selectedMember = isFamily ? getSelectedFamilyMember() : null;
+  const age = selectedMember?.age || activeUser?.age || 30;
+
+  try {
+    const data = await apiRequest("/api/ai/auto-assign-doctor", {
+      method: "POST",
+      body: JSON.stringify({
+        symptoms: symptoms.split(",").map((s) => s.trim()),
+        disease: symptoms,
+        coordinates: coords,
+        age
+      })
+    });
+
+    lastAiTriage = data.triage || null;
+
+    if (data.success && data.matchedDoctor) {
+      const doc = data.matchedDoctor;
+      const score = data.matchScore || 95;
+      const dist = data.distanceKm !== null ? `${data.distanceKm} km away` : "Nearby";
+      const urgency = data.triage?.urgencyLevel || "medium";
+      const urgencyColor = urgency === "critical" ? "#dc2626" : urgency === "high" ? "#ea580c" : "#2563eb";
+
+      if (aiMatchResult) {
+        aiMatchResult.style.display = "block";
+        aiMatchResult.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+            <div>
+              <div style="font-weight:800;color:var(--text-1);font-size:0.95rem">
+                🎯 Best Match: Dr. ${doc.name}
+              </div>
+              <div style="font-size:0.83rem;color:var(--text-2)">
+                ${doc.specialization || data.targetSpecialty} • ★ ${doc.rating || 4.9} • ₹${doc.consultationFee || 500}
+              </div>
+            </div>
+            <div style="text-align:right">
+              <span class="badge" style="background:#dcfce7;color:#15803d;font-weight:700">${score}% Match</span>
+              <div style="font-size:0.75rem;margin-top:2px;color:${urgencyColor};font-weight:700">${urgency.toUpperCase()} PRIORITY</div>
+            </div>
+          </div>
+          <div style="font-size:0.82rem;line-height:1.4;color:#475569;margin-bottom:8px">
+            ${data.explanation || `Auto-matched based on your condition and doctor's clinic availability.`}
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding-top:6px;border-top:1px dashed #cbd5e1">
+            <span style="font-size:0.8rem;color:#64748b">📍 ${dist}</span>
+            <span style="font-size:0.8rem;color:#16a34a;font-weight:600">✓ Auto-selected in Doctor list below</span>
+          </div>
+        `;
+      }
+
+      // Auto-select this doctor in dropdown
+      if (doctorSelect) {
+        doctorSelect.value = doc._id;
+      }
+
+      // Pre-fill reason if empty
+      const reasonInput = document.getElementById("appointment-reason");
+      if (reasonInput && !reasonInput.value.trim()) {
+        reasonInput.value = symptoms;
+      }
+
+      toast(`Matched Dr. ${doc.name} (${score}% match)`, "success");
+    }
+  } catch (error) {
+    toast(error.message || "Failed to analyze symptoms", "error");
+  } finally {
+    aiMatchDoctorBtn.disabled = false;
+    aiMatchDoctorBtn.innerHTML = "<span>AI Auto-Match</span>";
+  }
+};
+
+aiMatchDoctorBtn?.addEventListener("click", runAiDoctorMatch);
+aiSymptomInput?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    runAiDoctorMatch();
+  }
+});
+
+// Render Appointments List
 const renderAppointments = () => {
   if (!listEl) return;
 
   if (!appointments.length) {
     listEl.innerHTML =
-      '<div class="muted" style="padding:8px 0">No appointments found. Book your first appointment.</div>';
+      '<div class="muted" style="padding:16px;text-align:center">No appointments found. Book your first appointment.</div>';
     return;
   }
 
   listEl.innerHTML = appointments
     .map((appointment) => {
       const doctorName = appointment.doctor?.name || "Doctor";
+      const doctorSpec = appointment.doctor?.specialization ? ` (${appointment.doctor.specialization})` : "";
       const status = String(appointment.status || "pending").toLowerCase();
       const consultation = consultationTypeDetails(appointment);
       const subtitleParts = [formatDateTime(appointment.appointmentDate), consultation.label];
       if (appointment.tokenNumber) subtitleParts.push(`Token: ${appointment.tokenNumber}`);
-      if (appointment.reason) subtitleParts.push(appointment.reason);
+      if (appointment.reason) subtitleParts.push(`Reason: ${appointment.reason}`);
+
       const existingRating = Number(appointment.doctorRating || 0);
       if (existingRating >= 1 && existingRating <= 5) {
         subtitleParts.push(`Your Rating: ${existingRating}/5`);
       }
+
+      const isFamily = appointment.bookedFor === "family";
+      const familyName = appointment.patientDetails?.name || "Family Member";
+      const relationship = appointment.patientDetails?.relationship || "Family";
+      const locText = appointment.patientLocation?.city || appointment.patientLocation?.address;
+      const aiSpec = appointment.aiTriage?.predictedSpecialty;
 
       const canJoinVideoCall = consultation.value === "video" && status === "confirmed";
       const canModify = !["completed", "cancelled"].includes(status);
@@ -267,8 +523,21 @@ const renderAppointments = () => {
       return `
         <div style="padding:16px;border:1px solid var(--border);border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
           <div>
-            <div style="font-weight:700">${doctorName}</div>
-            <div class="muted">${subtitleParts.join(" - ")}</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-weight:700;font-size:1.05rem">${doctorName}${doctorSpec}</span>
+              ${
+                isFamily
+                  ? `<span class="badge" style="background:#fef3c7;color:#92400e;font-size:0.75rem">👨‍👩‍👧 For: ${familyName} (${relationship})</span>`
+                  : `<span class="badge badge-blue" style="font-size:0.75rem">👤 For: Myself</span>`
+              }
+              ${
+                aiSpec
+                  ? `<span class="badge" style="background:#ede9fe;color:#6b21a8;font-size:0.75rem">🤖 AI: ${aiSpec}</span>`
+                  : ""
+              }
+            </div>
+            <div class="muted" style="margin-top:4px">${subtitleParts.join(" • ")}</div>
+            ${locText ? `<div style="font-size:0.8rem;color:#64748b;margin-top:2px">📍 Location: ${locText}</div>` : ""}
             <div style="margin-top:8px">${statusBadge(appointment.status)}</div>
           </div>
           <div class="actions-row">
@@ -293,11 +562,23 @@ const loadAppointments = async () => {
 
 const openBookModal = () => {
   if (modal) modal.classList.remove("hidden");
+  // Set default appointment date to tomorrow at 10:00 AM
+  const dateInput = document.getElementById("appointment-date");
+  if (dateInput && !dateInput.value) {
+    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    tomorrow.setHours(10, 0, 0, 0);
+    dateInput.value = tomorrow.toISOString().slice(0, 16);
+  }
 };
 
 const closeBookModal = () => {
   if (modal) modal.classList.add("hidden");
   if (bookForm) bookForm.reset();
+  if (familySelectWrapper) familySelectWrapper.style.display = "none";
+  if (locFamilyLabel) locFamilyLabel.style.display = "none";
+  if (customLocationFields) customLocationFields.style.display = "none";
+  if (aiMatchResult) aiMatchResult.style.display = "none";
+  lastAiTriage = null;
 };
 
 window.openBookModal = openBookModal;
@@ -306,17 +587,13 @@ window.closeRatingModal = closeRatingModal;
 
 if (modal) {
   modal.addEventListener("click", (event) => {
-    if (event.target === modal) {
-      closeBookModal();
-    }
+    if (event.target === modal) closeBookModal();
   });
 }
 
 if (ratingModalEl) {
   ratingModalEl.addEventListener("click", (event) => {
-    if (event.target === ratingModalEl) {
-      closeRatingModal();
-    }
+    if (event.target === ratingModalEl) closeRatingModal();
   });
 }
 
@@ -337,6 +614,7 @@ if (ratingSubmitBtnEl) {
   });
 }
 
+// Appointment Form Submission
 if (bookForm) {
   bookForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -351,17 +629,84 @@ if (bookForm) {
       toast("Please select a valid date/time", "error");
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.textContent = "Book Appointment";
+        submitBtn.textContent = "Confirm & Book Appointment";
       }
       return;
     }
+
+    const isFamily = targetFamilyRadio?.checked;
+    const selectedMember = isFamily ? getSelectedFamilyMember() : null;
+
+    if (isFamily && !selectedMember) {
+      toast("Please select a family member profile", "warning");
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Confirm & Book Appointment";
+      }
+      return;
+    }
+
+    const locMode = document.querySelector('input[name="location-mode"]:checked')?.value || "current";
+
+    let patientLocation = null;
+    if (locMode === "remote_saved" && selectedMember) {
+      patientLocation = {
+        address: selectedMember.address || "",
+        city: selectedMember.city || "",
+        coordinates: selectedMember.coordinates || undefined
+      };
+    } else if (locMode === "custom_remote") {
+      patientLocation = {
+        address: customAddressInput?.value.trim() || "",
+        city: customCityInput?.value.trim() || ""
+      };
+    } else {
+      patientLocation = {
+        address: activeUser?.address || "",
+        city: activeUser?.city || "",
+        coordinates: currentPatientCoords || undefined
+      };
+    }
+
+    const patientDetails = isFamily && selectedMember
+      ? {
+          name: selectedMember.name,
+          relationship: selectedMember.relationship,
+          age: selectedMember.age,
+          gender: selectedMember.gender,
+          bloodGroup: selectedMember.bloodGroup,
+          phone: selectedMember.phone
+        }
+      : {
+          name: activeUser?.name || "Self",
+          relationship: "Self",
+          age: activeUser?.age,
+          gender: activeUser?.gender,
+          bloodGroup: activeUser?.bloodGroup,
+          phone: activeUser?.phone
+        };
 
     const payload = {
       doctorId: doctorSelect?.value || "",
       appointmentDate: parsedDate.toISOString(),
       consultationType: consultationTypeSelect?.value || "in_person",
       reason: String(document.getElementById("appointment-reason")?.value || "").trim(),
-      notes: String(document.getElementById("appointment-notes")?.value || "").trim()
+      notes: String(document.getElementById("appointment-notes")?.value || "").trim(),
+      bookedFor: isFamily ? "family" : "self",
+      familyMemberId: isFamily && selectedMember ? selectedMember._id : null,
+      patientDetails,
+      locationType: locMode,
+      patientLocation,
+      aiTriage: lastAiTriage
+        ? {
+            symptoms: aiSymptomInput?.value.split(",").map((s) => s.trim()).filter(Boolean),
+            predictedSpecialty: lastAiTriage.predictedSpecialty,
+            urgencyLevel: lastAiTriage.urgencyLevel,
+            diagnosisHint: lastAiTriage.diagnosisHint,
+            autoAssigned: true,
+            confidence: lastAiTriage.confidence
+          }
+        : undefined
     };
 
     try {
@@ -369,7 +714,8 @@ if (bookForm) {
         method: "POST",
         body: JSON.stringify(payload)
       });
-      toast("Appointment booked successfully", "success");
+      const targetName = isFamily && selectedMember ? selectedMember.name : "you";
+      toast(`Appointment booked successfully for ${targetName}!`, "success");
       closeBookModal();
       await loadAppointments();
     } catch (error) {
@@ -377,7 +723,7 @@ if (bookForm) {
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.textContent = "Book Appointment";
+        submitBtn.textContent = "Confirm & Book Appointment";
       }
     }
   });
@@ -464,18 +810,68 @@ if (listEl) {
   });
 }
 
+// Check Geolocation
+const detectBrowserLocation = () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        currentPatientCoords = {
+          lat: Number(pos.coords.latitude.toFixed(6)),
+          lng: Number(pos.coords.longitude.toFixed(6))
+        };
+      },
+      () => {},
+      { timeout: 5000 }
+    );
+  }
+};
+
+const handleUrlParams = () => {
+  const url = new URL(window.location.href);
+  const familyId = url.searchParams.get("familyId");
+  const symptomsParam = url.searchParams.get("symptoms") || sessionStorage.getItem("arogya_ai_query");
+  const autoAi = url.searchParams.get("ai");
+
+  if (familyId) {
+    openBookModal();
+    if (targetFamilyRadio) {
+      targetFamilyRadio.checked = true;
+      targetFamilyRadio.dispatchEvent(new Event("change"));
+    }
+    if (familyMemberSelect) {
+      familyMemberSelect.value = familyId;
+      familyMemberSelect.dispatchEvent(new Event("change"));
+    }
+  }
+
+  if (symptomsParam) {
+    openBookModal();
+    if (aiSymptomInput) {
+      aiSymptomInput.value = symptomsParam;
+    }
+    if (autoAi === "1") {
+      setTimeout(() => {
+        runAiDoctorMatch();
+      }, 400);
+    }
+    sessionStorage.removeItem("arogya_ai_query");
+  }
+};
+
 const init = async () => {
   const session = ensureSession({
     allowedRoles: ["patient"],
     onDenied: () => toast("Please login as user", "error")
   });
   if (!session.allowed) return;
+  activeUser = session.user;
 
   renderRatingStars();
+  detectBrowserLocation();
 
   try {
-    await loadDoctors();
-    await loadAppointments();
+    await Promise.all([loadDoctors(), loadAppointments(), loadFamilyMembers()]);
+    handleUrlParams();
   } catch (error) {
     toast(error.message, "error");
   }

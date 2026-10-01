@@ -27,6 +27,32 @@
                     </div>
                 </div>
 
+                <!-- Profile & Family Setup Notification Banner (shown if profile incomplete or family members < 1) -->
+                <div id="profile-setup-banner" style="display:none;background:linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);color:#fff;border-radius:12px;padding:16px 20px;margin-bottom:20px;box-shadow:0 4px 14px rgba(37,99,235,0.25)">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+                        <div style="display:flex;align-items:center;gap:14px;flex:1;min-width:260px">
+                            <div style="font-size:2rem;line-height:1">👨‍👩‍👧‍👦</div>
+                            <div>
+                                <div style="display:flex;align-items:center;gap:8px">
+                                    <span style="font-weight:800;font-size:1.05rem">Complete Profile & Add Family Members</span>
+                                    <span id="banner-pct-badge" class="badge" style="background:rgba(255,255,255,0.2);color:#fff">50% Complete</span>
+                                </div>
+                                <div id="banner-subtext" style="font-size:0.85rem;opacity:0.95;margin-top:2px">
+                                    Add up to 5 family member profiles to book doctors & dispatch ambulances for them from remote places!
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px">
+                            <button class="btn" style="background:#fff;color:#2563eb;font-weight:700;border:none;padding:8px 14px;border-radius:8px;cursor:pointer" onclick="location.href='profile.html'">
+                                ⚙️ Complete Profile
+                            </button>
+                            <button class="btn" style="background:rgba(255,255,255,0.2);color:#fff;font-weight:700;border:1px solid rgba(255,255,255,0.4);padding:8px 14px;border-radius:8px;cursor:pointer" onclick="location.href='profile.html#add-family'">
+                                ➕ Add Family Member
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Emergency SOS Alert Banner -->
                 <div style="background:linear-gradient(135deg, #ef4444 0%, #dc2626 100%);color:#fff;border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;box-shadow:0 4px 14px rgba(239,68,68,0.3)">
                     <div style="display:flex;align-items:center;gap:12px">
@@ -37,6 +63,26 @@
                         </div>
                     </div>
                     <button class="btn" style="background:#fff;color:#dc2626;font-weight:700;border:none;padding:10px 18px;border-radius:8px;cursor:pointer" onclick="location.href='ambulance-booking.html'">Request Emergency Ambulance</button>
+                </div>
+
+                <!-- AI Smart Healthcare Auto-Triage Widget -->
+                <div class="card" style="margin-bottom:24px;padding:18px;background:linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);border:1px solid #bfdbfe">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span style="font-size:1.3rem">🤖</span>
+                            <div>
+                                <span style="font-weight:800;font-size:0.98rem;color:var(--text-1)">Autonomous AI Health Assistant</span>
+                                <span class="badge badge-blue" style="margin-left:6px;font-size:0.75rem">Auto-Triage & Doctor Match</span>
+                            </div>
+                        </div>
+                        <div style="font-size:0.8rem;color:var(--text-2)">Match best doctor or ambulance for self or remote family</div>
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap">
+                        <input id="ai-quick-symptoms" class="form-input" style="flex:1;min-width:240px;background:#fff" placeholder="Describe symptoms or condition (e.g. Chest pain, High fever, Sprained ankle, Knee pain)..." />
+                        <button id="ai-quick-match-btn" class="btn btn-primary" type="button" style="gap:6px">
+                            <span>🤖 Auto-Match Doctor</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Quick Actions Bar -->

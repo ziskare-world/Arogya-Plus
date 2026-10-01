@@ -109,14 +109,71 @@ router.get(
   })
 );
 
+const calculateProfileCompletion = (user) => {
+  let score = 0;
+  const missing = [];
+
+  if (user.name) score += 15; else missing.push("Full Name");
+  if (user.phone) score += 15; else missing.push("Phone Number");
+
+  if (user.age && user.gender) score += 15; else missing.push("Age and Gender");
+  if (user.bloodGroup && user.bloodGroup !== "Unknown") score += 15; else missing.push("Blood Group");
+
+  if (user.address || user.city) score += 20; else missing.push("Home / Current Address");
+
+  const familyCount = (user.familyMembers || []).length;
+  if (familyCount > 0) {
+    score += 20;
+  } else {
+    missing.push("Add Family Members for remote care");
+  }
+
+  return {
+    completionPercentage: Math.min(100, score),
+    isProfileComplete: score >= 80,
+    missingFields: missing,
+    familyMemberCount: familyCount,
+    maxFamilyMembers: 5
+  };
+};
+
+router.get(
+  "/profile-status",
+  protect,
+  authorize("patient"),
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const status = calculateProfileCompletion(user);
+
+    // Auto-update isProfileComplete if changed
+    if (user.isProfileComplete !== status.isProfileComplete) {
+      user.isProfileComplete = status.isProfileComplete;
+      await user.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      ...status,
+      familyMembers: user.familyMembers || []
+    });
+  })
+);
+
 router.get(
   "/profile",
   protect,
   authorize("patient"),
   asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+    const completion = calculateProfileCompletion(user);
     return res.status(200).json({
       success: true,
-      profile: req.user
+      profile: user,
+      completion
     });
   })
 );
@@ -128,7 +185,15 @@ router.patch(
   [
     body("name").optional().trim().notEmpty().withMessage("Name cannot be empty"),
     body("email").optional().isEmail().withMessage("Valid email is required").normalizeEmail(),
-    body("phone").optional().isString()
+    body("phone").optional().isString(),
+    body("age").optional().isNumeric().withMessage("Age must be a number"),
+    body("gender").optional().isIn(["male", "female", "other"]).withMessage("Invalid gender"),
+    body("bloodGroup").optional().isString(),
+    body("address").optional().isString(),
+    body("city").optional().isString(),
+    body("coordinates").optional().isObject(),
+    body("allergies").optional().isArray(),
+    body("medicalHistory").optional().isArray()
   ],
   validateRequest,
   asyncHandler(async (req, res) => {
@@ -147,19 +212,211 @@ router.patch(
 
     if (req.body.name !== undefined) user.name = req.body.name;
     if (req.body.phone !== undefined) user.phone = req.body.phone;
+    if (req.body.age !== undefined) user.age = Number(req.body.age);
+    if (req.body.gender !== undefined) user.gender = req.body.gender;
+    if (req.body.bloodGroup !== undefined) user.bloodGroup = req.body.bloodGroup;
+    if (req.body.address !== undefined) user.address = req.body.address;
+    if (req.body.city !== undefined) user.city = req.body.city;
+    if (req.body.coordinates !== undefined) user.coordinates = req.body.coordinates;
+    if (req.body.allergies !== undefined) user.allergies = req.body.allergies;
+    if (req.body.medicalHistory !== undefined) user.medicalHistory = req.body.medicalHistory;
+
+    const completion = calculateProfileCompletion(user);
+    user.isProfileComplete = completion.isProfileComplete;
 
     await user.save();
 
     return res.status(200).json({
       success: true,
       message: "Profile updated successfully",
-      profile: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role
+      profile: user,
+      completion
+    });
+  })
+);
+
+// ==========================================
+// FAMILY MEMBER CRUD (UP TO 5 FAMILY MEMBERS)
+// ==========================================
+router.get(
+  "/family-members",
+  protect,
+  authorize("patient"),
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id).select("familyMembers");
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      count: (user.familyMembers || []).length,
+      maxAllowed: 5,
+      remainingSlots: Math.max(0, 5 - (user.familyMembers || []).length),
+      familyMembers: user.familyMembers || []
+    });
+  })
+);
+
+router.post(
+  "/family-members",
+  protect,
+  authorize("patient"),
+  [
+    body("name").trim().notEmpty().withMessage("Family member name is required"),
+    body("relationship")
+      .isIn(["Father", "Mother", "Spouse", "Child", "Son", "Daughter", "Brother", "Sister", "Grandparent", "Other"])
+      .withMessage("Valid relationship is required"),
+    body("age").optional().isNumeric().withMessage("Age must be a number"),
+    body("gender").optional().isIn(["male", "female", "other"]).withMessage("Invalid gender"),
+    body("bloodGroup").optional().isString(),
+    body("phone").optional().isString(),
+    body("address").optional().isString(),
+    body("city").optional().isString(),
+    body("coordinates").optional().isObject(),
+    body("medicalHistory").optional().isArray(),
+    body("allergies").optional().isArray()
+  ],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    if (!user.familyMembers) {
+      user.familyMembers = [];
+    }
+
+    if (user.familyMembers.length >= 5) {
+      return res.status(400).json({
+        success: false,
+        message: "Maximum limit reached. You can add up to 5 family members to your profile."
+      });
+    }
+
+    const {
+      name,
+      relationship,
+      age,
+      gender,
+      bloodGroup,
+      phone,
+      address,
+      city,
+      coordinates,
+      medicalHistory,
+      allergies,
+      isEmergencyContact
+    } = req.body;
+
+    user.familyMembers.push({
+      name,
+      relationship,
+      age: age ? Number(age) : undefined,
+      gender: gender || "other",
+      bloodGroup: bloodGroup || "Unknown",
+      phone: phone || "",
+      address: address || "",
+      city: city || "",
+      coordinates: coordinates || undefined,
+      medicalHistory: Array.isArray(medicalHistory) ? medicalHistory : [],
+      allergies: Array.isArray(allergies) ? allergies : [],
+      isEmergencyContact: Boolean(isEmergencyContact)
+    });
+
+    const completion = calculateProfileCompletion(user);
+    user.isProfileComplete = completion.isProfileComplete;
+
+    await user.save();
+
+    const addedMember = user.familyMembers[user.familyMembers.length - 1];
+
+    return res.status(201).json({
+      success: true,
+      message: `${name} (${relationship}) added to your family profiles`,
+      familyMember: addedMember,
+      count: user.familyMembers.length,
+      maxAllowed: 5,
+      remainingSlots: 5 - user.familyMembers.length,
+      completion
+    });
+  })
+);
+
+router.put(
+  "/family-members/:memberId",
+  protect,
+  authorize("patient"),
+  [
+    param("memberId").isMongoId().withMessage("Valid family member id required"),
+    body("name").optional().trim().notEmpty().withMessage("Name cannot be empty"),
+    body("relationship")
+      .optional()
+      .isIn(["Father", "Mother", "Spouse", "Child", "Son", "Daughter", "Brother", "Sister", "Grandparent", "Other"])
+  ],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const member = user.familyMembers.id(req.params.memberId);
+    if (!member) {
+      return res.status(404).json({ success: false, message: "Family member not found" });
+    }
+
+    const fields = [
+      "name", "relationship", "age", "gender", "bloodGroup", "phone",
+      "address", "city", "coordinates", "medicalHistory", "allergies", "isEmergencyContact"
+    ];
+
+    fields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        member[field] = req.body[field];
       }
+    });
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Family member updated successfully",
+      familyMember: member
+    });
+  })
+);
+
+router.delete(
+  "/family-members/:memberId",
+  protect,
+  authorize("patient"),
+  [param("memberId").isMongoId().withMessage("Valid family member id required")],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const member = user.familyMembers.id(req.params.memberId);
+    if (!member) {
+      return res.status(404).json({ success: false, message: "Family member not found" });
+    }
+
+    user.familyMembers.pull(req.params.memberId);
+    const completion = calculateProfileCompletion(user);
+    user.isProfileComplete = completion.isProfileComplete;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Family member removed successfully",
+      count: user.familyMembers.length,
+      remainingSlots: 5 - user.familyMembers.length,
+      completion
     });
   })
 );

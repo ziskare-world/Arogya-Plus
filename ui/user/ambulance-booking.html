@@ -100,32 +100,60 @@
                     <div style="display:flex;flex-direction:column;gap:20px">
                         <div class="card">
                             <div class="card-header">
-                                <div class="card-title">New Booking</div>
+                                <div class="card-title" style="display:flex;align-items:center;gap:8px">
+                                    <span>🚑 Emergency Ambulance Dispatch</span>
+                                    <span class="badge badge-red" style="font-size:0.72rem">AI Autonomous</span>
+                                </div>
                             </div>
+
+                            <!-- 1. Who is this for? -->
+                            <div style="background:#f8fafc;padding:12px;border-radius:10px;border:1px solid var(--border);margin-bottom:12px">
+                                <label class="form-label" style="font-weight:700;margin-bottom:6px">1. Dispatching For</label>
+                                <div style="display:flex;gap:14px;align-items:center;margin-bottom:6px">
+                                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.88rem">
+                                        <input type="radio" name="amb-target" value="self" checked id="amb-target-self" />
+                                        <span>👤 Myself</span>
+                                    </label>
+                                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.88rem">
+                                        <input type="radio" name="amb-target" value="family" id="amb-target-family" />
+                                        <span>👨‍👩‍👧 Family Member (Remote)</span>
+                                    </label>
+                                </div>
+                                <div id="amb-family-wrapper" style="display:none;margin-top:8px">
+                                    <select id="amb-family-select" class="form-input">
+                                        <option value="">-- Choose family member --</option>
+                                    </select>
+                                    <div id="amb-family-details" class="muted" style="font-size:0.8rem;margin-top:4px"></div>
+                                </div>
+                            </div>
+
                             <div class="mode-toggle" style="margin-bottom:12px">
-                                <button id="mode-pickup-btn" class="btn btn-outline btn-sm active" type="button">Select Pickup</button>
-                                <button id="mode-hospital-btn" class="btn btn-outline btn-sm" type="button">Select Hospital</button>
-                                <button id="select-nearest-hospital-btn" class="btn btn-outline btn-sm" type="button">🏥 Nearest Emergency Hospital</button>
-                                <button id="use-current-btn" class="btn btn-ghost btn-sm" type="button">🎯 Current Location</button>
+                                <button id="mode-pickup-btn" class="btn btn-outline btn-sm active" type="button">📍 Select on Map</button>
+                                <button id="use-current-btn" class="btn btn-ghost btn-sm" type="button">🎯 Current GPS</button>
+                                <button id="use-family-loc-btn" class="btn btn-ghost btn-sm" type="button" style="display:none">🏠 Family Remote Address</button>
+                                <button id="select-nearest-hospital-btn" class="btn btn-outline btn-sm" type="button">🏥 Nearest Hospital</button>
                             </div>
+
                             <form id="ambulance-booking-form" style="display:grid;gap:12px">
                                 <div class="form-group">
-                                    <label class="form-label" for="problem-description-input">Problem / Symptoms</label>
+                                    <label class="form-label" for="problem-description-input">Emergency Symptoms / Condition *</label>
                                     <textarea id="problem-description-input" class="form-input" rows="2"
-                                        placeholder="Describe emergency problem (example: chest pain, fracture, breathing issue)"
+                                        placeholder="Describe emergency problem (e.g. Severe chest pain, breathing difficulty, accident, stroke signs)"
                                         required></textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" for="pickup-location-input">Pickup Location</label>
-                                    <input id="pickup-location-input" class="form-input" placeholder="Click map or type address" />
+                                    <label class="form-label" for="pickup-location-input">Pickup Location (Current or Remote Place) *</label>
+                                    <input id="pickup-location-input" class="form-input" placeholder="Type remote address or click map" required />
                                     <div class="map-help" id="pickup-coords-label"></div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" for="hospital-location-input">Assigned Hospital</label>
-                                    <input id="hospital-location-input" class="form-input" placeholder="Will be auto-assigned on booking" />
+                                    <label class="form-label" for="hospital-location-input">Assigned Facility / Hospital</label>
+                                    <input id="hospital-location-input" class="form-input" placeholder="AI will auto-assign nearest emergency hospital with ICU/beds" />
                                     <div class="map-help" id="hospital-coords-label"></div>
                                 </div>
-                                <button id="book-ambulance-btn" class="btn btn-primary btn-full" type="submit">Book Ambulance</button>
+                                <button id="book-ambulance-btn" class="btn btn-primary btn-full" type="submit" style="background:#dc2626;border-color:#dc2626;font-weight:700">
+                                    🚨 AI Auto-Dispatch Closest Ambulance
+                                </button>
                             </form>
                             <div class="map-help" id="google-map-key-help" style="margin-top:10px"></div>
                         </div>

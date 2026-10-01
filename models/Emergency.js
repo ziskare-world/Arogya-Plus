@@ -12,6 +12,24 @@ const emergencySchema = new mongoose.Schema(
       required: [true, "Contact number is required"],
       trim: true
     },
+    bookedFor: {
+      type: String,
+      enum: ["self", "family"],
+      default: "self"
+    },
+    familyMemberId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null
+    },
+    relationship: {
+      type: String,
+      trim: true
+    },
+    locationType: {
+      type: String,
+      enum: ["current", "remote_saved", "custom_remote"],
+      default: "current"
+    },
     symptoms: [
       {
         type: String,
@@ -22,6 +40,11 @@ const emergencySchema = new mongoose.Schema(
       type: String,
       enum: ["low", "medium", "high", "critical"],
       default: "medium"
+    },
+    aiAssessment: {
+      triageLevel: { type: String, enum: ["low", "medium", "high", "critical"] },
+      recommendations: [{ type: String, trim: true }],
+      emergencyCategory: { type: String, trim: true }
     },
     status: {
       type: String,

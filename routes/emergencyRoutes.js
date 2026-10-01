@@ -23,13 +23,40 @@ router.post(
   ],
   validateRequest,
   asyncHandler(async (req, res) => {
-    const { patientName, contact, location, priority, symptoms = [] } = req.body;
-    const emergency = await Emergency.create({
+    const {
       patientName,
       contact,
       location,
-      priority: priority || "medium",
+      priority,
+      symptoms = [],
+      bookedFor = "self",
+      familyMemberId = null,
+      relationship = "",
+      locationType = "current",
+      latitude,
+      longitude
+    } = req.body;
+
+    const { analyzeSymptoms } = require("../utils/aiEngine");
+    const aiAssessment = analyzeSymptoms({ symptoms, additionalNotes: location });
+
+    const emergency = await Emergency.create({
+      patientName,
+      contact,
+      bookedFor: bookedFor === "family" ? "family" : "self",
+      familyMemberId: familyMemberId || null,
+      relationship: relationship || (bookedFor === "family" ? "Family" : "Self"),
+      locationType: locationType || (bookedFor === "family" ? "remote_saved" : "current"),
+      location,
+      latitude: Number(latitude) || 28.6139,
+      longitude: Number(longitude) || 77.2090,
+      priority: priority || aiAssessment.urgencyLevel || "medium",
       symptoms,
+      aiAssessment: {
+        triageLevel: aiAssessment.urgencyLevel,
+        recommendations: [aiAssessment.advice, aiAssessment.diagnosisHint],
+        emergencyCategory: aiAssessment.predictedSpecialty
+      },
       createdBy: req.user._id
     });
 

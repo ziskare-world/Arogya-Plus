@@ -7,6 +7,27 @@ const ambulanceSchema = new mongoose.Schema(
       ref: "User",
       required: true
     },
+    bookedFor: {
+      type: String,
+      enum: ["self", "family"],
+      default: "self"
+    },
+    familyMemberId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null
+    },
+    patientDetails: {
+      name: { type: String, trim: true },
+      relationship: { type: String, trim: true },
+      phone: { type: String, trim: true },
+      age: { type: Number, min: 0, max: 130 },
+      gender: { type: String, enum: ["male", "female", "other"] }
+    },
+    locationType: {
+      type: String,
+      enum: ["current", "remote_saved", "custom_remote"],
+      default: "current"
+    },
     pickupLocation: {
       type: String,
       required: [true, "Pickup location is required"],
@@ -19,6 +40,12 @@ const ambulanceSchema = new mongoose.Schema(
     pickupCoordinates: {
       lat: { type: Number, min: -90, max: 90 },
       lng: { type: Number, min: -180, max: 180 }
+    },
+    aiDispatch: {
+      autoDispatched: { type: Boolean, default: false },
+      dispatchReason: { type: String, trim: true },
+      severityScore: { type: Number, min: 0, max: 10 },
+      priority: { type: String, enum: ["low", "medium", "high", "critical"], default: "high" }
     },
     hospitalLocation: {
       type: String,

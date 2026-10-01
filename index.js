@@ -24,6 +24,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const authPageRoutes = require("./routes/authPageRoutes");
 const mapRoutes = require("./routes/mapRoutes");
 const labRoutes = require("./routes/labRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const { getEmergencyQueue } = require("./utils/emergencyQueue");
 
@@ -275,6 +276,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/doctor", doctorRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/ai", aiRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/map", mapRoutes);
 app.use("/api/lab-tests", labRoutes);

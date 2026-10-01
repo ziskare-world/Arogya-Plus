@@ -231,6 +231,33 @@ describe("AI Healthcare Architecture & Family Profile Automation", () => {
       expect(deleteRes.body.remainingSlots).toBe(5);
     });
 
+    test("allows creating multiple profiles under one account with only name (Lenskart style)", async () => {
+      // Create profile with ONLY name - no relationship, no age, no bloodGroup, no address
+      const addRes = await request(app)
+        .post("/api/user/family-members")
+        .set("Authorization", `Bearer ${patient.token}`)
+        .send({
+          name: "Papa"
+        });
+
+      expect(addRes.statusCode).toBe(201);
+      expect(addRes.body.success).toBe(true);
+      expect(addRes.body.familyMember.name).toBe("Papa");
+      expect(addRes.body.familyMember.relationship).toBe("Other");
+
+      const listRes = await request(app)
+        .get("/api/user/family-members")
+        .set("Authorization", `Bearer ${patient.token}`);
+
+      expect(listRes.body.count).toBe(1);
+      expect(listRes.body.familyMembers[0].name).toBe("Papa");
+
+      // Clean up
+      await request(app)
+        .delete(`/api/user/family-members/${addRes.body.familyMember._id}`)
+        .set("Authorization", `Bearer ${patient.token}`);
+    });
+
     test("computes profile completion percentage correctly", async () => {
       // Initially, with only basic name and phone
       const initialStatus = await request(app)

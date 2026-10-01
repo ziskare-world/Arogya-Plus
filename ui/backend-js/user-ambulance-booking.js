@@ -66,78 +66,231 @@ const statusBadge = (status = "") => {
   return '<span class="badge badge-yellow">Requested</span>';
 };
 
-// ==========================================
-// FAMILY MEMBER INTEGRATION
-// ==========================================
+// ========================================================
+// LENSKART-STYLE MULTI-PROFILE CHOOSER FOR AMBULANCE
+// ========================================================
+let activeAmbProfileId = "self";
+
+const getAmbAvatarMeta = (member, isSelf = false) => {
+  if (isSelf) return { cls: "avatar-self", icon: "👤", tag: "Self" };
+  const rel = String(member?.relationship || "").toLowerCase();
+  if (rel.includes("dad") || rel.includes("father")) return { cls: "avatar-dad", icon: "👨", tag: member.relationship || "Dad" };
+  if (rel.includes("mom") || rel.includes("mother")) return { cls: "avatar-mom", icon: "👩", tag: member.relationship || "Mom" };
+  if (rel.includes("child") || rel.includes("son") || rel.includes("daughter")) return { cls: "avatar-child", icon: "🧒", tag: member.relationship || "Child" };
+  if (rel.includes("brother") || rel.includes("sister")) return { cls: "avatar-other", icon: "🧑", tag: member.relationship || "Sibling" };
+  return { cls: "avatar-other", icon: "👤", tag: member.relationship || "Profile" };
+};
+
 const loadFamilyMembers = async () => {
   try {
     const data = await apiRequest("/api/user/family-members");
     familyMembers = data.familyMembers || [];
-    renderFamilyOptions();
+    renderAmbProfilePills();
   } catch (e) {
     familyMembers = [];
+    renderAmbProfilePills();
   }
 };
 
-const renderFamilyOptions = () => {
-  if (!ambFamilySelect) return;
-  if (!familyMembers.length) {
-    ambFamilySelect.innerHTML = '<option value="">No family members added yet. Add in Profile.</option>';
-    return;
+const renderAmbProfilePills = () => {
+  const container = document.getElementById("amb-profile-pills");
+  if (!container) return;
+
+  const countBadge = document.getElementById("amb-profile-count");
+  if (countBadge) {
+    const total = 1 + familyMembers.length;
+    countBadge.textContent = `${total} Profile${total > 1 ? "s" : ""} in Account`;
   }
 
-  ambFamilySelect.innerHTML = '<option value="">-- Choose family member --</option>' +
-    familyMembers.map((m) => {
-      const blood = m.bloodGroup && m.bloodGroup !== "Unknown" ? ` [${m.bloodGroup}]` : "";
-      const loc = m.city || m.address || "Remote Location";
-      return `<option value="${m._id}">${m.name} (${m.relationship})${blood} - 📍 ${loc}</option>`;
-    }).join("");
-};
+  let html = "";
 
-const getSelectedFamilyMember = () => {
-  const id = ambFamilySelect?.value;
-  if (!id) return null;
-  return familyMembers.find((m) => String(m._id) === String(id)) || null;
-};
+  // 1. Myself Pill
+  const isSelfActive = activeAmbProfileId === "self";
+  html += `
+    <div class="profile-pill ${isSelfActive ? "active" : ""}" data-profile-id="self" role="button" tabindex="0">
+      <div class="profile-pill-avatar avatar-self">👤</div>
+      <div class="profile-pill-text">
+        <span class="profile-pill-name">${activeUser?.name || "Myself"}</span>
+        <span class="profile-pill-tag">Primary Account</span>
+      </div>
+      <div class="profile-pill-check">✓</div>
+    </div>
+  `;
 
-// Dispatch target change
-document.querySelectorAll('input[name="amb-target"]').forEach((radio) => {
-  radio.addEventListener("change", () => {
-    const isFamily = ambTargetFamily?.checked;
-    if (ambFamilyWrapper) ambFamilyWrapper.style.display = isFamily ? "block" : "none";
-    if (useFamilyLocBtnEl) useFamilyLocBtnEl.style.display = isFamily ? "inline-block" : "none";
-
-    if (isFamily) {
-      if (familyMembers.length && ambFamilySelect && !ambFamilySelect.value) {
-        ambFamilySelect.value = familyMembers[0]._id;
-        ambFamilySelect.dispatchEvent(new Event("change"));
-      }
-    } else {
-      if (ambFamilyDetails) ambFamilyDetails.textContent = "";
-      if (currentLocationCoords) {
-        setPickupLocation(currentLocationCoords.lat, currentLocationCoords.lng, "My Current Location");
-      }
-    }
+  // 2. Family Members
+  familyMembers.forEach((member) => {
+    const meta = getAmbAvatarMeta(member);
+    const isActive = activeAmbProfileId === String(member._id);
+    html += `
+      <div class="profile-pill ${isActive ? "active" : ""}" data-profile-id="${member._id}" role="button" tabindex="0">
+        <div class="profile-pill-avatar ${meta.cls}">${meta.icon}</div>
+        <div class="profile-pill-text">
+          <span class="profile-pill-name">${member.name}</span>
+          <span class="profile-pill-tag">${meta.tag}</span>
+        </div>
+        <div class="profile-pill-check">✓</div>
+      </div>
+    `;
   });
-});
 
-ambFamilySelect?.addEventListener("change", () => {
-  const member = getSelectedFamilyMember();
-  if (!member) {
-    if (ambFamilyDetails) ambFamilyDetails.textContent = "";
-    return;
-  }
-
-  const blood = member.bloodGroup && member.bloodGroup !== "Unknown" ? member.bloodGroup : "N/A";
-  if (ambFamilyDetails) {
-    ambFamilyDetails.innerHTML = `
-      <strong>${member.name} (${member.relationship})</strong> • Age: ${member.age || "N/A"} • Blood: <span style="color:#ef4444">${blood}</span><br>
-      📍 Remote Place: <strong>${member.address || member.city || "Remote Address"}</strong>
+  // 3. Add Profile Pill (if < 5)
+  if (familyMembers.length < 5) {
+    html += `
+      <div class="profile-pill-add" id="amb-pill-add-profile" role="button" tabindex="0">
+        <span style="font-size:1.1rem;line-height:1">➕</span>
+        <span>Add Profile</span>
+      </div>
     `;
   }
 
-  applyFamilyMemberLocation(member);
-});
+  container.innerHTML = html;
+
+  container.querySelectorAll(".profile-pill").forEach((pill) => {
+    pill.addEventListener("click", () => {
+      const pid = pill.getAttribute("data-profile-id");
+      selectAmbProfile(pid);
+    });
+  });
+
+  const addPill = document.getElementById("amb-pill-add-profile");
+  if (addPill) {
+    addPill.addEventListener("click", () => {
+      const drawer = document.getElementById("amb-quick-add-drawer");
+      if (drawer) {
+        drawer.style.display = drawer.style.display === "none" ? "grid" : "none";
+        if (drawer.style.display === "grid") {
+          document.getElementById("amb-quick-name")?.focus();
+        }
+      }
+    });
+  }
+
+  updateAmbActiveStrip();
+};
+
+const selectAmbProfile = (profileId) => {
+  activeAmbProfileId = String(profileId || "self");
+
+  const container = document.getElementById("amb-profile-pills");
+  if (container) {
+    container.querySelectorAll(".profile-pill").forEach((pill) => {
+      const pid = pill.getAttribute("data-profile-id");
+      pill.classList.toggle("active", pid === activeAmbProfileId);
+    });
+  }
+
+  if (activeAmbProfileId === "self") {
+    if (ambTargetSelf) ambTargetSelf.checked = true;
+    if (ambTargetFamily) ambTargetFamily.checked = false;
+    if (useFamilyLocBtnEl) useFamilyLocBtnEl.style.display = "none";
+    if (currentLocationCoords) {
+      setPickupLocation(currentLocationCoords.lat, currentLocationCoords.lng, "My Current Location");
+    }
+  } else {
+    if (ambTargetSelf) ambTargetSelf.checked = false;
+    if (ambTargetFamily) ambTargetFamily.checked = true;
+    if (useFamilyLocBtnEl) useFamilyLocBtnEl.style.display = "inline-block";
+    if (ambFamilySelect) ambFamilySelect.value = activeAmbProfileId;
+
+    const member = familyMembers.find((m) => String(m._id) === activeAmbProfileId);
+    if (member) {
+      applyFamilyMemberLocation(member);
+    }
+  }
+
+  updateAmbActiveStrip();
+};
+
+const updateAmbActiveStrip = () => {
+  const strip = document.getElementById("amb-active-profile-strip");
+  const title = document.getElementById("amb-active-profile-title");
+  const meta = document.getElementById("amb-active-profile-meta");
+  if (!strip || !title) return;
+
+  if (activeAmbProfileId === "self") {
+    strip.style.display = "flex";
+    strip.style.background = "#f0fdf4";
+    strip.style.borderColor = "#bbf7d0";
+    title.innerHTML = `👤 Ambulance Dispatch for: <strong>${activeUser?.name || "Myself"}</strong> (Primary)`;
+    title.style.color = "#166534";
+    if (meta) meta.textContent = "• Pickup at current GPS location";
+  } else {
+    const member = familyMembers.find((m) => String(m._id) === activeAmbProfileId);
+    if (member) {
+      strip.style.display = "flex";
+      strip.style.background = "#eff6ff";
+      strip.style.borderColor = "#bfdbfe";
+      title.innerHTML = `👨‍👩‍👧 Ambulance Dispatch for: <strong>${member.name}</strong> (${member.relationship || "Profile"})`;
+      title.style.color = "#1e40af";
+      const loc = member.address || member.city || "";
+      if (meta) meta.textContent = loc ? `• 📍 Remote Place: ${loc}` : "• Remote Family Member";
+    }
+  }
+};
+
+const initQuickAddAmbProfile = () => {
+  const closeBtn = document.getElementById("amb-close-quick-add-btn");
+  const saveBtn = document.getElementById("amb-save-quick-btn");
+  const drawer = document.getElementById("amb-quick-add-drawer");
+
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      if (drawer) drawer.style.display = "none";
+    });
+  }
+
+  if (saveBtn) {
+    saveBtn.addEventListener("click", async () => {
+      const nameInput = document.getElementById("amb-quick-name");
+      const relInput = document.getElementById("amb-quick-rel");
+      const addrInput = document.getElementById("amb-quick-address");
+
+      const name = nameInput?.value.trim();
+      if (!name) {
+        toast("Profile Name is required", "warning");
+        nameInput?.focus();
+        return;
+      }
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Saving...";
+
+      try {
+        const payload = {
+          name,
+          relationship: relInput?.value || "Other",
+          address: addrInput?.value.trim() || undefined,
+          city: addrInput?.value.trim() || undefined
+        };
+
+        const res = await apiRequest("/api/user/family-members", {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+
+        toast(`Profile "${name}" added to account!`, "success");
+        if (drawer) drawer.style.display = "none";
+        if (nameInput) nameInput.value = "";
+        if (addrInput) addrInput.value = "";
+
+        await loadFamilyMembers();
+        if (res.familyMember?._id) {
+          selectAmbProfile(res.familyMember._id);
+        }
+      } catch (err) {
+        toast(err.message || "Failed to add profile", "error");
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save & Select";
+      }
+    });
+  }
+};
+
+const getSelectedFamilyMember = () => {
+  if (activeAmbProfileId === "self") return null;
+  return familyMembers.find((m) => String(m._id) === activeAmbProfileId) || null;
+};
 
 const applyFamilyMemberLocation = (member) => {
   if (!member) return;
@@ -483,18 +636,14 @@ const handleUrlParams = () => {
   const url = new URL(window.location.href);
   const familyId = url.searchParams.get("familyId");
 
-  if (familyId && ambTargetFamily) {
-    ambTargetFamily.checked = true;
-    ambTargetFamily.dispatchEvent(new Event("change"));
-    if (ambFamilySelect) {
-      ambFamilySelect.value = familyId;
-      ambFamilySelect.dispatchEvent(new Event("change"));
-    }
+  if (familyId) {
+    selectAmbProfile(familyId);
   }
 };
 
 // Boot application
 initLeafletMap();
+initQuickAddAmbProfile();
 
 ensureSession({
   allowedRoles: ["patient", "admin", "super-admin"]

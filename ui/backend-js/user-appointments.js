@@ -232,38 +232,237 @@ if (qrModalEl) {
   });
 }
 
-// ==========================================
-// FAMILY MEMBER & REMOTE LOCATION MANAGEMENT
-// ==========================================
+// ========================================================
+// LENSKART-STYLE MULTI-PROFILE CHOOSER & REMOTE MANAGEMENT
+// ========================================================
+let activeProfileId = "self";
+
+const getAvatarMeta = (member, isSelf = false) => {
+  if (isSelf) return { cls: "avatar-self", icon: "👤", tag: "Self" };
+  const rel = String(member?.relationship || "").toLowerCase();
+  if (rel.includes("dad") || rel.includes("father")) return { cls: "avatar-dad", icon: "👨", tag: member.relationship || "Dad" };
+  if (rel.includes("mom") || rel.includes("mother")) return { cls: "avatar-mom", icon: "👩", tag: member.relationship || "Mom" };
+  if (rel.includes("child") || rel.includes("son") || rel.includes("daughter")) return { cls: "avatar-child", icon: "🧒", tag: member.relationship || "Child" };
+  if (rel.includes("brother") || rel.includes("sister")) return { cls: "avatar-other", icon: "🧑", tag: member.relationship || "Sibling" };
+  return { cls: "avatar-other", icon: "👤", tag: member.relationship || "Profile" };
+};
+
 const loadFamilyMembers = async () => {
   try {
     const data = await apiRequest("/api/user/family-members");
     familyMembers = data.familyMembers || [];
-    renderFamilyOptions();
+    renderProfilePills();
   } catch (e) {
     familyMembers = [];
+    renderProfilePills();
   }
 };
 
-const renderFamilyOptions = () => {
-  if (!familyMemberSelect) return;
-  if (!familyMembers.length) {
-    familyMemberSelect.innerHTML = '<option value="">No family profiles found. Click "+ Add New Family Member" above.</option>';
-    return;
+const renderProfilePills = () => {
+  const pillsContainer = document.getElementById("appointment-profile-pills");
+  if (!pillsContainer) return;
+
+  const countBadge = document.getElementById("appointment-profile-count");
+  if (countBadge) {
+    const total = 1 + familyMembers.length;
+    countBadge.textContent = `${total} Profile${total > 1 ? "s" : ""} in Account`;
   }
 
-  familyMemberSelect.innerHTML = '<option value="">-- Choose family member --</option>' +
-    familyMembers.map((m) => {
-      const blood = m.bloodGroup && m.bloodGroup !== "Unknown" ? ` [${m.bloodGroup}]` : "";
-      const loc = m.city || m.address || "Remote Location";
-      return `<option value="${m._id}">${m.name} (${m.relationship})${blood} - 📍 ${loc}</option>`;
-    }).join("");
+  let html = "";
+
+  // 1. Myself Pill (Primary account)
+  const isSelfActive = activeProfileId === "self";
+  html += `
+    <div class="profile-pill ${isSelfActive ? "active" : ""}" data-profile-id="self" id="pill-profile-self" role="button" tabindex="0">
+      <div class="profile-pill-avatar avatar-self">👤</div>
+      <div class="profile-pill-text">
+        <span class="profile-pill-name">${activeUser?.name || "Myself"}</span>
+        <span class="profile-pill-tag">Primary Account</span>
+      </div>
+      <div class="profile-pill-check">✓</div>
+    </div>
+  `;
+
+  // 2. Family Members Pills (Like Lenskart multiple profiles)
+  familyMembers.forEach((member) => {
+    const meta = getAvatarMeta(member);
+    const isActive = activeProfileId === String(member._id);
+    html += `
+      <div class="profile-pill ${isActive ? "active" : ""}" data-profile-id="${member._id}" id="pill-profile-${member._id}" role="button" tabindex="0">
+        <div class="profile-pill-avatar ${meta.cls}">${meta.icon}</div>
+        <div class="profile-pill-text">
+          <span class="profile-pill-name">${member.name}</span>
+          <span class="profile-pill-tag">${meta.tag}</span>
+        </div>
+        <div class="profile-pill-check">✓</div>
+      </div>
+    `;
+  });
+
+  // 3. Add Profile Pill (if under 5 limit)
+  if (familyMembers.length < 5) {
+    html += `
+      <div class="profile-pill-add" id="pill-add-profile" role="button" tabindex="0" title="Add profile like Lenskart">
+        <span style="font-size:1.1rem;line-height:1">➕</span>
+        <span>Add Profile</span>
+      </div>
+    `;
+  }
+
+  pillsContainer.innerHTML = html;
+
+  // Bind click on pills
+  pillsContainer.querySelectorAll(".profile-pill").forEach((pill) => {
+    pill.addEventListener("click", () => {
+      const pid = pill.getAttribute("data-profile-id");
+      selectProfile(pid);
+    });
+  });
+
+  const addPill = document.getElementById("pill-add-profile");
+  if (addPill) {
+    addPill.addEventListener("click", () => {
+      const drawer = document.getElementById("quick-add-profile-drawer");
+      if (drawer) {
+        drawer.style.display = drawer.style.display === "none" ? "grid" : "none";
+        if (drawer.style.display === "grid") {
+          document.getElementById("quick-profile-name")?.focus();
+        }
+      }
+    });
+  }
+
+  updateActiveProfileStrip();
+};
+
+const selectProfile = (profileId) => {
+  activeProfileId = String(profileId || "self");
+
+  // Update pills UI
+  const pillsContainer = document.getElementById("appointment-profile-pills");
+  if (pillsContainer) {
+    pillsContainer.querySelectorAll(".profile-pill").forEach((pill) => {
+      const pid = pill.getAttribute("data-profile-id");
+      pill.classList.toggle("active", pid === activeProfileId);
+    });
+  }
+
+  // Update backward compatibility inputs
+  if (activeProfileId === "self") {
+    if (targetSelfRadio) targetSelfRadio.checked = true;
+    if (targetFamilyRadio) targetFamilyRadio.checked = false;
+    if (locFamilyLabel) locFamilyLabel.style.display = "none";
+    if (locCurrentRadio) locCurrentRadio.checked = true;
+    if (customLocationFields) customLocationFields.style.display = "none";
+  } else {
+    if (targetSelfRadio) targetSelfRadio.checked = false;
+    if (targetFamilyRadio) targetFamilyRadio.checked = true;
+    if (locFamilyLabel) locFamilyLabel.style.display = "flex";
+    if (familyMemberSelect) familyMemberSelect.value = activeProfileId;
+
+    const member = familyMembers.find((m) => String(m._id) === activeProfileId);
+    if (member && (member.address || member.city)) {
+      if (locFamilyRadio) locFamilyRadio.checked = true;
+      if (customLocationFields) customLocationFields.style.display = "none";
+    } else {
+      if (locCurrentRadio) locCurrentRadio.checked = true;
+    }
+  }
+
+  updateActiveProfileStrip();
+  updateLocationBadge();
+};
+
+const updateActiveProfileStrip = () => {
+  const strip = document.getElementById("active-profile-strip");
+  const title = document.getElementById("active-profile-title");
+  const meta = document.getElementById("active-profile-meta");
+  if (!strip || !title) return;
+
+  if (activeProfileId === "self") {
+    strip.style.display = "flex";
+    strip.style.background = "#f0fdf4";
+    strip.style.borderColor = "#bbf7d0";
+    title.innerHTML = `👤 Consultation for: <strong>${activeUser?.name || "Myself"}</strong> (Primary)`;
+    title.style.color = "#166534";
+    if (meta) meta.textContent = "• Using your current profile";
+  } else {
+    const member = familyMembers.find((m) => String(m._id) === activeProfileId);
+    if (member) {
+      strip.style.display = "flex";
+      strip.style.background = "#eff6ff";
+      strip.style.borderColor = "#bfdbfe";
+      title.innerHTML = `👨‍👩‍👧 Consultation for: <strong>${member.name}</strong> (${member.relationship || "Profile"})`;
+      title.style.color = "#1e40af";
+      const loc = member.city || member.address || "";
+      if (meta) meta.textContent = loc ? `• 📍 Remote: ${loc}` : "• Family Profile";
+    }
+  }
+};
+
+const initQuickAddProfile = () => {
+  const closeBtn = document.getElementById("close-quick-add-btn");
+  const saveBtn = document.getElementById("save-quick-profile-btn");
+  const drawer = document.getElementById("quick-add-profile-drawer");
+
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      if (drawer) drawer.style.display = "none";
+    });
+  }
+
+  if (saveBtn) {
+    saveBtn.addEventListener("click", async () => {
+      const nameInput = document.getElementById("quick-profile-name");
+      const relInput = document.getElementById("quick-profile-rel");
+      const cityInput = document.getElementById("quick-profile-city");
+
+      const name = nameInput?.value.trim();
+      if (!name) {
+        toast("Profile Name is required", "warning");
+        nameInput?.focus();
+        return;
+      }
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Saving...";
+
+      try {
+        const payload = {
+          name,
+          relationship: relInput?.value || "Other",
+          city: cityInput?.value.trim() || undefined
+        };
+
+        const res = await apiRequest("/api/user/family-members", {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+
+        toast(`Profile "${name}" added successfully!`, "success");
+        if (drawer) drawer.style.display = "none";
+        if (nameInput) nameInput.value = "";
+        if (cityInput) cityInput.value = "";
+
+        // Reload and activate newly created profile
+        await loadFamilyMembers();
+        if (res.familyMember?._id) {
+          selectProfile(res.familyMember._id);
+        }
+      } catch (err) {
+        toast(err.message || "Failed to add profile", "error");
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save & Select";
+      }
+    });
+  }
 };
 
 const updateLocationBadge = () => {
   const mode = document.querySelector('input[name="location-mode"]:checked')?.value || "current";
   if (mode === "current") {
-    locationActiveBadge.innerHTML = '📍 Using <strong>current browser location</strong> for doctor distance calculation.';
+    locationActiveBadge.innerHTML = "📍 Using <strong>current browser location</strong> for doctor distance calculation.";
   } else if (mode === "remote_saved") {
     const selectedMember = getSelectedFamilyMember();
     const loc = selectedMember?.address || selectedMember?.city || "Family member saved address";
@@ -277,66 +476,9 @@ const updateLocationBadge = () => {
 };
 
 const getSelectedFamilyMember = () => {
-  const memberId = familyMemberSelect?.value;
-  if (!memberId) return null;
-  return familyMembers.find((m) => String(m._id) === String(memberId)) || null;
+  if (activeProfileId === "self") return null;
+  return familyMembers.find((m) => String(m._id) === activeProfileId) || null;
 };
-
-// Target change: Myself vs Family
-document.querySelectorAll('input[name="booking-target"]').forEach((radio) => {
-  radio.addEventListener("change", () => {
-    const isFamily = targetFamilyRadio?.checked;
-    if (familySelectWrapper) {
-      familySelectWrapper.style.display = isFamily ? "block" : "none";
-    }
-    if (locFamilyLabel) {
-      locFamilyLabel.style.display = isFamily ? "flex" : "none";
-    }
-
-    if (isFamily) {
-      if (familyMembers.length && familyMemberSelect) {
-        if (!familyMemberSelect.value && familyMembers[0]) {
-          familyMemberSelect.value = familyMembers[0]._id;
-          familyMemberSelect.dispatchEvent(new Event("change"));
-        }
-      }
-    } else {
-      if (locCurrentRadio) locCurrentRadio.checked = true;
-      if (customLocationFields) customLocationFields.style.display = "none";
-      if (familyMemberSummary) familyMemberSummary.style.display = "none";
-      updateLocationBadge();
-    }
-  });
-});
-
-familyMemberSelect?.addEventListener("change", () => {
-  const member = getSelectedFamilyMember();
-  if (!member) {
-    if (familyMemberSummary) familyMemberSummary.style.display = "none";
-    return;
-  }
-
-  if (familyMemberSummary) {
-    familyMemberSummary.style.display = "block";
-    const blood = member.bloodGroup && member.bloodGroup !== "Unknown" ? member.bloodGroup : "N/A";
-    familyMemberSummary.innerHTML = `
-      <div style="font-weight:700;color:var(--text-1)">${member.name} (${member.relationship})</div>
-      <div class="muted" style="margin-top:2px">
-        Age: ${member.age || "N/A"} • Gender: ${member.gender || "N/A"} • Blood Group: <span style="color:#ef4444;font-weight:600">${blood}</span>
-      </div>
-      <div style="margin-top:2px;font-size:0.8rem">
-        📍 Remote Address: <strong>${member.address || member.city || "Not specified"}</strong>
-      </div>
-    `;
-  }
-
-  // Auto-switch to family saved address
-  if (locFamilyRadio) {
-    locFamilyRadio.checked = true;
-    if (customLocationFields) customLocationFields.style.display = "none";
-    updateLocationBadge();
-  }
-});
 
 // Location mode toggle
 document.querySelectorAll('input[name="location-mode"]').forEach((radio) => {
@@ -834,14 +976,7 @@ const handleUrlParams = () => {
 
   if (familyId) {
     openBookModal();
-    if (targetFamilyRadio) {
-      targetFamilyRadio.checked = true;
-      targetFamilyRadio.dispatchEvent(new Event("change"));
-    }
-    if (familyMemberSelect) {
-      familyMemberSelect.value = familyId;
-      familyMemberSelect.dispatchEvent(new Event("change"));
-    }
+    selectProfile(familyId);
   }
 
   if (symptomsParam) {
@@ -868,6 +1003,7 @@ const init = async () => {
 
   renderRatingStars();
   detectBrowserLocation();
+  initQuickAddProfile();
 
   try {
     await Promise.all([loadDoctors(), loadAppointments(), loadFamilyMembers()]);

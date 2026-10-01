@@ -113,20 +113,13 @@ const calculateProfileCompletion = (user) => {
   let score = 0;
   const missing = [];
 
-  if (user.name) score += 15; else missing.push("Full Name");
-  if (user.phone) score += 15; else missing.push("Phone Number");
-
-  if (user.age && user.gender) score += 15; else missing.push("Age and Gender");
-  if (user.bloodGroup && user.bloodGroup !== "Unknown") score += 15; else missing.push("Blood Group");
-
+  if (user.name) score += 20; else missing.push("Full Name");
+  if (user.phone) score += 20; else missing.push("Phone Number");
+  if (user.age && user.gender) score += 20; else missing.push("Age and Gender");
+  if (user.bloodGroup && user.bloodGroup !== "Unknown") score += 20; else missing.push("Blood Group");
   if (user.address || user.city) score += 20; else missing.push("Home / Current Address");
 
   const familyCount = (user.familyMembers || []).length;
-  if (familyCount > 0) {
-    score += 20;
-  } else {
-    missing.push("Add Family Members for remote care");
-  }
 
   return {
     completionPercentage: Math.min(100, score),
@@ -236,7 +229,7 @@ router.patch(
 );
 
 // ==========================================
-// FAMILY MEMBER CRUD (UP TO 5 FAMILY MEMBERS)
+// FAMILY MEMBER CRUD (UP TO 5 FAMILY PROFILES LIKE LENSKART)
 // ==========================================
 router.get(
   "/family-members",
@@ -263,19 +256,17 @@ router.post(
   protect,
   authorize("patient"),
   [
-    body("name").trim().notEmpty().withMessage("Family member name is required"),
-    body("relationship")
-      .isIn(["Father", "Mother", "Spouse", "Child", "Son", "Daughter", "Brother", "Sister", "Grandparent", "Other"])
-      .withMessage("Valid relationship is required"),
-    body("age").optional().isNumeric().withMessage("Age must be a number"),
-    body("gender").optional().isIn(["male", "female", "other"]).withMessage("Invalid gender"),
-    body("bloodGroup").optional().isString(),
-    body("phone").optional().isString(),
-    body("address").optional().isString(),
-    body("city").optional().isString(),
-    body("coordinates").optional().isObject(),
-    body("medicalHistory").optional().isArray(),
-    body("allergies").optional().isArray()
+    body("name").trim().notEmpty().withMessage("Profile name is required"),
+    body("relationship").optional().isString(),
+    body("age").optional(),
+    body("gender").optional(),
+    body("bloodGroup").optional(),
+    body("phone").optional(),
+    body("address").optional(),
+    body("city").optional(),
+    body("coordinates").optional(),
+    body("medicalHistory").optional(),
+    body("allergies").optional()
   ],
   validateRequest,
   asyncHandler(async (req, res) => {
@@ -297,7 +288,7 @@ router.post(
 
     const {
       name,
-      relationship,
+      relationship = "Other",
       age,
       gender,
       bloodGroup,
@@ -312,7 +303,7 @@ router.post(
 
     user.familyMembers.push({
       name,
-      relationship,
+      relationship: relationship ? String(relationship).trim() : "Other",
       age: age ? Number(age) : undefined,
       gender: gender || "other",
       bloodGroup: bloodGroup || "Unknown",
@@ -334,7 +325,7 @@ router.post(
 
     return res.status(201).json({
       success: true,
-      message: `${name} (${relationship}) added to your family profiles`,
+      message: `${name} added to your profiles`,
       familyMember: addedMember,
       count: user.familyMembers.length,
       maxAllowed: 5,
@@ -351,9 +342,7 @@ router.put(
   [
     param("memberId").isMongoId().withMessage("Valid family member id required"),
     body("name").optional().trim().notEmpty().withMessage("Name cannot be empty"),
-    body("relationship")
-      .optional()
-      .isIn(["Father", "Mother", "Spouse", "Child", "Son", "Daughter", "Brother", "Sister", "Grandparent", "Other"])
+    body("relationship").optional().isString()
   ],
   validateRequest,
   asyncHandler(async (req, res) => {

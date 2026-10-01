@@ -113,17 +113,17 @@ const renderFamilyMembers = (familyMembers = []) => {
     if (count === 0) {
         familyMembersGrid.innerHTML = `
             <div style="grid-column:1/-1;text-align:center;padding:32px;background:#f8fafc;border-radius:12px;border:1px dashed var(--border)">
-                <div style="font-size:2rem;margin-bottom:8px">👨‍👩‍👧‍👦</div>
-                <div style="font-weight:700;color:var(--text-1);margin-bottom:4px">No Family Members Added Yet</div>
-                <div class="muted" style="font-size:0.85rem;max-width:440px;margin:0 auto 16px">Add your parents, spouse, or children to book doctors and dispatch emergency ambulances directly to their remote addresses.</div>
-                <button class="btn btn-primary btn-sm" onclick="window.openFamilyModal()">➕ Add First Family Profile</button>
+                <div style="font-size:2rem;margin-bottom:8px">👥</div>
+                <div style="font-weight:700;color:var(--text-1);margin-bottom:4px">No Family Profiles Added Yet</div>
+                <div class="muted" style="font-size:0.85rem;max-width:460px;margin:0 auto 16px">Add multiple profiles under your Gmail account like Lenskart. Only Name is required! You can use them to book doctors or dispatch ambulances to remote places.</div>
+                <button class="btn btn-primary btn-sm" onclick="window.openFamilyModal()">➕ Add First Profile</button>
             </div>
         `;
         return;
     }
 
-    familyMembersGrid.innerHTML = familyMembers.map((member) => {
-        const initials = (member.name || 'F').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    let cardsHtml = familyMembers.map((member) => {
+        const initials = (member.name || 'P').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
         const address = member.address || (member.city ? member.city : 'Remote Location');
         const blood = member.bloodGroup && member.bloodGroup !== 'Unknown' ? member.bloodGroup : 'Blood: Unknown';
         const hasCoords = member.coordinates?.lat && member.coordinates?.lng;
@@ -133,13 +133,13 @@ const renderFamilyMembers = (familyMembers = []) => {
                 <div>
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
                         <div style="display:flex;align-items:center;gap:12px">
-                            <div style="width:44px;height:44px;border-radius:50%;background:#eff6ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.05rem">
+                            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg, #3b82f6, #1d4ed8);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.05rem">
                                 ${initials}
                             </div>
                             <div>
                                 <div style="font-weight:700;color:var(--text-1);font-size:1rem">${member.name}</div>
                                 <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
-                                    <span class="badge badge-blue" style="font-size:0.75rem">${member.relationship}</span>
+                                    <span class="badge badge-blue" style="font-size:0.75rem">${member.relationship || 'Profile'}</span>
                                     ${member.isEmergencyContact ? '<span class="badge badge-red" style="font-size:0.75rem">Emergency SOS</span>' : ''}
                                 </div>
                             </div>
@@ -170,6 +170,22 @@ const renderFamilyMembers = (familyMembers = []) => {
             </div>
         `;
     }).join('');
+
+    // If slots are available (up to 5), show interactive + Add Profile card like Lenskart
+    if (familyMembers.length < 5) {
+        cardsHtml += `
+            <div class="card" onclick="window.openFamilyModal()" style="padding:24px 16px;border-radius:14px;border:2px dashed #94a3b8;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;min-height:220px;text-align:center;transition:all 0.2s ease" onmouseover="this.style.borderColor='#2563eb';this.style.background='#eff6ff'" onmouseout="this.style.borderColor='#94a3b8';this.style.background='#f8fafc'">
+                <div style="width:48px;height:48px;border-radius:50%;background:#e0e7ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:10px">
+                    ➕
+                </div>
+                <div style="font-weight:700;font-size:0.95rem;color:var(--text-1)">Add Another Profile</div>
+                <div class="muted" style="font-size:0.8rem;margin-top:4px">Only Name required • Multi-profile account</div>
+                <span class="badge badge-blue" style="margin-top:8px">${5 - familyMembers.length} slot(s) remaining</span>
+            </div>
+        `;
+    }
+
+    familyMembersGrid.innerHTML = cardsHtml;
 };
 
 const loadProfile = async () => {
@@ -232,15 +248,16 @@ const saveProfile = async () => {
     }
 };
 
-// Family Member Modal Functions
+// Family Member Modal Functions (Lenskart Style)
 window.openFamilyModal = () => {
     if (currentFamilyMembers.length >= 5) {
-        toast('You have reached the maximum limit of 5 family members.', 'warning');
+        toast('You have reached the maximum limit of 5 profiles in your account.', 'warning');
         return;
     }
-    familyModalTitle.textContent = 'Add Family Member Profile';
+    familyModalTitle.textContent = 'Add Profile to Account';
     familyMemberIdInput.value = '';
     familyForm.reset();
+    if (familyRelationshipInput) familyRelationshipInput.value = 'Other';
     familyModal.classList.remove('hidden');
 };
 
@@ -254,10 +271,10 @@ window.editFamilyMember = (memberId) => {
     const member = currentFamilyMembers.find(m => m._id === memberId);
     if (!member) return;
 
-    familyModalTitle.textContent = 'Edit Family Member Profile';
+    familyModalTitle.textContent = 'Edit Profile';
     familyMemberIdInput.value = member._id;
     familyNameInput.value = member.name || '';
-    familyRelationshipInput.value = member.relationship || 'Father';
+    familyRelationshipInput.value = member.relationship || 'Other';
     familyAgeInput.value = member.age || '';
     familyGenderInput.value = member.gender || 'other';
     familyBloodGroupInput.value = member.bloodGroup || 'Unknown';
@@ -274,7 +291,7 @@ window.editFamilyMember = (memberId) => {
 };
 
 window.deleteFamilyMember = async (memberId, memberName) => {
-    if (!window.confirm(`Are you sure you want to remove ${memberName} from your family profiles?`)) {
+    if (!window.confirm(`Are you sure you want to remove ${memberName} from your profiles?`)) {
         return;
     }
 
@@ -282,7 +299,7 @@ window.deleteFamilyMember = async (memberId, memberName) => {
         const data = await apiRequest(`/api/user/family-members/${memberId}`, {
             method: 'DELETE'
         });
-        toast(data.message || 'Family member removed', 'success');
+        toast(data.message || 'Profile removed', 'success');
         await loadProfile();
     } catch (error) {
         toast(error.message, 'error');
@@ -294,6 +311,12 @@ familyForm.addEventListener('submit', async (e) => {
     const memberId = familyMemberIdInput.value;
     const submitBtn = document.getElementById('family-submit-btn');
 
+    const name = familyNameInput.value.trim();
+    if (!name) {
+        toast('Profile Name is required', 'warning');
+        return;
+    }
+
     submitBtn.disabled = true;
     submitBtn.textContent = 'Saving...';
 
@@ -302,35 +325,33 @@ familyForm.addEventListener('submit', async (e) => {
         : undefined;
 
     const payload = {
-        name: familyNameInput.value.trim(),
-        relationship: familyRelationshipInput.value,
+        name,
+        relationship: familyRelationshipInput?.value || 'Other',
         age: familyAgeInput.value ? parseInt(familyAgeInput.value, 10) : undefined,
-        gender: familyGenderInput.value,
-        bloodGroup: familyBloodGroupInput.value,
-        phone: familyPhoneInput.value.trim(),
-        address: familyAddressInput.value.trim(),
-        city: familyCityInput.value.trim(),
+        gender: familyGenderInput.value || 'other',
+        bloodGroup: familyBloodGroupInput.value || 'Unknown',
+        phone: familyPhoneInput.value.trim() || undefined,
+        address: familyAddressInput.value.trim() || undefined,
+        city: familyCityInput.value.trim() || undefined,
         coordinates: coords,
-        medicalHistory: familyHistoryInput.value.split(',').map(s => s.trim()).filter(Boolean),
-        allergies: familyAllergiesInput.value.split(',').map(s => s.trim()).filter(Boolean),
+        medicalHistory: familyHistoryInput.value ? familyHistoryInput.value.split(',').map(s => s.trim()).filter(Boolean) : undefined,
+        allergies: familyAllergiesInput.value ? familyAllergiesInput.value.split(',').map(s => s.trim()).filter(Boolean) : undefined,
         isEmergencyContact: familyEmergencyInput.checked
     };
 
     try {
         if (memberId) {
-            // Update
             await apiRequest(`/api/user/family-members/${memberId}`, {
                 method: 'PUT',
                 body: JSON.stringify(payload)
             });
-            toast('Family member updated successfully', 'success');
+            toast(`Profile "${name}" updated successfully`, 'success');
         } else {
-            // Create
             await apiRequest('/api/user/family-members', {
                 method: 'POST',
                 body: JSON.stringify(payload)
             });
-            toast('Family member added successfully', 'success');
+            toast(`Profile "${name}" added to account!`, 'success');
         }
         window.closeFamilyModal();
         await loadProfile();
@@ -338,7 +359,7 @@ familyForm.addEventListener('submit', async (e) => {
         toast(error.message, 'error');
     } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Save Family Member';
+        submitBtn.textContent = 'Save Profile';
     }
 });
 

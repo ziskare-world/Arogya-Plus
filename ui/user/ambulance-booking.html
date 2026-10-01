@@ -106,25 +106,60 @@
                                 </div>
                             </div>
 
-                            <!-- 1. Who is this for? -->
-                            <div style="background:#f8fafc;padding:12px;border-radius:10px;border:1px solid var(--border);margin-bottom:12px">
-                                <label class="form-label" style="font-weight:700;margin-bottom:6px">1. Dispatching For</label>
-                                <div style="display:flex;gap:14px;align-items:center;margin-bottom:6px">
-                                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.88rem">
-                                        <input type="radio" name="amb-target" value="self" checked id="amb-target-self" />
-                                        <span>👤 Myself</span>
-                                    </label>
-                                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.88rem">
-                                        <input type="radio" name="amb-target" value="family" id="amb-target-family" />
-                                        <span>👨‍👩‍👧 Family Member (Remote)</span>
-                                    </label>
+                            <!-- 1. Who is this for? (Lenskart-Style Multi-Profile Chooser) -->
+                            <div class="form-group" style="background:#f8fafc;padding:12px;border-radius:12px;border:1px solid var(--border);margin-bottom:12px">
+                                <div class="profile-chooser-header" style="margin-bottom:8px">
+                                    <span style="font-weight:700">1. Emergency Dispatch For (Select Profile)</span>
+                                    <span id="amb-profile-count" class="profile-count-pill">1 Account • Multiple Profiles</span>
                                 </div>
-                                <div id="amb-family-wrapper" style="display:none;margin-top:8px">
-                                    <select id="amb-family-select" class="form-input">
-                                        <option value="">-- Choose family member --</option>
-                                    </select>
-                                    <div id="amb-family-details" class="muted" style="font-size:0.8rem;margin-top:4px"></div>
+
+                                <!-- Lenskart Profile Avatar Pills -->
+                                <div id="amb-profile-pills" class="profile-pills-row">
+                                    <!-- Dynamic pills: Myself, Dad, Mom, etc., + Add Profile -->
                                 </div>
+
+                                <!-- Quick Add Profile Drawer (Inline, Lenskart style - only name required) -->
+                                <div id="amb-quick-add-drawer" class="quick-add-profile-box" style="display:none">
+                                    <div style="display:flex;justify-content:space-between;align-items:center">
+                                        <span style="font-weight:700;font-size:0.85rem;color:#1e40af">➕ Add Profile to your Account</span>
+                                        <button type="button" class="btn btn-ghost btn-sm" id="amb-close-quick-add-btn" style="padding:2px 6px">✕</button>
+                                    </div>
+                                    <p class="muted" style="font-size:0.78rem;margin:0">Only Profile Name is required (like Lenskart). Other details are optional.</p>
+                                    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:8px">
+                                        <input id="amb-quick-name" class="form-input" placeholder="Profile Name * (e.g. Papa, Aarav, Mom)" style="font-size:0.85rem" />
+                                        <select id="amb-quick-rel" class="form-input" style="font-size:0.85rem">
+                                            <option value="Father">Father</option>
+                                            <option value="Mother">Mother</option>
+                                            <option value="Spouse">Spouse</option>
+                                            <option value="Child">Child</option>
+                                            <option value="Son">Son</option>
+                                            <option value="Daughter">Daughter</option>
+                                            <option value="Brother">Brother</option>
+                                            <option value="Sister">Sister</option>
+                                            <option value="Grandparent">Grandparent</option>
+                                            <option value="Other" selected>Other / Relative</option>
+                                        </select>
+                                    </div>
+                                    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:8px">
+                                        <input id="amb-quick-address" class="form-input" placeholder="Remote Street Address / City (optional)" style="font-size:0.85rem" />
+                                        <button id="amb-save-quick-btn" type="button" class="btn btn-primary btn-sm" style="font-weight:600">Save & Select</button>
+                                    </div>
+                                </div>
+
+                                <!-- Selected Profile Active Strip -->
+                                <div id="amb-active-profile-strip" class="profile-active-detail-strip" style="margin-top:10px">
+                                    <div>
+                                        <span id="amb-active-profile-title" style="font-weight:700;color:#166534">👤 Dispatch for Myself</span>
+                                        <span id="amb-active-profile-meta" class="muted" style="margin-left:8px;font-size:0.78rem"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Hidden elements for backward compatibility -->
+                                <input type="radio" name="amb-target" value="self" checked id="amb-target-self" style="display:none" />
+                                <input type="radio" name="amb-target" value="family" id="amb-target-family" style="display:none" />
+                                <select id="amb-family-select" style="display:none"></select>
+                                <div id="amb-family-details" style="display:none"></div>
+                                <div id="amb-family-wrapper" style="display:none"></div>
                             </div>
 
                             <div class="mode-toggle" style="margin-bottom:12px">

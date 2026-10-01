@@ -71,30 +71,60 @@
                 <button class="btn btn-ghost btn-sm" type="button" onclick="window.closeBookModal()">Close</button>
             </div>
             <form id="book-form" style="display:grid;gap:14px">
-                <!-- 1. Who is this appointment for? -->
-                <div class="form-group" style="background:#f8fafc;padding:12px;border-radius:10px;border:1px solid var(--border)">
-                    <label class="form-label" style="font-weight:700;margin-bottom:8px">1. Who is this appointment for?</label>
-                    <div style="display:flex;gap:16px;align-items:center;margin-bottom:8px">
-                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.9rem">
-                            <input type="radio" name="booking-target" value="self" checked id="target-self" />
-                            <span>👤 Myself</span>
-                        </label>
-                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.9rem">
-                            <input type="radio" name="booking-target" value="family" id="target-family" />
-                            <span>👨‍👩‍👧 Family Member (Remote Care)</span>
-                        </label>
+                <!-- 1. Who is this appointment for? (Lenskart-Style Multi-Profile Chooser) -->
+                <div class="form-group" style="background:#f8fafc;padding:14px;border-radius:12px;border:1px solid var(--border)">
+                    <div class="profile-chooser-header" style="margin-bottom:8px">
+                        <span style="font-weight:700">1. Who is this consultation for? (Choose Profile)</span>
+                        <span id="appointment-profile-count" class="profile-count-pill">1 Account • Multiple Profiles</span>
                     </div>
 
-                    <div id="family-select-wrapper" style="display:none;margin-top:10px">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-                            <label class="form-label" for="family-member-select" style="font-size:0.83rem">Select Family Profile (Up to 5)</label>
-                            <a href="profile.html#add-family" style="font-size:0.75rem;color:var(--blue);font-weight:600">+ Add New Family Member</a>
-                        </div>
-                        <select id="family-member-select" class="form-input">
-                            <option value="">-- Choose family member --</option>
-                        </select>
-                        <div id="family-member-summary" style="margin-top:8px;font-size:0.82rem;padding:8px 12px;background:#fff;border-radius:6px;border:1px solid var(--border);display:none"></div>
+                    <!-- Lenskart-Style Profile Avatar Pills -->
+                    <div id="appointment-profile-pills" class="profile-pills-row">
+                        <!-- Dynamic Pills: Myself, Dad, Mom, etc., + Add Profile -->
                     </div>
+
+                    <!-- Quick Add Profile Drawer (Inline, Lenskart simple style - only name required) -->
+                    <div id="quick-add-profile-drawer" class="quick-add-profile-box" style="display:none">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <span style="font-weight:700;font-size:0.85rem;color:#1e40af">➕ Add Profile to your Account</span>
+                            <button type="button" class="btn btn-ghost btn-sm" id="close-quick-add-btn" style="padding:2px 6px">✕</button>
+                        </div>
+                        <p class="muted" style="font-size:0.78rem;margin:0">Add family profiles under your Gmail ID like Lenskart. Only Name is required!</p>
+                        <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:8px">
+                            <input id="quick-profile-name" class="form-input" placeholder="Profile Name * (e.g. Papa, Aarav, Mom)" style="font-size:0.85rem" />
+                            <select id="quick-profile-rel" class="form-input" style="font-size:0.85rem">
+                                <option value="Father">Father</option>
+                                <option value="Mother">Mother</option>
+                                <option value="Spouse">Spouse</option>
+                                <option value="Child">Child</option>
+                                <option value="Son">Son</option>
+                                <option value="Daughter">Daughter</option>
+                                <option value="Brother">Brother</option>
+                                <option value="Sister">Sister</option>
+                                <option value="Grandparent">Grandparent</option>
+                                <option value="Other" selected>Other / Relative</option>
+                            </select>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:8px">
+                            <input id="quick-profile-city" class="form-input" placeholder="Remote City (optional, e.g. Mumbai)" style="font-size:0.85rem" />
+                            <button id="save-quick-profile-btn" type="button" class="btn btn-primary btn-sm" style="font-weight:600">Save & Select</button>
+                        </div>
+                    </div>
+
+                    <!-- Selected Profile Details Strip -->
+                    <div id="active-profile-strip" class="profile-active-detail-strip" style="margin-top:10px">
+                        <div>
+                            <span id="active-profile-title" style="font-weight:700;color:#166534">👤 Consultation for Myself</span>
+                            <span id="active-profile-meta" class="muted" style="margin-left:8px;font-size:0.78rem"></span>
+                        </div>
+                    </div>
+
+                    <!-- Hidden inputs for backward-compatibility with existing scripts -->
+                    <input type="radio" name="booking-target" value="self" checked id="target-self" style="display:none" />
+                    <input type="radio" name="booking-target" value="family" id="target-family" style="display:none" />
+                    <select id="family-member-select" style="display:none"></select>
+                    <div id="family-member-summary" style="display:none"></div>
+                    <div id="family-select-wrapper" style="display:none"></div>
                 </div>
 
                 <!-- 2. Patient Location for Distance & Facility Matching -->

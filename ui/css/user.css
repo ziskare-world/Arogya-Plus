@@ -291,3 +291,192 @@
         font-size: .62rem;
     }
 }
+
+/* ========================================================
+   LENSKART-STYLE MULTI-PROFILE CHOOSER & DECK
+   Allows choosing & adding multiple profiles under 1 Gmail account
+   ======================================================== */
+.profile-chooser-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.profile-chooser-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-1);
+}
+
+.profile-count-pill {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    background: #e0f2fe;
+    color: #0369a1;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+.profile-pills-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    padding: 4px 0;
+}
+
+.profile-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+    position: relative;
+}
+
+.profile-pill:hover {
+    border-color: #93c5fd;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.profile-pill.active {
+    border-color: #2563eb;
+    background: #eff6ff;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+}
+
+.profile-pill-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.profile-pill-avatar.avatar-self {
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+}
+
+.profile-pill-avatar.avatar-dad,
+.profile-pill-avatar.avatar-father {
+    background: linear-gradient(135deg, #6366f1, #4338ca);
+}
+
+.profile-pill-avatar.avatar-mom,
+.profile-pill-avatar.avatar-mother {
+    background: linear-gradient(135deg, #ec4899, #be185d);
+}
+
+.profile-pill-avatar.avatar-child,
+.profile-pill-avatar.avatar-son,
+.profile-pill-avatar.avatar-daughter {
+    background: linear-gradient(135deg, #10b981, #047857);
+}
+
+.profile-pill-avatar.avatar-other {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+}
+
+.profile-pill-text {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    line-height: 1.2;
+}
+
+.profile-pill-name {
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: var(--text-1);
+}
+
+.profile-pill.active .profile-pill-name {
+    color: #1e40af;
+}
+
+.profile-pill-tag {
+    font-size: 0.72rem;
+    color: #64748b;
+}
+
+.profile-pill.active .profile-pill-tag {
+    color: #2563eb;
+    font-weight: 600;
+}
+
+.profile-pill-check {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #2563eb;
+    color: white;
+    font-size: 10px;
+    align-items: center;
+    justify-content: center;
+    margin-left: 2px;
+}
+
+.profile-pill.active .profile-pill-check {
+    display: flex;
+}
+
+.profile-pill-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 2px dashed #94a3b8;
+    color: #2563eb;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.profile-pill-add:hover {
+    background: #eff6ff;
+    border-color: #2563eb;
+    transform: translateY(-1px);
+}
+
+.profile-active-detail-strip {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+/* Quick inline profile creation card */
+.quick-add-profile-box {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 8px;
+    display: grid;
+    gap: 10px;
+}

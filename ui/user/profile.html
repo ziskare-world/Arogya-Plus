@@ -16,20 +16,23 @@
     <!-- Add/Edit Family Member Modal -->
     <div id="family-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:200;padding:16px;">
         <div class="card" style="width:100%;max-width:540px;max-height:90vh;overflow-y:auto;background:var(--surface);border-radius:16px;padding:24px;box-shadow:0 20px 40px rgba(0,0,0,0.2);">
-            <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-                <div class="card-title" id="family-modal-title" style="font-size:1.15rem;font-weight:700">Add Family Member Profile</div>
+            <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                <div>
+                    <div class="card-title" id="family-modal-title" style="font-size:1.15rem;font-weight:700">Add Profile to Account</div>
+                    <div class="muted" style="font-size:0.8rem;margin-top:2px">Like Lenskart profiles, only Name is required. All other details are optional.</div>
+                </div>
                 <button class="btn btn-ghost btn-sm" type="button" onclick="window.closeFamilyModal()">✕</button>
             </div>
-            <form id="family-form" style="display:grid;gap:14px">
+            <form id="family-form" style="display:grid;gap:12px">
                 <input type="hidden" id="family-member-id" />
                 <div class="form-group">
-                    <label class="form-label" for="family-name">Full Name *</label>
-                    <input id="family-name" class="form-input" required placeholder="e.g. Ramesh Kumar" />
+                    <label class="form-label" for="family-name">Profile Name *</label>
+                    <input id="family-name" class="form-input" required placeholder="e.g. Papa, Aarav, Mom, Grandfather" />
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
                     <div class="form-group">
-                        <label class="form-label" for="family-relationship">Relationship *</label>
-                        <select id="family-relationship" class="form-input" required>
+                        <label class="form-label" for="family-relationship">Relationship (optional)</label>
+                        <select id="family-relationship" class="form-input">
                             <option value="Father">Father</option>
                             <option value="Mother">Mother</option>
                             <option value="Spouse">Spouse</option>
@@ -38,78 +41,88 @@
                             <option value="Brother">Brother</option>
                             <option value="Sister">Sister</option>
                             <option value="Grandparent">Grandparent</option>
-                            <option value="Other">Other</option>
+                            <option value="Other" selected>Other / Relative</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="family-age">Age</label>
+                        <label class="form-label" for="family-age">Age (optional)</label>
                         <input id="family-age" class="form-input" type="number" min="0" max="130" placeholder="e.g. 58" />
                     </div>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                    <div class="form-group">
-                        <label class="form-label" for="family-gender">Gender</label>
-                        <select id="family-gender" class="form-input">
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                            <option value="other">Other</option>
-                        </select>
+
+                <!-- Expandable Optional Details Section (Lenskart style progressive disclosure) -->
+                <details style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:10px;padding:10px 14px">
+                    <summary style="cursor:pointer;font-weight:600;font-size:0.84rem;color:#2563eb;user-select:none">
+                        ➕ Add Remote Address & Medical Details (Optional)
+                    </summary>
+                    <div style="display:grid;gap:12px;margin-top:12px">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                            <div class="form-group">
+                                <label class="form-label" for="family-gender">Gender</label>
+                                <select id="family-gender" class="form-input">
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other" selected>Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="family-blood-group">Blood Group</label>
+                                <select id="family-blood-group" class="form-input">
+                                    <option value="Unknown" selected>Unknown</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="family-phone">Contact Phone</label>
+                            <input id="family-phone" class="form-input" placeholder="e.g. +91 9876543210" />
+                        </div>
+                        <div class="form-group">
+                            <div style="display:flex;justify-content:space-between;align-items:center">
+                                <label class="form-label" for="family-address">Remote Place / Home Address</label>
+                                <button type="button" class="btn btn-ghost btn-sm" id="detect-family-coords-btn" style="font-size:0.75rem;padding:2px 8px">📍 Detect GPS</button>
+                            </div>
+                            <input id="family-address" class="form-input" placeholder="e.g. Flat 304, Green Heights, Gomti Nagar" />
+                        </div>
+                        <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px">
+                            <div class="form-group">
+                                <label class="form-label" for="family-city">City</label>
+                                <input id="family-city" class="form-input" placeholder="e.g. Lucknow" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="family-lat">Latitude</label>
+                                <input id="family-lat" class="form-input" type="number" step="any" placeholder="26.8467" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="family-lng">Longitude</label>
+                                <input id="family-lng" class="form-input" type="number" step="any" placeholder="80.9462" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="family-history">Medical Conditions (comma separated)</label>
+                            <input id="family-history" class="form-input" placeholder="e.g. Diabetes Type 2, Hypertension" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="family-allergies">Allergies (comma separated)</label>
+                            <input id="family-allergies" class="form-input" placeholder="e.g. Penicillin, Peanuts" />
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+                            <input type="checkbox" id="family-emergency-contact" style="width:16px;height:16px" />
+                            <label for="family-emergency-contact" style="font-size:0.85rem;cursor:pointer">Mark as Primary Emergency Contact</label>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label" for="family-blood-group">Blood Group</label>
-                        <select id="family-blood-group" class="form-input">
-                            <option value="Unknown">Unknown</option>
-                            <option value="A+">A+</option>
-                            <option value="A-">A-</option>
-                            <option value="B+">B+</option>
-                            <option value="B-">B-</option>
-                            <option value="AB+">AB+</option>
-                            <option value="AB-">AB-</option>
-                            <option value="O+">O+</option>
-                            <option value="O-">O-</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="family-phone">Contact Phone</label>
-                    <input id="family-phone" class="form-input" placeholder="e.g. +91 9876543210" />
-                </div>
-                <div class="form-group">
-                    <div style="display:flex;justify-content:space-between;align-items:center">
-                        <label class="form-label" for="family-address">Remote Place / Home Address</label>
-                        <button type="button" class="btn btn-ghost btn-sm" id="detect-family-coords-btn" style="font-size:0.75rem;padding:2px 8px">📍 Detect GPS</button>
-                    </div>
-                    <input id="family-address" class="form-input" placeholder="e.g. Flat 304, Green Heights, Gomti Nagar" />
-                </div>
-                <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px">
-                    <div class="form-group">
-                        <label class="form-label" for="family-city">City</label>
-                        <input id="family-city" class="form-input" placeholder="e.g. Lucknow" />
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="family-lat">Latitude</label>
-                        <input id="family-lat" class="form-input" type="number" step="any" placeholder="26.8467" />
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="family-lng">Longitude</label>
-                        <input id="family-lng" class="form-input" type="number" step="any" placeholder="80.9462" />
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="family-history">Medical Conditions (comma separated)</label>
-                    <input id="family-history" class="form-input" placeholder="e.g. Diabetes Type 2, Hypertension" />
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="family-allergies">Allergies (comma separated)</label>
-                    <input id="family-allergies" class="form-input" placeholder="e.g. Penicillin, Peanuts" />
-                </div>
-                <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-                    <input type="checkbox" id="family-emergency-contact" style="width:16px;height:16px" />
-                    <label for="family-emergency-contact" style="font-size:0.85rem;cursor:pointer">Mark as Primary Emergency Contact</label>
-                </div>
+                </details>
+
                 <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px">
                     <button class="btn btn-outline" type="button" onclick="window.closeFamilyModal()">Cancel</button>
-                    <button id="family-submit-btn" class="btn btn-primary" type="submit">Save Family Member</button>
+                    <button id="family-submit-btn" class="btn btn-primary" type="submit">Save Profile</button>
                 </div>
             </form>
         </div>
@@ -239,32 +252,32 @@
                             <button id="delete-account-btn" class="btn btn-outline" style="width:100%;color:var(--red)">Deactivate Account</button>
                         </div>
 
-                        <div class="card" style="background:#f8fafc;border:1px dashed var(--border)">
-                            <div class="card-title" style="font-size:0.95rem;margin-bottom:8px">💡 Why Add Family Members?</div>
-                            <p class="muted" style="font-size:0.83rem;line-height:1.5">
-                                Adding family profiles allows you to book doctor consultations, schedule diagnostic tests, and call emergency ambulances for parents or loved ones living in different cities or remote locations.
-                            </p>
-                        </div>
+                    <div class="card" style="background:#f8fafc;border:1px dashed var(--border)">
+                        <div class="card-title" style="font-size:0.95rem;margin-bottom:8px">💡 Multiple Profiles under 1 Account (Like Lenskart)</div>
+                        <p class="muted" style="font-size:0.83rem;line-height:1.5">
+                            Just like Lenskart profiles under a single Gmail login, you can create up to 5 family profiles here. Family member details are <strong>not required</strong> for your account completion — only a name is needed to add a profile for doctor or ambulance bookings.
+                        </p>
                     </div>
                 </div>
+            </div>
 
-                <!-- Family Member Management Section (Up to 5) -->
-                <div class="card" style="margin-top:24px">
-                    <div class="card-header flex-between" style="flex-wrap:wrap;gap:12px">
-                        <div>
-                            <div class="card-title" style="display:flex;align-items:center;gap:8px">
-                                <span>👨‍👩‍👧 Family Profiles for Remote Care</span>
-                                <span id="family-count-badge" class="badge badge-blue">0 of 5 Added</span>
-                            </div>
-                            <p class="muted" style="font-size:0.85rem">Book appointments and emergency services for up to 5 family members located anywhere.</p>
+            <!-- Family Member Management Section (Up to 5) -->
+            <div class="card" style="margin-top:24px">
+                <div class="card-header flex-between" style="flex-wrap:wrap;gap:12px">
+                    <div>
+                        <div class="card-title" style="display:flex;align-items:center;gap:8px">
+                            <span>👥 Multiple Profiles in Account (Lenskart Style)</span>
+                            <span id="family-count-badge" class="badge badge-blue">0 of 5 Added</span>
                         </div>
-                        <button id="add-family-btn" class="btn btn-primary" type="button">➕ Add Family Member</button>
+                        <p class="muted" style="font-size:0.85rem">Easily add & switch profiles for family members. Only Name is required.</p>
                     </div>
-
-                    <div id="family-members-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:16px;margin-top:16px">
-                        <div class="muted" style="grid-column:1/-1;text-align:center;padding:24px">Loading family profiles...</div>
-                    </div>
+                    <button id="add-family-btn" class="btn btn-primary" type="button">➕ Add Profile</button>
                 </div>
+
+                <div id="family-members-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:16px;margin-top:16px">
+                    <div class="muted" style="grid-column:1/-1;text-align:center;padding:24px">Loading family profiles...</div>
+                </div>
+            </div>
             </main>
         </div>
     </div>

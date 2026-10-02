@@ -4,33 +4,132 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>Arogya Plus - Prescriptions</title>
+    <title>Arogya Plus - Issue Prescription & Clinical Safety CDSS</title>
     <link rel="stylesheet" href="../css/global.css" />
     <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="stylesheet" href="../css/user.css" />
+    <style>
+        .clinical-alert-box {
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-top: 14px;
+            display: none;
+            transition: all 0.3s ease;
+        }
+        .clinical-alert-critical {
+            background: #fef2f2;
+            border: 2px solid #ef4444;
+            color: #991b1b;
+        }
+        .clinical-alert-high {
+            background: #fffbeb;
+            border: 2px solid #f59e0b;
+            color: #92400e;
+        }
+        .clinical-alert-moderate {
+            background: #eff6ff;
+            border: 2px solid #3b82f6;
+            color: #1e40af;
+        }
+        .allergy-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fca5a5;
+            padding: 3px 9px;
+            border-radius: 12px;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+        .patient-strip {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-top: 8px;
+            display: none;
+            font-size: 0.85rem;
+        }
+    </style>
 </head>
 
 <body>
     <div id="toast-container"></div>
     <div class="app-layout">
-        <!-- Sidebar injected by JS -->
         <div class="main-area">
             <div id="topbar-container"></div>
             <main class="page-content">
-                <div class="page-header">
-                    <h2>Issue Prescription</h2>
-                </div>
-                <div class="card" style="margin-top:20px;max-width:600px">
-                    <div class="form-group"><label class="form-label">Patient</label>
-                        <select class="form-input">
-                            <option>John Doe (PAT-1042)</option>
-                        </select>
+                <div class="page-header flex-between" style="flex-wrap:wrap;gap:12px">
+                    <div>
+                        <h2>Issue E-Prescription</h2>
+                        <p class="muted" style="font-size:0.85rem">AI & Rule-Based Clinical Decision Support System (CDSS) for Medication Safety</p>
                     </div>
-                    <div class="form-group" style="margin-top:12px"><label class="form-label">Medication</label><input
-                            class="form-input" placeholder="e.g. Lisinopril 10mg" /></div>
-                    <div class="form-group" style="margin-top:12px"><label class="form-label">Dosage</label><input
-                            class="form-input" placeholder="e.g. Once daily" /></div>
-                    <button class="btn btn-primary" style="margin-top:20px;width:100%"
-                        onclick="toast('Prescription issued!','success')">Sign & Send</button>
+                </div>
+
+                <div class="card" style="margin-top:20px;max-width:680px">
+                    <div class="card-header" style="margin-bottom:12px">
+                        <div class="card-title">Consultation Rx Details</div>
+                        <span class="badge badge-green" style="font-size:0.75rem">🔒 CDSS Safety Active</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="prescription-patient">Select Patient *</label>
+                        <select id="prescription-patient" class="form-input">
+                            <option value="">Select patient</option>
+                        </select>
+                        <div id="patient-strip" class="patient-strip">
+                            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+                                <div><strong id="patient-strip-name">--</strong> <span id="patient-strip-id" class="muted"></span></div>
+                                <div id="patient-strip-allergies" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top:14px">
+                        <div class="flex-between" style="align-items:center;margin-bottom:6px">
+                            <label class="form-label" for="prescription-medicine" style="margin-bottom:0">Medication Name & Strength *</label>
+                            <button id="voice-rx-btn" type="button" class="btn btn-ghost btn-sm voice-dictation-btn" style="padding:3px 8px;font-size:0.8rem;border:1px solid #cbd5e1" title="Voice Dictation">
+                                <span class="mic-icon">🎙️</span>
+                                <span class="mic-label">Dictate Rx</span>
+                            </button>
+                        </div>
+                        <input id="prescription-medicine" class="form-input" placeholder="e.g. Amoxicillin 500mg, Lisinopril 10mg, Aspirin 75mg" autocomplete="off" />
+                        <div id="voice-rx-status" class="muted" style="font-size:0.75rem;margin-top:4px;display:none"></div>
+                    </div>
+
+                    <!-- Real-Time CDSS Safety Alert Box -->
+                    <div id="clinical-safety-card" class="clinical-alert-box">
+                        <div style="display:flex;align-items:flex-start;gap:10px">
+                            <span id="safety-alert-icon" style="font-size:1.4rem">⚠️</span>
+                            <div style="flex:1">
+                                <div id="safety-alert-title" style="font-weight:700;font-size:0.95rem;margin-bottom:4px">Clinical Safety Warning</div>
+                                <div id="safety-alert-body" style="font-size:0.84rem;line-height:1.4"></div>
+                                <div id="safety-override-wrap" style="margin-top:10px;padding-top:8px;border-top:1px dashed rgba(0,0,0,0.15);display:flex;align-items:center;gap:8px">
+                                    <input type="checkbox" id="clinical-override-check" style="cursor:pointer" />
+                                    <label for="clinical-override-check" style="font-size:0.82rem;font-weight:600;cursor:pointer">I acknowledge this clinical contraindication and authorize overriding with documented rationale</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2" style="margin-top:14px">
+                        <div class="form-group">
+                            <label class="form-label" for="prescription-dosage">Dosage & Frequency *</label>
+                            <input id="prescription-dosage" class="form-input" placeholder="e.g. 1 Tab Twice Daily (1-0-1)" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="prescription-instructions">Instructions / Duration</label>
+                            <input id="prescription-instructions" class="form-input" placeholder="e.g. After meals for 5 days" />
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:10px;margin-top:20px">
+                        <button id="prescription-submit-btn" class="btn btn-primary" style="flex:1" type="button">
+                            <span>✍️</span> Sign & Issue Prescription
+                        </button>
+                    </div>
                 </div>
             </main>
         </div>
@@ -39,4 +138,3 @@
 </body>
 
 </html>
-

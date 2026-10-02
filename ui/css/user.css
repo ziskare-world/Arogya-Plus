@@ -480,3 +480,49 @@
     display: grid;
     gap: 10px;
 }
+
+/* Voice Dictation Speech AI Styles */
+.voice-dictation-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #ffffff;
+    color: var(--text-1);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.voice-dictation-btn:hover {
+    border-color: #3b82f6;
+    color: #2563eb;
+    background: #eff6ff;
+}
+
+.voice-dictation-btn.listening {
+    background: #fef2f2;
+    border-color: #ef4444;
+    color: #dc2626;
+    animation: voicePulse 1.2s infinite ease-in-out;
+}
+
+@keyframes voicePulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
+.voice-status-feedback {
+    animation: fadeIn 0.2s ease-in-out;
+}
+

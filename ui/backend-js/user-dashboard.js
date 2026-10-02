@@ -1,6 +1,7 @@
         import { toast } from '../js/utils.js';
         import { injectSidebar, renderTopbar } from '../js/sidebar.js';
         import { apiRequest, ensureSession, formatCurrencyINR } from '../js/api-client.js';
+        import { setupVoiceDictation } from '../js/voice-assistant.js';
 
         window.toast = toast;
         injectSidebar('dashboard.html');
@@ -108,6 +109,8 @@
         const setupAiAssistant = () => {
             const input = document.getElementById('ai-quick-symptoms');
             const btn = document.getElementById('ai-quick-match-btn');
+            const voiceBtn = document.getElementById('voice-dashboard-btn');
+            const voiceStatus = document.getElementById('voice-dashboard-status');
 
             if (!btn || !input) return;
 
@@ -126,6 +129,22 @@
             input.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') handleMatch();
             });
+
+            if (voiceBtn) {
+                setupVoiceDictation({
+                    buttonEl: voiceBtn,
+                    inputEl: input,
+                    statusEl: voiceStatus,
+                    onResult: (text) => {
+                        if (text) {
+                            toast(`Voice recognized: "${text}"`, 'info');
+                            setTimeout(() => {
+                                handleMatch();
+                            }, 500);
+                        }
+                    }
+                });
+            }
         };
 
         const init = async () => {

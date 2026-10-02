@@ -7,6 +7,7 @@ const Prescription = require("../models/Prescription");
 const Payment = require("../models/Payment");
 const User = require("../models/User");
 const { emitEmergencyQueueUpdate } = require("../utils/emergencyQueue");
+const { checkClinicalSafety } = require("../utils/clinicalSafetyEngine");
 const { protect, authorize } = require("../middleware/authMiddleware");
 const validateRequest = require("../middleware/validateMiddleware");
 
@@ -299,7 +300,7 @@ router.get(
     const now = new Date();
 
     const appointments = await Appointment.find({ doctor: req.user._id })
-      .populate("patient", "name email phone")
+      .populate("patient", "name email phone allergies medicalHistory")
       .sort({ appointmentDate: -1 });
 
     const patientMap = new Map();
@@ -313,6 +314,8 @@ router.get(
         name: patient.name || "Unknown Patient",
         email: patient.email || "",
         phone: patient.phone || "",
+        allergies: patient.allergies || [],
+        medicalHistory: patient.medicalHistory || [],
         totalVisits: 0,
         upcomingVisits: 0,
         lastAppointmentAt: null,
@@ -400,6 +403,49 @@ router.get(
 );
 
 router.post(
+  "/prescriptions/check-safety",
+  protect,
+  authorize("doctor"),
+  [
+    body("patientId").isMongoId().withMessage("Valid patientId is required"),
+    body("medicineName").trim().notEmpty().withMessage("Medicine name is required")
+  ],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const patient = await User.findOne({
+      _id: req.body.patientId,
+      role: "patient"
+    });
+
+    if (!patient) {
+      return res.status(404).json({ success: false, message: "Patient not found" });
+    }
+
+    const activePrescriptions = await Prescription.find({
+      patient: patient._id,
+      status: "active"
+    }).select("medicineName dosage frequency");
+
+    const activeMedNames = activePrescriptions.map((p) => p.medicineName);
+
+    const safetyResult = checkClinicalSafety({
+      patientAllergies: patient.allergies || [],
+      activeMedications: activeMedNames,
+      newMedicineName: req.body.medicineName
+    });
+
+    return res.status(200).json({
+      success: true,
+      patientId: patient._id,
+      patientName: patient.name,
+      patientAllergies: patient.allergies || [],
+      activeMedications: activeMedNames,
+      ...safetyResult
+    });
+  })
+);
+
+router.post(
   "/prescriptions",
   protect,
   authorize("doctor"),
@@ -409,7 +455,8 @@ router.post(
     body("dosage").optional().isString(),
     body("frequency").optional().isString(),
     body("instructions").optional().isString(),
-    body("nextRefillDate").optional().isISO8601().withMessage("Valid nextRefillDate is required")
+    body("nextRefillDate").optional().isISO8601().withMessage("Valid nextRefillDate is required"),
+    body("overrideWarning").optional().isBoolean()
   ],
   validateRequest,
   asyncHandler(async (req, res) => {
@@ -423,6 +470,27 @@ router.post(
       return res.status(404).json({ success: false, message: "Patient not found" });
     }
 
+    const activePrescriptions = await Prescription.find({
+      patient: patient._id,
+      status: "active"
+    }).select("medicineName");
+    const activeMedNames = activePrescriptions.map((p) => p.medicineName);
+
+    const safetyResult = checkClinicalSafety({
+      patientAllergies: patient.allergies || [],
+      activeMedications: activeMedNames,
+      newMedicineName: req.body.medicineName
+    });
+
+    if (!safetyResult.safe && !req.body.overrideWarning) {
+      return res.status(409).json({
+        success: false,
+        safetyBlocked: true,
+        message: "Clinical contraindication detected. Review safety alerts before confirming override.",
+        safetyResult
+      });
+    }
+
     const prescription = await Prescription.create({
       patient: patient._id,
       doctor: req.user._id,
@@ -434,13 +502,14 @@ router.post(
     });
 
     const populated = await Prescription.findById(prescription._id)
-      .populate("patient", "name email")
-      .populate("doctor", "name email");
+      .populate("patient", "name email allergies")
+      .populate("doctor", "name email specialization");
 
     return res.status(201).json({
       success: true,
       message: "Prescription issued successfully",
-      prescription: populated
+      prescription: populated,
+      safetyResult
     });
   })
 );

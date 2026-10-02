@@ -1,6 +1,8 @@
 import { toast } from "../js/utils.js";
 import { injectSidebar, renderTopbar } from "../js/sidebar.js";
 import { apiRequest, ensureSession, formatDateTime } from "../js/api-client.js";
+import { setupVoiceDictation } from "../js/voice-assistant.js";
+import { generateCheckinPassPdf } from "../js/pdf-generator.js";
 
 window.toast = toast;
 injectSidebar("appointments.html");
@@ -197,13 +199,19 @@ const renderDoctorOptions = () => {
     .join("");
 };
 
+let currentQrAppointment = null;
+let currentQrData = null;
+
 const qrModalEl = document.getElementById("qr-modal");
 const qrTokenLabelEl = document.getElementById("qr-token-label");
 const qrDoctorLabelEl = document.getElementById("qr-doctor-label");
 const qrCodeImgEl = document.getElementById("qr-code-img");
+const qrDownloadPdfBtn = document.getElementById("qr-download-pdf-btn");
 
 const closeQrModal = () => {
   if (qrModalEl) qrModalEl.classList.add("hidden");
+  currentQrAppointment = null;
+  currentQrData = null;
 };
 
 const openQrModal = async (appointmentId) => {
@@ -215,6 +223,9 @@ const openQrModal = async (appointmentId) => {
 
   try {
     const data = await apiRequest(`/api/appointments/${appointmentId}/token-qr`);
+    currentQrAppointment = appointment;
+    currentQrData = data;
+
     if (qrTokenLabelEl) qrTokenLabelEl.textContent = data.tokenNumber || appointment.tokenNumber || "APT-PASS";
     if (qrDoctorLabelEl) qrDoctorLabelEl.textContent = `Check-in Token for Dr. ${appointment.doctor?.name || "Assigned Doctor"}`;
     if (qrCodeImgEl) qrCodeImgEl.src = data.qrDataUrl || "";
@@ -229,6 +240,31 @@ window.closeQrModal = closeQrModal;
 if (qrModalEl) {
   qrModalEl.addEventListener("click", (event) => {
     if (event.target === qrModalEl) closeQrModal();
+  });
+}
+
+if (qrDownloadPdfBtn) {
+  qrDownloadPdfBtn.addEventListener("click", () => {
+    if (!currentQrAppointment) {
+      toast("No appointment pass selected", "warning");
+      return;
+    }
+    const token = currentQrData?.tokenNumber || currentQrAppointment.tokenNumber || "APT-PASS";
+    const apptDate = currentQrAppointment.appointmentDate
+      ? new Date(currentQrAppointment.appointmentDate).toLocaleDateString("en-IN", { dateStyle: "medium" })
+      : new Date().toLocaleDateString("en-IN", { dateStyle: "medium" });
+
+    generateCheckinPassPdf({
+      tokenNumber: token,
+      appointmentDate: apptDate,
+      appointmentTime: currentQrAppointment.appointmentTime || "10:30 AM",
+      doctor: currentQrAppointment.doctor || {},
+      patient: currentQrAppointment.patient || {},
+      qrDataUrl: currentQrData?.qrDataUrl || (qrCodeImgEl ? qrCodeImgEl.src : ""),
+      bookedForFamily: Boolean(currentQrAppointment.bookedForFamily),
+      familyMemberName: currentQrAppointment.familyMemberName || "",
+      roomNo: "Consultation Cabin 104, OPD Wing"
+    });
   });
 }
 
@@ -600,6 +636,24 @@ aiSymptomInput?.addEventListener("keydown", (e) => {
     runAiDoctorMatch();
   }
 });
+
+// Initialize Voice Dictation for Symptoms
+const voiceSymptomBtn = document.getElementById("voice-symptom-btn");
+const voiceSymptomStatus = document.getElementById("voice-symptom-status");
+
+if (voiceSymptomBtn && aiSymptomInput) {
+  setupVoiceDictation({
+    buttonEl: voiceSymptomBtn,
+    inputEl: aiSymptomInput,
+    statusEl: voiceSymptomStatus,
+    onResult: (spokenText) => {
+      if (spokenText) {
+        toast(`Voice captured: "${spokenText}"`, "info");
+        runAiDoctorMatch();
+      }
+    }
+  });
+}
 
 // Render Appointments List
 const renderAppointments = () => {

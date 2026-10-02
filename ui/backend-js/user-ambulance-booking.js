@@ -1,6 +1,7 @@
 import { toast } from "../js/utils.js";
 import { injectSidebar, renderTopbar } from "../js/sidebar.js";
 import { apiRequest, ensureSession, formatDateTime } from "../js/api-client.js";
+import { setupVoiceDictation } from "../js/voice-assistant.js";
 
 window.toast = toast;
 injectSidebar("ambulance-booking.html");
@@ -644,6 +645,23 @@ const handleUrlParams = () => {
 // Boot application
 initLeafletMap();
 initQuickAddAmbProfile();
+
+// Initialize Voice Dictation for Emergency Condition
+const voiceEmergencyBtn = document.getElementById("voice-emergency-btn");
+const voiceEmergencyStatus = document.getElementById("voice-emergency-status");
+
+if (voiceEmergencyBtn && problemDescriptionInputEl) {
+  setupVoiceDictation({
+    buttonEl: voiceEmergencyBtn,
+    inputEl: problemDescriptionInputEl,
+    statusEl: voiceEmergencyStatus,
+    onResult: (text) => {
+      if (text) {
+        toast(`Emergency condition transcribed: "${text}"`, "info");
+      }
+    }
+  });
+}
 
 ensureSession({
   allowedRoles: ["patient", "admin", "super-admin"]

@@ -77,12 +77,17 @@
                         </div>
                         <div style="font-size:0.8rem;color:var(--text-2)">Match best doctor or ambulance for self or remote family</div>
                     </div>
-                    <div style="display:flex;gap:10px;flex-wrap:wrap">
-                        <input id="ai-quick-symptoms" class="form-input" style="flex:1;min-width:240px;background:#fff" placeholder="Describe symptoms or condition (e.g. Chest pain, High fever, Sprained ankle, Knee pain)..." />
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                        <input id="ai-quick-symptoms" class="form-input" style="flex:1;min-width:240px;background:#fff" placeholder="Describe or speak symptoms (e.g. Chest pain, High fever, Sprained ankle)..." />
+                        <button id="voice-dashboard-btn" class="btn btn-outline voice-dictation-btn" type="button" title="Speak Symptoms (Voice AI)" style="gap:4px">
+                            <span class="mic-icon">🎙️</span>
+                            <span class="mic-label">Speak</span>
+                        </button>
                         <button id="ai-quick-match-btn" class="btn btn-primary" type="button" style="gap:6px">
                             <span>🤖 Auto-Match Doctor</span>
                         </button>
                     </div>
+                    <div id="voice-dashboard-status" class="muted voice-status-feedback" style="display:none;font-size:0.8rem;margin-top:6px"></div>
                 </div>
 
                 <!-- Quick Actions Bar -->

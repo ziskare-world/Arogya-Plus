@@ -441,14 +441,16 @@ const init = async () => {
 };
 
 window.terminateDoctor = async function (doctorId, doctorName) {
-  if (!confirm(`Are you sure you want to terminate & deactivate Dr. ${doctorName}?`)) return;
+  const displayDoc = /^dr\.?\s+/i.test(doctorName) ? doctorName : `Dr. ${doctorName}`;
+  if (!confirm(`Are you sure you want to terminate & deactivate ${displayDoc}?`)) return;
 
   try {
     const res = await apiRequest(`/api/admin/doctors/${doctorId}/terminate`, "PATCH");
     if (res.success) {
-      toast(`Dr. ${doctorName} terminated successfully`, "success");
+      toast(`${displayDoc} terminated successfully`, "success");
       await loadDoctors();
     }
+
   } catch (err) {
     toast(err.message || "Failed to terminate doctor", "error");
   }

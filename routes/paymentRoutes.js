@@ -78,9 +78,11 @@ router.post(
         return res.status(404).json({ success: false, message: "Appointment not found" });
       }
       if (appointment.doctor) {
-        serviceDescription = `Consultation with Dr. ${appointment.doctor.name} (${appointment.doctor.specialization || "Clinical Specialist"})`;
+        const docName = /^dr\.?\s+/i.test(appointment.doctor.name) ? appointment.doctor.name : `Dr. ${appointment.doctor.name}`;
+        serviceDescription = `Consultation with ${docName} (${appointment.doctor.specialization || "Clinical Specialist"})`;
       }
     }
+
 
     const invoiceNumber = `INV-${new Date().getFullYear()}-${Date.now().toString().slice(-5)}${Math.floor(10 + Math.random() * 90)}`;
     const baseAmount = Math.round((amount / 1.18) * 100) / 100;

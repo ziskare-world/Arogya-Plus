@@ -258,9 +258,11 @@ let doctorToDelete = null;
 window.toggleDoctorAccess = async (doctorId, currentActive, doctorName) => {
   const nextActive = !currentActive;
   const actionText = nextActive ? "restore access for" : "BLOCK access for";
-  if (!confirm(`Are you sure you want to ${actionText} Dr. ${doctorName}?`)) {
+  const displayDocName = /^dr\.?\s+/i.test(doctorName) ? doctorName : `Dr. ${doctorName}`;
+  if (!confirm(`Are you sure you want to ${actionText} ${displayDocName}?`)) {
     return;
   }
+
 
   try {
     const res = await apiRequest(`/api/admin/users/${doctorId}/toggle-active`, {
@@ -344,7 +346,9 @@ window.openDoctorDetailsModal = async (doctorId) => {
     const rating = Number(doc.rating || 4.9).toFixed(1);
     const reviews = Number(doc.reviewCount || 18);
 
-    if (titleEl) titleEl.textContent = `Dr. ${doc.name} - Profile Details`;
+    const profileTitleDoc = /^dr\.?\s+/i.test(doc.name) ? doc.name : `Dr. ${doc.name}`;
+    if (titleEl) titleEl.textContent = `${profileTitleDoc} - Profile Details`;
+
 
     if (bodyEl) {
       bodyEl.innerHTML = `

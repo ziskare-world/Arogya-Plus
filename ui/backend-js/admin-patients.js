@@ -258,15 +258,20 @@ window.openPatientView = async (id) => {
     const p = res.patient || {};
     const h = res.history || {};
 
-    const apptRows = (h.appointments || []).slice(0, 5).map((a) => `
+    const apptRows = (h.appointments || []).slice(0, 5).map((a) => {
+      const docRaw = a.doctor?.name || "Consultant";
+      const docLabel = /^dr\.?\s+/i.test(docRaw) ? docRaw : `Dr. ${docRaw}`;
+      return `
       <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color, #334155);font-size:0.85rem;">
         <div>
-          <strong>${formatDate(a.appointmentDate)}</strong> - Dr. ${escapeHtml(a.doctor?.name || "Consultant")}
+          <strong>${formatDate(a.appointmentDate)}</strong> - ${escapeHtml(docLabel)}
           <div style="color:var(--text-400);font-size:0.8rem">${escapeHtml(a.reason || "General Consultation")}</div>
         </div>
         <div><span class="badge badge-${a.status === 'completed' ? 'green' : 'blue'}">${a.status}</span></div>
       </div>
-    `).join("") || `<div style="color:var(--text-400);font-size:0.85rem;padding:8px 0;">No appointment records found.</div>`;
+    `;
+    }).join("") || `<div style="color:var(--text-400);font-size:0.85rem;padding:8px 0;">No appointment records found.</div>`;
+
 
     const labRows = (h.labBookings || []).slice(0, 5).map((l) => `
       <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color, #334155);font-size:0.85rem;">

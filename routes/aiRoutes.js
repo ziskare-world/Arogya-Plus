@@ -144,9 +144,11 @@ router.post(
         .populate("patient", "name email phone")
         .populate("doctor", "name email phone specialization consultationFee clinicAddress hospitalName");
 
+      const doctorDisplayName = /^dr\.?\s+/i.test(doctor.name) ? doctor.name : `Dr. ${doctor.name}`;
       return res.status(201).json({
         success: true,
-        message: `Dr. ${doctor.name} (${doctor.specialization}) was autonomously matched and booked!`,
+        message: `${doctorDisplayName} (${doctor.specialization}) was autonomously matched and booked!`,
+
         appointment: populated,
         matchDetails: {
           matchScore: matchResult.matchScore,

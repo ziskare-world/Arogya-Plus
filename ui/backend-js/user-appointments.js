@@ -227,8 +227,11 @@ const openQrModal = async (appointmentId) => {
     currentQrData = data;
 
     if (qrTokenLabelEl) qrTokenLabelEl.textContent = data.tokenNumber || appointment.tokenNumber || "APT-PASS";
-    if (qrDoctorLabelEl) qrDoctorLabelEl.textContent = `Check-in Token for Dr. ${appointment.doctor?.name || "Assigned Doctor"}`;
+    const assignedDoctorName = appointment.doctor?.name || "Assigned Doctor";
+    const displayDoctorName = /^dr\.?\s+/i.test(assignedDoctorName) ? assignedDoctorName : `Dr. ${assignedDoctorName}`;
+    if (qrDoctorLabelEl) qrDoctorLabelEl.textContent = `Check-in Token for ${displayDoctorName}`;
     if (qrCodeImgEl) qrCodeImgEl.src = data.qrDataUrl || "";
+
     if (qrModalEl) qrModalEl.classList.remove("hidden");
   } catch (error) {
     toast(error.message || "Failed to load check-in QR pass", "error");
@@ -581,13 +584,14 @@ const runAiDoctorMatch = async () => {
       const urgency = data.triage?.urgencyLevel || "medium";
       const urgencyColor = urgency === "critical" ? "#dc2626" : urgency === "high" ? "#ea580c" : "#2563eb";
 
+      const matchedDoctorDisplayName = /^dr\.?\s+/i.test(doc.name) ? doc.name : `Dr. ${doc.name}`;
       if (aiMatchResult) {
         aiMatchResult.style.display = "block";
         aiMatchResult.innerHTML = `
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
             <div>
               <div style="font-weight:800;color:var(--text-1);font-size:0.95rem">
-                🎯 Best Match: Dr. ${doc.name}
+                🎯 Best Match: ${matchedDoctorDisplayName}
               </div>
               <div style="font-size:0.83rem;color:var(--text-2)">
                 ${doc.specialization || data.targetSpecialty} • ★ ${doc.rating || 4.9} • ₹${doc.consultationFee || 500}
@@ -619,7 +623,8 @@ const runAiDoctorMatch = async () => {
         reasonInput.value = symptoms;
       }
 
-      toast(`Matched Dr. ${doc.name} (${score}% match)`, "success");
+      toast(`Matched ${matchedDoctorDisplayName} (${score}% match)`, "success");
+
     }
   } catch (error) {
     toast(error.message || "Failed to analyze symptoms", "error");

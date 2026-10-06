@@ -49,32 +49,139 @@ const syncHospitalsFromDatabase = async () => {
   }
 };
 
+const GUNUPUR_MEDICAL_STORES = [
+  {
+    id: "med-store-1",
+    name: "Maa Tarini Medical Store & Chemist",
+    type: "pharmacy",
+    latitude: 19.08120,
+    longitude: 83.81300,
+    address: "Opposite Sub-Divisional Hospital Gate, Main Road, Gunupur, Odisha 765022",
+    city: "Gunupur",
+    phone: "+91-9438201101",
+    timing: "24x7 Open (Emergency Day & Night)",
+    isEmergencyPharmacy: true,
+    rating: 4.8
+  },
+  {
+    id: "med-store-2",
+    name: "Sai Ram Pharmacy & 24x7 Drug House",
+    type: "pharmacy",
+    latitude: 19.08220,
+    longitude: 83.81600,
+    address: "Town High School Chowk, Main Road, Gunupur, Odisha 765022",
+    city: "Gunupur",
+    phone: "+91-9438201102",
+    timing: "8:00 AM - 11:00 PM",
+    isEmergencyPharmacy: true,
+    rating: 4.7
+  },
+  {
+    id: "med-store-3",
+    name: "Pradhan Mantri Jan Aushadhi Generic Kendra",
+    type: "pharmacy",
+    latitude: 19.08310,
+    longitude: 83.81420,
+    address: "Daily Market Complex, Shop No. 14, Gunupur, Odisha 765022",
+    city: "Gunupur",
+    phone: "+91-9438201103",
+    timing: "9:00 AM - 9:30 PM (Affordable Generic Medicines)",
+    isEmergencyPharmacy: false,
+    rating: 4.9
+  },
+  {
+    id: "med-store-4",
+    name: "GIET Campus Medical Hall & Dispensary",
+    type: "pharmacy",
+    latitude: 19.07800,
+    longitude: 83.82620,
+    address: "Gate No. 2, GIET University Campus, Gunupur, Odisha 765022",
+    city: "Gunupur",
+    phone: "+91-9438201104",
+    timing: "24x7 Student & Emergency Dispensary",
+    isEmergencyPharmacy: true,
+    rating: 4.8
+  },
+  {
+    id: "med-store-5",
+    name: "Lifeline Apollo Pharmacy & Surgical Store",
+    type: "pharmacy",
+    latitude: 19.08720,
+    longitude: 83.81520,
+    address: "College Road Junction, Gunupur, Odisha 765022",
+    city: "Gunupur",
+    phone: "+91-9438201105",
+    timing: "7:30 AM - 11:30 PM",
+    isEmergencyPharmacy: true,
+    rating: 4.6
+  },
+  {
+    id: "med-store-6",
+    name: "Sri Krishna Medical & Day Care Pharmacy",
+    type: "pharmacy",
+    latitude: 19.08450,
+    longitude: 83.81800,
+    address: "Station Road, Gunupur, Odisha 765022",
+    city: "Gunupur",
+    phone: "+91-9438201106",
+    timing: "8:00 AM - 10:30 PM",
+    isEmergencyPharmacy: false,
+    rating: 4.7
+  }
+];
+
 const DEFAULT_FLEET = [
   {
-    hospitalName: "Pawan_Multinational_Hospital",
-    hospitalAddress: "hospital road, Gunupur Town, Ketalugurha, Gunupur, Rayagada, Odisha, 765022, India",
-    hospitalCoordinates: { lat: 19.0715764, lng: 83.8095657 },
-    vehicleNumber: "OD17C8056",
-    driverName: "Om Meher",
-    driverPhone: "+91-8658067196",
+    hospitalName: "Arogya Life Multispeciality Hospital",
+    hospitalAddress: "Main Hospital Road, Near Town Hall, Gunupur, Rayagada, Odisha 765022",
+    hospitalCoordinates: { lat: 19.08250, lng: 83.81550 },
+    vehicleNumber: "OD-18-AMB-1081",
+    driverName: "Santosh Kumar Nayak",
+    driverPhone: "+91-9437554401",
     equipmentLevel: "ALS",
     status: "available",
     speed: 0,
-    currentCoordinates: { lat: 19.0715764, lng: 83.8095657 }
+    currentCoordinates: { lat: 19.08250, lng: 83.81550 }
   },
   {
-    hospitalName: "Pawan_Multinational_Hospital",
-    hospitalAddress: "hospital road, Gunupur Town, Ketalugurha, Gunupur, Rayagada, Odisha, 765022, India",
-    hospitalCoordinates: { lat: 19.0715764, lng: 83.8095657 },
+    hospitalName: "Sub-Divisional Hospital (SDH) Gunupur",
+    hospitalAddress: "Govt. Hospital Campus, Old Town Road, Gunupur, Rayagada, Odisha 765022",
+    hospitalCoordinates: { lat: 19.08050, lng: 83.81240 },
+    vehicleNumber: "OD-18-AMB-1082",
+    driverName: "Bikram Keshari Rout",
+    driverPhone: "+91-9437554402",
+    equipmentLevel: "BLS",
+    status: "available",
+    speed: 0,
+    currentCoordinates: { lat: 19.08050, lng: 83.81240 }
+  },
+  {
+    hospitalName: "Lifeline 24x7 Trauma & Critical Care Hospital",
+    hospitalAddress: "NH-326 Highway Junction, Gunupur, Rayagada, Odisha 765022",
+    hospitalCoordinates: { lat: 19.08850, lng: 83.82200 },
+    vehicleNumber: "OD-18-AMB-1083",
+    driverName: "Deepak Sahu",
+    driverPhone: "+91-9437554403",
+    equipmentLevel: "ICU Ambulance",
+    status: "available",
+    speed: 0,
+    currentCoordinates: { lat: 19.08850, lng: 83.82200 }
+  },
+  {
+    hospitalName: "Arogya Life Multispeciality Hospital",
+    hospitalAddress: "Main Hospital Road, Near Town Hall, Gunupur, Rayagada, Odisha 765022",
+    hospitalCoordinates: { lat: 19.08250, lng: 83.81550 },
     vehicleNumber: "DL-01-AMB-101",
     driverName: "Rajesh Kumar",
     driverPhone: "+91-9876543210",
     equipmentLevel: "ALS",
     status: "available",
     speed: 0,
-    currentCoordinates: { lat: 19.0715764, lng: 83.8095657 }
+    currentCoordinates: { lat: 19.08250, lng: 83.81550 }
   }
 ];
+
+
 
 /**
  * Bootstraps and pre-populates location map GIS markers when server starts
@@ -364,10 +471,17 @@ router.post("/ambulances/update-location", async (req, res) => {
           "currentCoordinates.lng": lng,
           speed: spd,
           status
+        },
+        $setOnInsert: {
+          vehicleNumber,
+          hospitalName: "Arogya Life Multispeciality Hospital",
+          driverName: "Emergency Response Driver",
+          equipmentLevel: "ALS"
         }
       },
-      { new: true }
+      { new: true, upsert: true }
     );
+
 
     const payload = {
       vehicleNumber,
@@ -478,19 +592,72 @@ router.get("/emergencies", async (req, res) => {
 });
 
 /**
+ * @route GET /api/map/medical-stores
+ * @desc Get all registered medical stores & 24/7 pharmacies in Gunupur with distances and emergency contacts
+ */
+router.get("/medical-stores", async (req, res) => {
+  try {
+    const lat = parseFloat(req.query.lat);
+    const lng = parseFloat(req.query.lng);
+
+    let stores = GUNUPUR_MEDICAL_STORES.map(s => {
+      let distanceKm = null;
+      if (!isNaN(lat) && !isNaN(lng)) {
+        distanceKm = parseFloat(calculateHaversineDistance(lat, lng, s.latitude, s.longitude).toFixed(2));
+      }
+      return {
+        ...s,
+        distanceKm
+      };
+    });
+
+    if (!isNaN(lat) && !isNaN(lng)) {
+      stores.sort((a, b) => (a.distanceKm || 0) - (b.distanceKm || 0));
+    }
+
+    return res.status(200).json({
+      success: true,
+      count: stores.length,
+      city: "Gunupur",
+      data: stores
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
  * @route GET /api/map/nearby
  * @desc Fetch nearby healthcare facilities (Hospitals, Clinics, Pharmacies, Blood Banks, Ambulance Stations) via Overpass API
  */
 router.get("/nearby", async (req, res) => {
   try {
-    const lat = parseFloat(req.query.lat) || 28.6139;
-    const lng = parseFloat(req.query.lng) || 77.2090;
+    const lat = parseFloat(req.query.lat) || 19.0825;
+    const lng = parseFloat(req.query.lng) || 83.8155;
     const radius = parseInt(req.query.radius) || 5000; // in meters
     const type = req.query.type || "hospital"; // hospital, clinic, pharmacy, blood_bank
 
+    // If pharmacy is requested, return Gunupur registered medical stores directly or combined
+    if (type === "pharmacy" || type === "store" || type === "medical_store") {
+      const stores = GUNUPUR_MEDICAL_STORES.map(s => ({
+        id: s.id,
+        name: s.name,
+        amenity: "pharmacy",
+        latitude: s.latitude,
+        longitude: s.longitude,
+        address: s.address,
+        phone: s.phone,
+        timing: s.timing,
+        isEmergencyPharmacy: s.isEmergencyPharmacy,
+        rating: s.rating,
+        distanceKm: parseFloat(calculateHaversineDistance(lat, lng, s.latitude, s.longitude).toFixed(2))
+      })).sort((a, b) => a.distanceKm - b.distanceKm);
+
+      return res.json({ success: true, count: stores.length, source: "gunupur_registry", data: stores });
+    }
+
     // Overpass API Query
     let amenityType = "hospital";
-    if (type === "pharmacy") amenityType = "pharmacy";
     if (type === "clinic") amenityType = "clinic";
     if (type === "blood_bank") amenityType = "blood_bank";
 
@@ -503,46 +670,62 @@ router.get("/nearby", async (req, res) => {
       out body center 20;`;
 
     const overpassUrl = "https://overpass-api.de/api/interpreter";
-    const response = await fetch(overpassUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: "data=" + encodeURIComponent(overpassQuery)
-    });
+    try {
+      const response = await fetch(overpassUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "data=" + encodeURIComponent(overpassQuery)
+      });
 
-    if (!response.ok) {
-      // Return local fallback hospitals if Overpass API rate limited
-      const localHospitals = await Hospital.find();
-      return res.json({ success: true, source: "database_fallback", data: localHospitals });
+      if (response.ok) {
+        const data = await response.json();
+        const elements = data.elements || [];
+
+        if (elements.length > 0) {
+          const results = elements.map(el => {
+            const elLat = el.lat || (el.center ? el.center.lat : lat);
+            const elLng = el.lon || (el.center ? el.center.lon : lng);
+            const dist = calculateHaversineDistance(lat, lng, elLat, elLng);
+
+            return {
+              id: el.id,
+              name: el.tags?.name || `${type.toUpperCase()} Facility`,
+              amenity: el.tags?.amenity || type,
+              latitude: elLat,
+              longitude: elLng,
+              address: el.tags?.["addr:street"] ? `${el.tags["addr:street"]}, ${el.tags["addr:city"] || ""}` : "Near requested location",
+              phone: el.tags?.phone || el.tags?.["contact:phone"] || "N/A",
+              distanceKm: parseFloat(dist.toFixed(2))
+            };
+          });
+
+          results.sort((a, b) => a.distanceKm - b.distanceKm);
+          return res.json({ success: true, count: results.length, data: results });
+        }
+      }
+    } catch (e) {
+      // Overpass offline or network rate limit, gracefully fallback
     }
 
-    const data = await response.json();
-    const elements = data.elements || [];
+    // Return local database hospitals as robust fallback
+    const localHospitals = await Hospital.find();
+    const rankedHospitals = localHospitals.map(h => ({
+      id: h._id,
+      name: h.name,
+      amenity: "hospital",
+      latitude: h.latitude,
+      longitude: h.longitude,
+      address: h.address,
+      phone: h.phone,
+      distanceKm: parseFloat(calculateHaversineDistance(lat, lng, h.latitude, h.longitude).toFixed(2))
+    })).sort((a, b) => a.distanceKm - b.distanceKm);
 
-    const results = elements.map(el => {
-      const elLat = el.lat || (el.center ? el.center.lat : lat);
-      const elLng = el.lon || (el.center ? el.center.lon : lng);
-      const dist = calculateHaversineDistance(lat, lng, elLat, elLng);
-
-      return {
-        id: el.id,
-        name: el.tags?.name || `${type.toUpperCase()} Facility`,
-        amenity: el.tags?.amenity || type,
-        latitude: elLat,
-        longitude: elLng,
-        address: el.tags?.["addr:street"] ? `${el.tags["addr:street"]}, ${el.tags["addr:city"] || ""}` : "Near requested location",
-        phone: el.tags?.phone || el.tags?.["contact:phone"] || "N/A",
-        distanceKm: parseFloat(dist.toFixed(2))
-      };
-    });
-
-    // Sort by nearest distance
-    results.sort((a, b) => a.distanceKm - b.distanceKm);
-
-    res.json({ success: true, count: results.length, data: results });
+    return res.json({ success: true, source: "database_fallback", data: rankedHospitals });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 /**
  * @route POST /api/map/route

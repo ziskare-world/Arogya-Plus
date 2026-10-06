@@ -24,24 +24,26 @@ async function run() {
       const lat = Number(coords.lat || 19.0715764);
       const lng = Number(coords.lng || 83.8095657);
 
+      const existing = await Hospital.findOne({ name: admin.hospitalName });
       const h = await Hospital.findOneAndUpdate(
         { name: admin.hospitalName },
         {
           $set: {
             name: admin.hospitalName,
-            address: admin.hospitalAddress || "hospital road, Gunupur Town, Ketalugurha, Gunupur, Rayagada, Odisha, 765022, India",
+            address: admin.hospitalAddress || "Main Road, Gunupur, Rayagada, Odisha, 765022, India",
             latitude: lat,
             longitude: lng,
-            phone: admin.phone || "+91-11-23456789",
-            specialty: "Neurology & Multi-Specialty",
-            totalBeds: 100,
-            occupiedBeds: 14,
-            availableBeds: 86,
+            phone: admin.phone || "+91-6857-220101",
+            specialty: existing?.specialty || admin.department || "Multispeciality & Emergency Care",
+            totalBeds: existing?.totalBeds || 100,
+            occupiedBeds: existing?.occupiedBeds || 30,
+            availableBeds: existing?.availableBeds || 70,
             emergencyServices: true
           }
         },
         { upsert: true, new: true }
       );
+
       console.log("Synced real hospital into DB:", h.name);
     }
 

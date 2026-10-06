@@ -21,6 +21,9 @@ window.ArogyaMap = (function () {
     } else if (type === 'doctor') {
       color = '#7c3aed'; // violet
       iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="8"/><line x1="20.5" y1="5.5" x2="20.5" y2="10.5"/></svg>`;
+    } else if (type === 'pharmacy' || type === 'medical-store' || type === 'store') {
+      color = '#0d9488'; // teal / emerald pharmacy color
+      iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>`;
     } else if (type === 'emergency') {
       color = '#dc2626'; // crimson red
       iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
@@ -40,9 +43,11 @@ window.ArogyaMap = (function () {
   }
 
   function initMap(containerId, options = {}) {
-    const lat = options.lat || 28.6139;
-    const lng = options.lng || 77.2090;
-    const zoom = options.zoom || 13;
+    // Default to Gunupur, Odisha coordinates for testing and project review
+    const lat = options.lat || 19.0825;
+    const lng = options.lng || 83.8155;
+    const zoom = options.zoom || 14;
+
 
     const container = document.getElementById(containerId);
     if (!container) {

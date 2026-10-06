@@ -9,3 +9,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 coverage/
+*credentials*.txt
+*credential*.txt
+GUNUPUR_HEALTHCARE_CREDENTIALS.txt
+credentials/

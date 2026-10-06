@@ -424,7 +424,7 @@ let mapMarkers = [];
 async function initAdminLiveMap() {
   if (!window.ArogyaMap || !document.getElementById("admin-live-map")) return;
 
-  adminMap = window.ArogyaMap.initMap("admin-live-map", { lat: 28.6139, lng: 77.2090, zoom: 12 });
+  adminMap = window.ArogyaMap.initMap("admin-live-map", { lat: 19.0825, lng: 83.8155, zoom: 14 });
   loadAdminMapMarkers();
 
   // Socket.IO tracking for live ambulance updates
@@ -466,18 +466,34 @@ async function loadAdminMapMarkers() {
   if (filterVal === "all" || filterVal === "hospitals") {
     const hospitals = await window.ArogyaHospital.getHospitals();
     hospitals.forEach(h => {
+      const docCount = (h.doctors && h.doctors.length) ? h.doctors.length : 0;
       const m = window.ArogyaMap.addMarker(
         adminMap,
         h.latitude,
         h.longitude,
         "hospital",
-        `<b>🏥 ${h.name}</b><br>${h.address}<br><small>${h.specialty}</small>`
+        `<b>🏥 ${h.name}</b><br>${h.address}<br><small>${h.specialty}</small>${docCount > 0 ? `<br><small style="color:#2563eb">👨‍⚕️ ${docCount} Doctors on duty</small>` : ''}`
       );
       if (m) mapMarkers.push(m);
     });
   }
 
-  // 2. Fetch Ambulances
+  // 2. Fetch Medical Stores
+  if (filterVal === "all" || filterVal === "stores" || filterVal === "pharmacies") {
+    const stores = await window.ArogyaHospital.getMedicalStores();
+    stores.forEach(s => {
+      const m = window.ArogyaMap.addMarker(
+        adminMap,
+        s.latitude,
+        s.longitude,
+        "pharmacy",
+        `<b>💊 ${s.name}</b><br>${s.address}<br><small>🕒 ${s.timing || '24x7 Open'} • 📞 ${s.phone || 'N/A'}</small>`
+      );
+      if (m) mapMarkers.push(m);
+    });
+  }
+
+  // 3. Fetch Ambulances
   if (filterVal === "all" || filterVal === "ambulances") {
     const fleetList = await window.ArogyaAmbulance.getAmbulanceFleet();
     fleetList.forEach(a => {
@@ -493,7 +509,7 @@ async function loadAdminMapMarkers() {
     });
   }
 
-  // 3. Fetch Emergency Incidents
+  // 4. Fetch Emergency Incidents
   if (filterVal === "all" || filterVal === "emergencies") {
     const emergencies = await window.ArogyaEmergency.getActiveEmergencies();
     emergencies.forEach(e => {
@@ -512,6 +528,7 @@ async function loadAdminMapMarkers() {
     window.ArogyaMap.fitBounds(adminMap, mapMarkers);
   }
 }
+
 
 const init = async () => {
   const session = ensureSession({

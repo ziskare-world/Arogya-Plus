@@ -63,10 +63,24 @@ window.ArogyaHospital = (function () {
     return R * c;
   }
 
+  async function getMedicalStores(lat, lng) {
+    try {
+      const query = (lat !== undefined && lng !== undefined) ? `?lat=${lat}&lng=${lng}` : '';
+      const response = await fetch(`/api/map/medical-stores${query}`);
+      const data = await response.json();
+      return data.success ? data.data : [];
+    } catch (err) {
+      console.error('Failed to fetch medical stores list:', err);
+      return [];
+    }
+  }
+
   return {
     getHospitals,
     getNearbyFacilities,
+    getMedicalStores,
     findNearestHospital,
     calculateHaversineDistance
   };
 })();
+

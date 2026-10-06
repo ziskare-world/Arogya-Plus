@@ -330,6 +330,52 @@ useFamilyLocBtnEl?.addEventListener("click", () => {
 // ==========================================
 // LEAFLET GIS MAP & ROUTING
 // ==========================================
+let facilityMarkers = [];
+
+async function loadGunupurFacilities(mapInstance) {
+  if (!mapInstance || !window.ArogyaHospital) return;
+  try {
+    // 1. Fetch & Plot Hospitals
+    const hospitals = await window.ArogyaHospital.getHospitals();
+    hospitals.forEach(h => {
+      const docCount = (h.doctors && h.doctors.length) ? h.doctors.length : 0;
+      const docListHtml = docCount > 0 
+        ? `<div style="margin-top:4px;font-size:0.75rem;color:#1e40af">👨‍⚕️ <b>${docCount} Doctors Assigned:</b><br>${h.doctors.map(d => '• ' + d.name + ' (' + d.specialization + ')').join('<br>')}</div>` 
+        : '';
+      const popupHtml = `
+        <div style="font-family:sans-serif;min-width:210px">
+          <div style="font-weight:700;color:#0369a1;font-size:0.92rem">🏥 ${h.name}</div>
+          <div style="font-size:0.78rem;color:#475569;margin-top:2px">${h.address}</div>
+          <div style="font-size:0.78rem;margin-top:4px">
+            <span style="color:#059669;font-weight:600">Beds: ${h.availableBeds || 0} free</span> / ${h.totalBeds || 100} total
+          </div>
+          ${docListHtml}
+          <div style="font-size:0.75rem;color:#64748b;margin-top:4px">📞 ${h.phone || '108'} • 24x7 Emergency</div>
+        </div>
+      `;
+      const marker = window.ArogyaMap.addMarker(mapInstance, h.latitude, h.longitude, 'hospital', popupHtml);
+      if (marker) facilityMarkers.push(marker);
+    });
+
+    // 2. Fetch & Plot Medical Stores
+    const stores = await window.ArogyaHospital.getMedicalStores();
+    stores.forEach(s => {
+      const popupHtml = `
+        <div style="font-family:sans-serif;min-width:200px">
+          <div style="font-weight:700;color:#0d9488;font-size:0.92rem">💊 ${s.name}</div>
+          <div style="font-size:0.78rem;color:#475569;margin-top:2px">${s.address}</div>
+          <div style="font-size:0.78rem;color:#0f766e;margin-top:3px;font-weight:600">🕒 ${s.timing || '24x7 Open'}</div>
+          <div style="font-size:0.75rem;color:#64748b;margin-top:4px">📞 ${s.phone || 'N/A'}</div>
+        </div>
+      `;
+      const marker = window.ArogyaMap.addMarker(mapInstance, s.latitude, s.longitude, 'pharmacy', popupHtml);
+      if (marker) facilityMarkers.push(marker);
+    });
+  } catch (err) {
+    console.warn("Failed to load Gunupur facilities onto map:", err);
+  }
+}
+
 async function initLeafletMap() {
   if (!window.ArogyaMap || !window.L) {
     if (mapStatusEl) mapStatusEl.textContent = "Map Loading...";
@@ -337,25 +383,27 @@ async function initLeafletMap() {
     return;
   }
 
-  const defaultLat = 28.6139;
-  const defaultLng = 77.2090;
-  const defaultAddress = "Connaught Place, New Delhi, India";
+  const defaultLat = 19.0825;
+  const defaultLng = 83.8155;
+  const defaultAddress = "Main Road, Near Town Hall, Gunupur, Odisha 765022";
 
   map = window.ArogyaMap.initMap("ambulance-map", {
     lat: defaultLat,
     lng: defaultLng,
-    zoom: 13
+    zoom: 14
   });
 
   if (mapStatusEl) {
-    mapStatusEl.textContent = "Interactive GIS Active";
+    mapStatusEl.textContent = "Gunupur GIS Active";
     mapStatusEl.className = "badge badge-green";
   }
   if (mapKeyHelpEl) {
-    mapKeyHelpEl.textContent = "Live GIS routing & autonomous dispatch active.";
+    mapKeyHelpEl.textContent = "Gunupur clinical network: 10 Hospitals & Medical Stores mapped.";
   }
 
   setPickupLocation(defaultLat, defaultLng, defaultAddress);
+  loadGunupurFacilities(map);
+  findNearestHospitalForPickup();
 
   // Map click handler to set pickup location
   map.on("click", async (e) => {
@@ -366,6 +414,7 @@ async function initLeafletMap() {
     findNearestHospitalForPickup();
   });
 }
+
 
 function setPickupLocation(lat, lng, addressStr = "") {
   pickupCoords = { lat: Number(lat), lng: Number(lng) };

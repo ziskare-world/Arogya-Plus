@@ -363,7 +363,7 @@ let doctorMap = null;
 async function initDoctorPatientMap() {
   if (!window.ArogyaMap || !document.getElementById("doctor-patient-map")) return;
 
-  doctorMap = window.ArogyaMap.initMap("doctor-patient-map", { lat: 28.6139, lng: 77.2090, zoom: 13 });
+  doctorMap = window.ArogyaMap.initMap("doctor-patient-map", { lat: 19.0825, lng: 83.8155, zoom: 14 });
 
   // Add Doctor's current location marker
   const doctorLoc = await window.ArogyaGeo.getCurrentLocation();

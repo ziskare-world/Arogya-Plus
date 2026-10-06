@@ -270,7 +270,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/emergency", emergencyRoutes);
 app.use("/api/ambulance", ambulanceRoutes);
-app.use("/api/payment", paymentRoutes);
+app.use(["/api/payment", "/api/payments"], paymentRoutes);
 app.use("/api/insurance", insuranceRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/doctors", doctorRoutes);

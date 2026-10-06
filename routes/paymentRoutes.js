@@ -1,6 +1,6 @@
 const express = require("express");
 const asyncHandler = require("express-async-handler");
-const { body } = require("express-validator");
+const { body, param } = require("express-validator");
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
 const Payment = require("../models/Payment");
@@ -339,6 +339,65 @@ router.get(
         patient: payment.user,
         appointment: payment.appointment
       }
+    });
+  })
+);
+
+router.delete(
+  "/history/clear",
+  protect,
+  authorize("super-admin"),
+  asyncHandler(async (req, res) => {
+    const deleteResult = await Payment.deleteMany({});
+
+    await logAudit({
+      action: "PAYMENT_HISTORY_CLEARED",
+      category: "PAYMENT",
+      severity: "warning",
+      details: `Entire payment transaction history cleared (${deleteResult.deletedCount} records deleted) by super-admin ${req.user.name}`,
+      actor: { id: req.user._id, name: req.user.name, role: req.user.role, email: req.user.email },
+      req
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Transaction history cleared successfully (${deleteResult.deletedCount} records deleted)`,
+      deletedCount: deleteResult.deletedCount
+    });
+  })
+);
+
+router.delete(
+  "/:id",
+  protect,
+  authorize("super-admin"),
+  [param("id").notEmpty().withMessage("Valid payment id is required")],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const payment = await Payment.findById(req.params.id);
+
+    if (!payment) {
+      return res.status(404).json({ success: false, message: "Payment transaction record not found" });
+    }
+
+    await Payment.findByIdAndDelete(payment._id);
+
+    await logAudit({
+      action: "PAYMENT_DELETED",
+      category: "PAYMENT",
+      severity: "warning",
+      details: `Payment transaction ${payment._id} (Invoice: ${payment.invoiceNumber || "N/A"}, Amount: INR ${payment.amount}) deleted by super-admin ${req.user.name}`,
+      actor: { id: req.user._id, name: req.user.name, role: req.user.role, email: req.user.email },
+      targetId: payment._id,
+      hospital: payment.hospital,
+      hospitalName: payment.hospitalName,
+      req
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment transaction record deleted successfully",
+      deletedId: payment._id
     });
   })
 );

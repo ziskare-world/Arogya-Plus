@@ -117,7 +117,7 @@ const renderTransactions = () => {
   if (!rows.length) {
     tableBodyEl.innerHTML = `
       <tr>
-        <td colspan="7" style="text-align:center;color:var(--text-500)">No payment records found.</td>
+        <td colspan="8" style="text-align:center;color:var(--text-500)">No payment records found.</td>
       </tr>`;
     return;
   }
@@ -134,6 +134,11 @@ const renderTransactions = () => {
           <td style="color:var(--text-400)">${escapeHtml(paymentDescription(payment))}</td>
           <td style="color:var(--text-500)">${escapeHtml(paymentDate(payment))}</td>
           <td>${statusBadge(payment.status)}</td>
+          <td>
+            <button class="btn btn-outline btn-sm delete-single-btn" type="button" data-id="${payment._id}" style="color:#ef4444;border-color:#fca5a5;padding:4px 8px;font-size:0.75rem;cursor:pointer" title="Delete payment record">
+              🗑️ Delete
+            </button>
+          </td>
         </tr>`;
     })
     .join("");
@@ -295,6 +300,105 @@ window.addPayment = async function addPayment() {
     toast(error.message, "error");
   }
 };
+
+const deleteConfirmModalEl = document.getElementById("delete-confirm-modal");
+const deleteModalTitleEl = document.getElementById("delete-modal-title");
+const deleteModalMsgEl = document.getElementById("delete-modal-msg");
+const cancelDeleteBtn = document.getElementById("cancel-delete-btn");
+const confirmDeleteBtn = document.getElementById("confirm-delete-btn");
+const clearTxnHistoryBtn = document.getElementById("clear-txn-history-btn");
+
+let pendingDeleteAction = null;
+
+const showDeleteConfirmation = ({ title, message, onConfirm }) => {
+  if (deleteModalTitleEl) deleteModalTitleEl.textContent = title;
+  if (deleteModalMsgEl) deleteModalMsgEl.textContent = message;
+  pendingDeleteAction = onConfirm;
+  if (deleteConfirmModalEl) deleteConfirmModalEl.classList.remove("hidden");
+};
+
+const hideDeleteConfirmation = () => {
+  if (deleteConfirmModalEl) deleteConfirmModalEl.classList.add("hidden");
+  pendingDeleteAction = null;
+};
+
+if (cancelDeleteBtn) {
+  cancelDeleteBtn.addEventListener("click", hideDeleteConfirmation);
+}
+
+if (deleteConfirmModalEl) {
+  deleteConfirmModalEl.addEventListener("click", (e) => {
+    if (e.target === deleteConfirmModalEl) hideDeleteConfirmation();
+  });
+}
+
+if (confirmDeleteBtn) {
+  confirmDeleteBtn.addEventListener("click", async () => {
+    if (typeof pendingDeleteAction === "function") {
+      const action = pendingDeleteAction;
+      hideDeleteConfirmation();
+      await action();
+    }
+  });
+}
+
+if (clearTxnHistoryBtn) {
+  clearTxnHistoryBtn.addEventListener("click", () => {
+    if (!payments.length) {
+      toast("No transaction records to clear", "info");
+      return;
+    }
+    showDeleteConfirmation({
+      title: "Clear Entire Transaction History",
+      message: `Are you sure you want to permanently delete all ${payments.length} payment records in the transaction history? This action is irreversible.`,
+      onConfirm: async () => {
+        try {
+          const res = await apiRequest("/api/payments/history/clear", { method: "DELETE" });
+          toast(res.message || "Transaction history cleared successfully", "success");
+          paymentMeta = {};
+          saveMeta();
+          await refreshPaymentsView();
+        } catch (error) {
+          toast(error.message || "Failed to clear transaction history", "error");
+        }
+      }
+    });
+  });
+}
+
+if (tableBodyEl) {
+  tableBodyEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".delete-single-btn");
+    if (!btn) return;
+    const paymentId = btn.getAttribute("data-id");
+    const payment = payments.find((p) => String(p._id) === String(paymentId));
+    if (!payment) {
+      toast("Payment transaction not found", "error");
+      return;
+    }
+
+    const patientLabel = paymentPatientLabel(payment);
+    const amountStr = formatMoney(payment.amount);
+
+    showDeleteConfirmation({
+      title: "Delete Payment Transaction",
+      message: `Are you sure you want to permanently delete the transaction record for ${patientLabel} (${amountStr})? This action cannot be undone.`,
+      onConfirm: async () => {
+        try {
+          await apiRequest(`/api/payments/${paymentId}`, { method: "DELETE" });
+          toast("Payment transaction deleted successfully", "success");
+          if (paymentMeta[paymentId]) {
+            delete paymentMeta[paymentId];
+            saveMeta();
+          }
+          await refreshPaymentsView();
+        } catch (error) {
+          toast(error.message || "Failed to delete payment transaction", "error");
+        }
+      }
+    });
+  });
+}
 
 const init = async () => {
   const session = ensureSession({

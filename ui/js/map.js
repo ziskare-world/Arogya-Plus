@@ -61,6 +61,9 @@ window.ArogyaMap = (function () {
       container.innerHTML = '';
     }
 
+    // Ensure any stale api-key-warning elements in DOM are immediately purged
+    document.querySelectorAll('.api-key-warning').forEach(el => el.remove());
+
     const map = L.map(containerId, {
       zoomControl: true,
       attributionControl: true

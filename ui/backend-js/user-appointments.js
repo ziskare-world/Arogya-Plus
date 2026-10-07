@@ -441,13 +441,23 @@ const updateActiveProfileStrip = () => {
 
 const initQuickAddProfile = () => {
   const closeBtn = document.getElementById("close-quick-add-btn");
+  const cancelBtn = document.getElementById("cancel-quick-profile-btn");
   const saveBtn = document.getElementById("save-quick-profile-btn");
   const drawer = document.getElementById("quick-add-profile-drawer");
 
+  const closeDrawer = () => {
+    if (drawer) drawer.style.display = "none";
+    const nameInput = document.getElementById("quick-profile-name");
+    const cityInput = document.getElementById("quick-profile-city");
+    if (nameInput) nameInput.value = "";
+    if (cityInput) cityInput.value = "";
+  };
+
   if (closeBtn) {
-    closeBtn.addEventListener("click", () => {
-      if (drawer) drawer.style.display = "none";
-    });
+    closeBtn.addEventListener("click", closeDrawer);
+  }
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", closeDrawer);
   }
 
   if (saveBtn) {
@@ -811,6 +821,8 @@ const openBookModal = () => {
 const closeBookModal = () => {
   if (modal) modal.classList.add("hidden");
   if (bookForm) bookForm.reset();
+  const drawer = document.getElementById("quick-add-profile-drawer");
+  if (drawer) drawer.style.display = "none";
   if (familySelectWrapper) familySelectWrapper.style.display = "none";
   if (locFamilyLabel) locFamilyLabel.style.display = "none";
   if (customLocationFields) customLocationFields.style.display = "none";

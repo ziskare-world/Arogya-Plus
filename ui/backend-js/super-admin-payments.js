@@ -314,13 +314,22 @@ const showDeleteConfirmation = ({ title, message, onConfirm }) => {
   if (deleteModalTitleEl) deleteModalTitleEl.textContent = title;
   if (deleteModalMsgEl) deleteModalMsgEl.textContent = message;
   pendingDeleteAction = onConfirm;
-  if (deleteConfirmModalEl) deleteConfirmModalEl.classList.remove("hidden");
+  if (deleteConfirmModalEl) {
+    deleteConfirmModalEl.classList.remove("hidden");
+    deleteConfirmModalEl.style.display = "flex";
+  }
 };
 
 const hideDeleteConfirmation = () => {
-  if (deleteConfirmModalEl) deleteConfirmModalEl.classList.add("hidden");
+  if (deleteConfirmModalEl) {
+    deleteConfirmModalEl.classList.add("hidden");
+    deleteConfirmModalEl.style.display = "none";
+  }
   pendingDeleteAction = null;
 };
+
+// Ensure modal is closed on page load
+hideDeleteConfirmation();
 
 if (cancelDeleteBtn) {
   cancelDeleteBtn.addEventListener("click", hideDeleteConfirmation);

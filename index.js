@@ -216,7 +216,8 @@ app.get("/api/health", (req, res) => {
 app.get("/api/public-config", (req, res) => {
   res.status(200).json({
     success: true,
-    openRouteServiceApiKey: resolveOpenRouteServiceApiKey()
+    openRouteServiceApiKey: resolveOpenRouteServiceApiKey() || "integrated_free_clinical_gis",
+    googleMapsApiKey: ""
   });
 });
 

@@ -68,7 +68,7 @@
         <div class="modal-card" style="max-width:640px;max-height:92vh;overflow-y:auto">
             <div class="card-header">
                 <div class="card-title">Book Doctor Appointment</div>
-                <button class="btn btn-ghost btn-sm" type="button" onclick="window.closeBookModal()">Close</button>
+                <button class="btn btn-ghost btn-sm" type="button" onclick="window.closeBookModal()" style="font-size:1.15rem;padding:2px 8px;cursor:pointer" title="Close" aria-label="Close">✕</button>
             </div>
             <form id="book-form" style="display:grid;gap:14px">
                 <!-- 1. Who is this appointment for? (Lenskart-Style Multi-Profile Chooser) -->
@@ -87,7 +87,7 @@
                     <div id="quick-add-profile-drawer" class="quick-add-profile-box" style="display:none">
                         <div style="display:flex;justify-content:space-between;align-items:center">
                             <span style="font-weight:700;font-size:0.85rem;color:#1e40af">➕ Add Profile to your Account</span>
-                            <button type="button" class="btn btn-ghost btn-sm" id="close-quick-add-btn" style="padding:2px 6px">✕</button>
+                            <button type="button" class="btn btn-ghost btn-sm" id="close-quick-add-btn" style="padding:2px 8px;font-size:1.1rem;cursor:pointer" title="Close" aria-label="Close">✕</button>
                         </div>
                         <p class="muted" style="font-size:0.78rem;margin:0">Add family profiles under your Gmail ID like Lenskart. Only Name is required!</p>
                         <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:8px">
@@ -107,7 +107,10 @@
                         </div>
                         <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:8px">
                             <input id="quick-profile-city" class="form-input" placeholder="Remote City (optional, e.g. Mumbai)" style="font-size:0.85rem" />
-                            <button id="save-quick-profile-btn" type="button" class="btn btn-primary btn-sm" style="font-weight:600">Save & Select</button>
+                            <div style="display:flex;gap:6px">
+                                <button id="cancel-quick-profile-btn" type="button" class="btn btn-outline btn-sm" style="flex:1" title="Cancel">Cancel</button>
+                                <button id="save-quick-profile-btn" type="button" class="btn btn-primary btn-sm" style="font-weight:600;flex:1.2">Save & Select</button>
+                            </div>
                         </div>
                     </div>
 

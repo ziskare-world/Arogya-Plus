@@ -1,4 +1,4 @@
-﻿const request = require("supertest");
+const request = require("supertest");
 const { app } = require("../index");
 const { registerAndLogin } = require("./testUtils");
 
@@ -69,4 +69,43 @@ describe("Appointments API", () => {
     expect(updateResponse.statusCode).toBe(200);
     expect(updateResponse.body.appointment.status).toBe("confirmed");
   });
+
+  test("admin can cancel an appointment", async () => {
+    const patient = await registerAndLogin({
+      name: "Patient C",
+      email: "patientC@test.com",
+      password: "patient123",
+      role: "patient"
+    });
+    const doctor = await registerAndLogin({
+      name: "Doctor C",
+      email: "doctorC@test.com",
+      password: "doctor123",
+      role: "doctor"
+    });
+    const admin = await registerAndLogin({
+      name: "Admin C",
+      email: "adminC@test.com",
+      password: "admin123",
+      role: "admin"
+    });
+
+    const appointment = await request(app)
+      .post("/api/appointments")
+      .set("Authorization", `Bearer ${patient.token}`)
+      .send({
+        doctorId: doctor.user.id,
+        appointmentDate: "2026-12-22T14:00:00.000Z",
+        reason: "Fever"
+      });
+
+    const cancelResponse = await request(app)
+      .patch(`/api/appointments/${appointment.body.appointment._id}/cancel`)
+      .set("Authorization", `Bearer ${admin.token}`)
+      .send({ cancellationReason: "Doctor unavailable" });
+
+    expect(cancelResponse.statusCode).toBe(200);
+    expect(cancelResponse.body.appointment.status).toBe("cancelled");
+  });
 });
+

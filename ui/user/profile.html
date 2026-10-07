@@ -14,14 +14,14 @@
     <div id="toast-container"></div>
 
     <!-- Add/Edit Family Member Modal -->
-    <div id="family-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:200;padding:16px;">
+    <div id="family-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;justify-content:center;align-items:center;z-index:200;padding:16px;">
         <div class="card" style="width:100%;max-width:540px;max-height:90vh;overflow-y:auto;background:var(--surface);border-radius:16px;padding:24px;box-shadow:0 20px 40px rgba(0,0,0,0.2);">
             <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
                 <div>
                     <div class="card-title" id="family-modal-title" style="font-size:1.15rem;font-weight:700">Add Profile to Account</div>
                     <div class="muted" style="font-size:0.8rem;margin-top:2px">Like Lenskart profiles, only Name is required. All other details are optional.</div>
                 </div>
-                <button class="btn btn-ghost btn-sm" type="button" onclick="window.closeFamilyModal()">✕</button>
+                <button class="btn btn-ghost btn-sm" id="close-family-modal-btn" type="button" onclick="window.closeFamilyModal()" style="font-size:1.15rem;padding:2px 8px;cursor:pointer" title="Close" aria-label="Close">✕</button>
             </div>
             <form id="family-form" style="display:grid;gap:12px">
                 <input type="hidden" id="family-member-id" />

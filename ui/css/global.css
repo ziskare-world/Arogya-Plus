@@ -1000,3 +1000,11 @@ tbody tr:hover {
         min-width: 500px;
     }
 }
+
+/* ── VISIBILITY UTILITIES ── */
+.hidden,
+.modal-backdrop.hidden,
+.popup-backdrop.hidden {
+    display: none !important;
+}
+

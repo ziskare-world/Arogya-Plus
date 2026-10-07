@@ -115,15 +115,15 @@ const actionButtons = (appointment) => {
   if (status === "pending") {
     return `
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="btn btn-ghost btn-sm" data-action="confirm" data-id="${appointment._id}">Confirm</button>
-        <button class="btn btn-ghost btn-sm" data-action="cancel" data-id="${appointment._id}">Cancel</button>
+        <button class="btn btn-ghost btn-sm" data-action="confirm" data-id="${appointment._id}" style="color:var(--green)">Confirm</button>
+        <button class="btn btn-outline btn-sm" data-action="cancel" data-id="${appointment._id}" style="color:#ef4444;border-color:#fca5a5">Cancel</button>
       </div>`;
   }
   if (status === "confirmed") {
     return `
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="btn btn-ghost btn-sm" data-action="complete" data-id="${appointment._id}">Complete</button>
-        <button class="btn btn-ghost btn-sm" data-action="cancel" data-id="${appointment._id}">Cancel</button>
+        <button class="btn btn-ghost btn-sm" data-action="complete" data-id="${appointment._id}" style="color:var(--blue)">Complete</button>
+        <button class="btn btn-outline btn-sm" data-action="cancel" data-id="${appointment._id}" style="color:#ef4444;border-color:#fca5a5">Cancel</button>
       </div>`;
   }
   if (status === "completed") {
@@ -294,8 +294,12 @@ const onTableAction = async (event) => {
       await updateAppointmentStatus(appointmentId, "completed");
       toast("Appointment marked completed", "success");
     } else if (action === "cancel") {
+      if (!window.confirm("Are you sure you want to cancel this appointment?")) {
+        button.disabled = false;
+        return;
+      }
       await cancelAppointment(appointmentId);
-      toast("Appointment cancelled", "success");
+      toast("Appointment cancelled successfully", "success");
     }
     await loadAppointments();
   } catch (error) {

@@ -13,39 +13,42 @@ const resetSuperAdmin = async () => {
     await mongoose.connect(mongoUri);
     console.log("Connected to MongoDB:", mongoUri);
 
-    const email = "super-admin@arogyaplus.com";
-    const password = "123456";
+    const emails = ["superadmin@arogyaplus.com", "super-admin@arogyaplus.com"];
+    const password = process.env.SUPER_ADMIN_PASSWORD || "Admin@12345";
 
-    let user = await User.findOne({ email });
+    for (const email of emails) {
+      let user = await User.findOne({ email });
 
-    if (user) {
-      console.log(`Resetting existing user: ${email}...`);
-      user.password = password; // Will be hashed by pre-save hook or manually
-      user.mfaEnabled = false;
-      user.totpVerified = false;
-      user.totpSecret = null;
-      user.isActive = true;
-      user.role = "super-admin";
-      await user.save();
-      console.log("✅ Super Admin account reset successfully!");
-    } else {
-      console.log(`Creating new Super Admin: ${email}...`);
-      user = await User.create({
-        name: "Super Admin",
-        email,
-        password,
-        role: "super-admin",
-        accessLevel: "full",
-        isActive: true,
-        mfaEnabled: false,
-        totpVerified: false,
-        totpSecret: null
-      });
-      console.log("✅ Super Admin account created successfully!");
+      if (user) {
+        console.log(`Resetting existing user: ${email}...`);
+        user.password = password; // Will be hashed by pre-save hook
+        user.mfaEnabled = false;
+        user.totpVerified = false;
+        user.totpSecret = null;
+        user.isActive = true;
+        user.role = "super-admin";
+        user.accessLevel = "full";
+        await user.save();
+        console.log(`✅ Super Admin account reset successfully: ${email}`);
+      } else {
+        console.log(`Creating new Super Admin: ${email}...`);
+        user = await User.create({
+          name: "Super Admin",
+          email,
+          password,
+          role: "super-admin",
+          accessLevel: "full",
+          isActive: true,
+          mfaEnabled: false,
+          totpVerified: false,
+          totpSecret: null
+        });
+        console.log(`✅ Super Admin account created successfully: ${email}`);
+      }
     }
 
     console.log(`\n==========================================`);
-    console.log(`📧 Email:    ${email}`);
+    console.log(`📧 Emails:   ${emails.join(", ")}`);
     console.log(`🔑 Password: ${password}`);
     console.log(`🛡️ 2FA:      Reset to OFF`);
     console.log(`==========================================\n`);

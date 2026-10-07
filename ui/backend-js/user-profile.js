@@ -259,13 +259,21 @@ window.openFamilyModal = () => {
     familyForm.reset();
     if (familyRelationshipInput) familyRelationshipInput.value = 'Other';
     familyModal.classList.remove('hidden');
+    familyModal.style.display = 'flex';
 };
 
 window.closeFamilyModal = () => {
     familyModal.classList.add('hidden');
+    familyModal.style.display = 'none';
     familyForm.reset();
     familyMemberIdInput.value = '';
 };
+
+if (familyModal) {
+    familyModal.addEventListener('click', (e) => {
+        if (e.target === familyModal) window.closeFamilyModal();
+    });
+}
 
 window.editFamilyMember = (memberId) => {
     const member = currentFamilyMembers.find(m => m._id === memberId);
@@ -288,6 +296,7 @@ window.editFamilyMember = (memberId) => {
     familyEmergencyInput.checked = Boolean(member.isEmergencyContact);
 
     familyModal.classList.remove('hidden');
+    familyModal.style.display = 'flex';
 };
 
 window.deleteFamilyMember = async (memberId, memberName) => {

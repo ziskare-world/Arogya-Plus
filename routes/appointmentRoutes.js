@@ -351,6 +351,50 @@ router.patch(
 );
 
 router.patch(
+  "/:id/cancel",
+  protect,
+  [param("id").isMongoId().withMessage("Valid appointment id is required")],
+  validateRequest,
+  asyncHandler(async (req, res) => {
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: "Appointment not found" });
+    }
+
+    const isOwner = appointment.patient && appointment.patient.toString() === req.user._id.toString();
+    const isDoctor = req.user.role === "doctor" && appointment.doctor && appointment.doctor.toString() === req.user._id.toString();
+    const isAdmin = ["admin", "super-admin"].includes(req.user.role);
+
+    if (!isOwner && !isDoctor && !isAdmin) {
+      return res.status(403).json({ success: false, message: "Access denied to cancel this appointment" });
+    }
+
+    appointment.status = "cancelled";
+    if (req.body.cancellationReason) {
+      appointment.cancellationReason = String(req.body.cancellationReason).trim();
+    }
+    await appointment.save();
+
+    try {
+      await notifyUser(appointment.patient, {
+        title: "Appointment Cancelled",
+        body: "Your appointment has been cancelled.",
+        url: "/user/appointments",
+        tag: "appointment-status"
+      });
+    } catch {
+      // Push error ignored
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Appointment cancelled successfully",
+      appointment
+    });
+  })
+);
+
+router.patch(
   "/:id/rating",
   protect,
   authorize("patient", "admin", "super-admin"),

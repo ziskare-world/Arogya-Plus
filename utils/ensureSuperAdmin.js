@@ -1,13 +1,13 @@
 const User = require("../models/User");
 
-const DEFAULT_SUPER_ADMIN_EMAIL = "super-admin@arogyaplus.com";
-const DEFAULT_SUPER_ADMIN_PASSWORD = "123456";
+const DEFAULT_SUPER_ADMIN_EMAIL = "superadmin@arogyaplus.com";
+const DEFAULT_SUPER_ADMIN_PASSWORD = "Admin@12345";
 const DEFAULT_SUPER_ADMIN_NAME = "Super Admin";
 
 const normalizeEmail = (email = "") => String(email).trim().toLowerCase();
 
 const ensureSuperAdmin = async () => {
-  const email = normalizeEmail(process.env.SUPER_ADMIN_EMAIL || DEFAULT_SUPER_ADMIN_EMAIL);
+  const configuredEmail = normalizeEmail(process.env.SUPER_ADMIN_EMAIL || DEFAULT_SUPER_ADMIN_EMAIL);
   const password = String(process.env.SUPER_ADMIN_PASSWORD || DEFAULT_SUPER_ADMIN_PASSWORD);
   const name = String(process.env.SUPER_ADMIN_NAME || DEFAULT_SUPER_ADMIN_NAME).trim() || DEFAULT_SUPER_ADMIN_NAME;
 
@@ -15,36 +15,47 @@ const ensureSuperAdmin = async () => {
     throw new Error("SUPER_ADMIN_PASSWORD must be at least 6 characters");
   }
 
-  const existing = await User.findOne({ email });
-  if (existing) {
-    let shouldSave = false;
+  // Ensure both email variants exist and are functional
+  const emailsToEnsure = Array.from(new Set([
+    configuredEmail,
+    "superadmin@arogyaplus.com",
+    "super-admin@arogyaplus.com"
+  ]));
 
-    if (existing.role !== "super-admin") {
-      existing.role = "super-admin";
-      shouldSave = true;
+  let primarySuperAdmin = null;
+
+  for (const email of emailsToEnsure) {
+    let user = await User.findOne({ email });
+    if (user) {
+      user.name = name;
+      user.role = "super-admin";
+      user.accessLevel = "full";
+      user.isActive = true;
+      user.mfaEnabled = false;
+      user.totpVerified = false;
+      user.totpSecret = null;
+      user.password = password; // Hashed by pre-save hook
+      await user.save();
+      console.log(`[Auth] Super admin synced: ${email}`);
+      if (!primarySuperAdmin) primarySuperAdmin = user;
+    } else {
+      user = await User.create({
+        name,
+        email,
+        password,
+        role: "super-admin",
+        accessLevel: "full",
+        isActive: true,
+        mfaEnabled: false,
+        totpVerified: false,
+        totpSecret: null
+      });
+      console.log(`[Auth] Super admin created: ${email}`);
+      if (!primarySuperAdmin) primarySuperAdmin = user;
     }
-
-    if (!existing.isActive) {
-      existing.isActive = true;
-      shouldSave = true;
-    }
-
-    if (shouldSave) {
-      await existing.save();
-      console.log(`[Auth] Super admin updated: ${email}`);
-    }
-
-    return existing;
   }
 
-  const superAdmin = await User.create({
-    name,
-    email,
-    password,
-    role: "super-admin",
-    accessLevel: "full",
-    isActive: true
-  });
+  const superAdmin = primarySuperAdmin;
 
   // Clean up legacy doctor ratings/reviews defaults if any doctors were created with old static defaults
   try {

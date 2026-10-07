@@ -9,17 +9,9 @@ window.ArogyaRouting = (function () {
 
   async function calculateRoute(startLat, startLng, endLat, endLng) {
     try {
-      // Retrieve API key from public config (cached)
-      const configResp = await fetch('/api/public-config');
-      const configData = await configResp.json();
-      const apiKey = configData.openRouteServiceApiKey?.trim() || '';
-      const headers = { 'Content-Type': 'application/json' };
-      if (apiKey) {
-        headers['Authorization'] = apiKey;
-      }
       const response = await fetch('/api/map/route', {
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ startLat, startLng, endLat, endLng })
       });
 

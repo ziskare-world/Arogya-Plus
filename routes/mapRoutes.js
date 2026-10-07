@@ -729,29 +729,25 @@ router.get("/nearby", async (req, res) => {
 
 /**
  * @route POST /api/map/route
- * @desc Calculate driving route, distance, ETA, and alternative routes via OSRM / OpenRouteService
+ * @desc Calculate driving route, distance, ETA, and alternative routes via OSRM / Geodesic fallback
  */
 router.post("/route", async (req, res) => {
   try {
     const { startLat, startLng, endLat, endLng } = req.body;
 
-    if (!startLat || !startLng || !endLat || !endLng) {
-      return res.status(400).json({ success: false, error: "startLat, startLng, endLat, endLng are required" });
+    const sLat = parseFloat(startLat);
+    const sLng = parseFloat(startLng);
+    const eLat = parseFloat(endLat);
+    const eLng = parseFloat(endLng);
+
+    if (isNaN(sLat) || isNaN(sLng) || isNaN(eLat) || isNaN(eLng)) {
+      return res.status(400).json({ success: false, error: "Valid startLat, startLng, endLat, endLng are required" });
     }
 
     const orsApiKey = String(process.env.OPENROUTESERVICE_API_KEY || "").trim();
 
-    // Validate OpenRouteService API key presence
-    if (!orsApiKey) {
-      console.error("[OpenRouteService] API key missing. Set OPENROUTESERVICE_API_KEY environment variable.");
-      return res.status(401).json({
-        success: false,
-        error: "OpenRouteService API key is required. Please configure the OPENROUTESERVICE_API_KEY environment variable."
-      });
-    }
-
-    // Try OpenRouteService API first if key available
-    if (orsApiKey) {
+    // 1. Try OpenRouteService if a real custom API key is explicitly configured
+    if (orsApiKey && !orsApiKey.startsWith("your_") && orsApiKey.length > 20 && !orsApiKey.startsWith("eyJvcmciOiI1YjNjZTM")) {
       try {
         const orsUrl = "https://api.openrouteservice.org/v2/directions/driving-car/geojson";
         const orsResponse = await fetch(orsUrl, {
@@ -761,8 +757,9 @@ router.post("/route", async (req, res) => {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            coordinates: [[parseFloat(startLng), parseFloat(startLat)], [parseFloat(endLng), parseFloat(endLat)]]
-          })
+            coordinates: [[sLng, sLat], [eLng, eLat]]
+          }),
+          signal: AbortSignal.timeout(3000)
         });
 
         if (orsResponse.ok) {
@@ -787,62 +784,69 @@ router.post("/route", async (req, res) => {
             });
           }
         }
-      } catch (orsErr) {
-        console.warn("OpenRouteService API fallback to OSRM:", orsErr.message);
+      } catch {
+        // Silently proceed to OSRM / Geodesic fallback without console spam
       }
     }
 
-    // Free OSRM Public Router API Fallback
-    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson&steps=true&alternatives=true`;
-
-    const response = await fetch(osrmUrl);
-    if (!response.ok) {
-      // Calculate straight-line fallback route if OSRM is unreachable
-      const distanceKm = calculateHaversineDistance(startLat, startLng, endLat, endLng);
-      const etaMinutes = Math.max(2, Math.round((distanceKm / 35) * 60)); // assume 35 km/h avg speed
-
-      return res.json({
-        success: true,
-        fallback: true,
-        distanceKm: parseFloat(distanceKm.toFixed(2)),
-        distanceMeters: Math.round(distanceKm * 1000),
-        etaMinutes: etaMinutes,
-        etaSeconds: etaMinutes * 60,
-        geometry: {
-          type: "LineString",
-          coordinates: [[startLng, startLat], [endLng, endLat]]
-        },
-        alternatives: []
+    // 2. Free Public OSRM Router API (zero key needed, fast driving route)
+    try {
+      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${sLng},${sLat};${eLng},${eLat}?overview=full&geometries=geojson&steps=true&alternatives=true`;
+      const response = await fetch(osrmUrl, {
+        headers: { "User-Agent": "ArogyaPlus-Healthcare/1.0" },
+        signal: AbortSignal.timeout(4000)
       });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.routes && data.routes.length > 0) {
+          const primaryRoute = data.routes[0];
+          const distanceMeters = primaryRoute.distance;
+          const durationSeconds = primaryRoute.duration;
+          const distanceKm = parseFloat((distanceMeters / 1000).toFixed(2));
+          const etaMinutes = Math.max(1, Math.round(durationSeconds / 60));
+
+          const alternatives = (data.routes.slice(1) || []).map((r, index) => ({
+            id: index + 1,
+            distanceKm: parseFloat((r.distance / 1000).toFixed(2)),
+            etaMinutes: Math.max(1, Math.round(r.duration / 60)),
+            geometry: r.geometry
+          }));
+
+          return res.json({
+            success: true,
+            provider: "OSRM",
+            distanceKm,
+            distanceMeters,
+            etaMinutes,
+            etaSeconds: durationSeconds,
+            geometry: primaryRoute.geometry,
+            steps: primaryRoute.legs[0]?.steps || [],
+            alternatives
+          });
+        }
+      }
+    } catch {
+      // OSRM network error or timeout: seamlessly proceed to straight-line fallback
     }
 
-    const data = await response.json();
-    if (!data.routes || data.routes.length === 0) {
-      return res.status(404).json({ success: false, error: "No driving route found" });
-    }
+    // 3. Robust Geodesic Straight-Line Routing Fallback (100% offline & instantaneous)
+    const distanceKm = calculateHaversineDistance(sLat, sLng, eLat, eLng);
+    const etaMinutes = Math.max(2, Math.round((distanceKm / 35) * 60)); // assume 35 km/h avg speed
 
-    const primaryRoute = data.routes[0];
-    const distanceMeters = primaryRoute.distance;
-    const durationSeconds = primaryRoute.duration;
-    const distanceKm = parseFloat((distanceMeters / 1000).toFixed(2));
-    const etaMinutes = Math.max(1, Math.round(durationSeconds / 60));
-
-    const alternatives = data.routes.slice(1).map((r, index) => ({
-      id: index + 1,
-      distanceKm: parseFloat((r.distance / 1000).toFixed(2)),
-      etaMinutes: Math.max(1, Math.round(r.duration / 60)),
-      geometry: r.geometry
-    }));
-
-    res.json({
+    return res.json({
       success: true,
-      distanceKm,
-      distanceMeters,
-      etaMinutes,
-      etaSeconds: durationSeconds,
-      geometry: primaryRoute.geometry,
-      steps: primaryRoute.legs[0]?.steps || [],
-      alternatives
+      fallback: true,
+      provider: "HaversineGeodesic",
+      distanceKm: parseFloat(distanceKm.toFixed(2)),
+      distanceMeters: Math.round(distanceKm * 1000),
+      etaMinutes: etaMinutes,
+      etaSeconds: etaMinutes * 60,
+      geometry: {
+        type: "LineString",
+        coordinates: [[sLng, sLat], [eLng, eLat]]
+      },
+      alternatives: []
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

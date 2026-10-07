@@ -219,6 +219,7 @@ const autoMatchDoctor = async ({
   disease = "",
   specialty = "",
   patientCoordinates = null,
+  patientLocation = null,
   hospitalName = "",
   age = 30
 }) => {
@@ -238,7 +239,7 @@ const autoMatchDoctor = async ({
   }
 
   const doctors = await User.find(query).select(
-    "name email phone specialization hospital hospitalName clinicAddress clinicCoordinates consultationFee rating reviewCount experienceYears isAvailable"
+    "name email phone specialization hospital hospitalName hospitalAddress clinicAddress clinicCoordinates consultationFee rating reviewCount experienceYears isAvailable"
   );
 
   if (!doctors.length) {
@@ -298,11 +299,29 @@ const autoMatchDoctor = async ({
     let proximityScore = 70; // default neutral if no coords
     const docCoords = doctor.clinicCoordinates?.lat ? doctor.clinicCoordinates : null;
 
-    if (patientCoordinates && docCoords) {
+    const hasValidPatientCoords =
+      patientCoordinates &&
+      typeof patientCoordinates === "object" &&
+      Number.isFinite(Number(patientCoordinates.lat !== undefined ? patientCoordinates.lat : patientCoordinates.latitude)) &&
+      Number.isFinite(Number(patientCoordinates.lng !== undefined ? patientCoordinates.lng : patientCoordinates.longitude));
+
+    if (hasValidPatientCoords && docCoords) {
       distanceKm = haversineDistanceKm(patientCoordinates, docCoords);
       if (distanceKm !== null) {
         // Under 5km = 100, 5-15km = 80, 15-30km = 60, >30km = 40
         proximityScore = Math.max(20, Math.round(100 - distanceKm * 2));
+      }
+    } else if (patientLocation && typeof patientLocation === "object") {
+      // Check city or address match when GPS coordinates are not provided
+      const pCity = String(patientLocation.city || "").toLowerCase().trim();
+      const pAddr = String(patientLocation.address || "").toLowerCase().trim();
+      const dClinic = String(doctor.clinicAddress || "").toLowerCase();
+      const dHosp = String(doctor.hospitalName || "").toLowerCase();
+      const dHospAddr = String(doctor.hospitalAddress || "").toLowerCase();
+      if (pCity && (dClinic.includes(pCity) || dHosp.includes(pCity) || dHospAddr.includes(pCity))) {
+        proximityScore = 95;
+      } else if (pAddr && (dClinic.includes(pAddr) || dHosp.includes(pAddr) || dHospAddr.includes(pAddr))) {
+        proximityScore = 90;
       }
     }
 
@@ -327,6 +346,13 @@ const autoMatchDoctor = async ({
   }).sort((a, b) => b.matchScore - a.matchScore);
 
   const bestMatch = scoredDoctors[0];
+  const doctorDisplayName = /^dr\.?\s+/i.test(bestMatch.doctor.name) ? bestMatch.doctor.name : `Dr. ${bestMatch.doctor.name}`;
+
+  const locationHint = bestMatch.distanceKm !== null
+    ? `, and geographic proximity (${bestMatch.distanceKm} km)`
+    : patientLocation?.city
+    ? `, and regional coverage in ${patientLocation.city}`
+    : ", and regional clinic proximity";
 
   return {
     success: true,
@@ -336,7 +362,7 @@ const autoMatchDoctor = async ({
     distanceKm: bestMatch.distanceKm,
     targetSpecialty,
     triage: triageResult,
-    explanation: `Auto-selected ${bestMatch.doctor.name} (${bestMatch.doctor.specialization || targetSpecialty}) with a ${bestMatch.matchScore}% compatibility score based on clinical specialization, current clinic availability, and geographic proximity.`,
+    explanation: `Auto-selected ${doctorDisplayName} (${bestMatch.doctor.specialization || targetSpecialty}) with a ${bestMatch.matchScore}% compatibility score based on clinical specialization, current clinic availability${locationHint}.`,
     rankedCandidates: scoredDoctors.slice(0, 5).map((c) => ({
       id: c.doctor._id,
       name: c.doctor.name,

@@ -23,6 +23,45 @@ const generateAppointmentToken = () => {
   return `AI-APT-${timestamp}-${random}`;
 };
 
+const sanitizePatientLocation = (loc, fallbackUser = null, fallbackCoords = null) => {
+  const address = loc && typeof loc === "object" && typeof loc.address === "string" ? loc.address.trim() : (fallbackUser?.address || "");
+  const city = loc && typeof loc === "object" && typeof loc.city === "string" ? loc.city.trim() : (fallbackUser?.city || "");
+
+  const rawCoords = (loc && typeof loc === "object" && loc.coordinates) || fallbackCoords || fallbackUser?.coordinates;
+  let cleanCoords = undefined;
+  if (rawCoords && typeof rawCoords === "object") {
+    const lat = Number(rawCoords.lat !== undefined ? rawCoords.lat : rawCoords.latitude);
+    const lng = Number(rawCoords.lng !== undefined ? rawCoords.lng : rawCoords.longitude);
+    if (Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+      cleanCoords = { lat, lng };
+    }
+  }
+
+  const result = { address, city };
+  if (cleanCoords) {
+    result.coordinates = cleanCoords;
+  }
+  return result;
+};
+
+const sanitizePatientDetails = (details, fallbackUser = null, defaultAge = 30) => {
+  const name = (details && typeof details === "object" && details.name) || fallbackUser?.name || "Patient";
+  const relationship = (details && typeof details === "object" && details.relationship) || "Self";
+  const phone = (details && typeof details === "object" && details.phone) || fallbackUser?.phone || "";
+  const bloodGroup = (details && typeof details === "object" && details.bloodGroup) || fallbackUser?.bloodGroup || "Unknown";
+
+  const rawAge = (details && typeof details === "object" && details.age !== undefined) ? details.age : (fallbackUser?.age !== undefined ? fallbackUser.age : defaultAge);
+  const ageNum = Number(rawAge);
+  const age = Number.isFinite(ageNum) && ageNum >= 0 && ageNum <= 130 ? ageNum : undefined;
+
+  const rawGender = String((details && typeof details === "object" && details.gender) || fallbackUser?.gender || "other").trim().toLowerCase();
+  const gender = ["male", "female", "other"].includes(rawGender) ? rawGender : "other";
+
+  const result = { name, relationship, phone, bloodGroup, gender };
+  if (age !== undefined) result.age = age;
+  return result;
+};
+
 // ==========================================
 // 1. AI CLINICAL SYMPTOM & TRIAGE ANALYZER
 // ==========================================
@@ -31,8 +70,8 @@ router.post(
   protect,
   [
     body("symptoms").optional(),
-    body("disease").optional().isString(),
-    body("age").optional().isNumeric()
+    body("disease").optional({ nullable: true }).isString().withMessage("Disease must be a string"),
+    body("age").optional({ nullable: true }).isNumeric().withMessage("Age must be a number")
   ],
   validateRequest,
   asyncHandler(async (req, res) => {
@@ -54,13 +93,23 @@ router.post(
   protect,
   [
     body("symptoms").optional(),
-    body("disease").optional().isString(),
-    body("specialty").optional().isString(),
-    body("coordinates").optional().isObject(),
-    body("autoBook").optional().isBoolean(),
-    body("bookedFor").optional().isIn(["self", "family"]),
-    body("familyMemberId").optional(),
-    body("appointmentDate").optional()
+    body("disease").optional({ nullable: true }).isString().withMessage("Disease must be a string"),
+    body("specialty").optional({ nullable: true }).isString().withMessage("Specialty must be a string"),
+    body("coordinates").optional({ nullable: true, checkFalsy: true }).custom((val) => {
+      if (val === null || val === undefined || val === "") return true;
+      if (typeof val === "object") return true;
+      throw new Error("Coordinates must be an object or null");
+    }),
+    body("autoBook").optional({ nullable: true }).isBoolean().withMessage("autoBook must be a boolean"),
+    body("bookedFor").optional({ nullable: true }).isIn(["self", "family"]).withMessage("bookedFor must be self or family"),
+    body("familyMemberId").optional({ nullable: true }),
+    body("appointmentDate").optional({ nullable: true }),
+    body("locationType")
+      .optional({ nullable: true })
+      .isIn(["current", "remote_saved", "custom_remote", "hospital"])
+      .withMessage("Invalid locationType"),
+    body("patientLocation").optional({ nullable: true }),
+    body("patientDetails").optional({ nullable: true })
   ],
   validateRequest,
   asyncHandler(async (req, res) => {
@@ -88,6 +137,7 @@ router.post(
       disease,
       specialty,
       patientCoordinates: coordinates,
+      patientLocation,
       hospitalName,
       age
     });
@@ -106,6 +156,10 @@ router.post(
       const targetDate = appointmentDate ? new Date(appointmentDate) : new Date(Date.now() + 24 * 60 * 60 * 1000);
       const triage = matchResult.triage || analyzeSymptoms({ symptoms, disease, age });
 
+      const cleanDetails = sanitizePatientDetails(patientDetails, req.user, age);
+      const cleanLocation = sanitizePatientLocation(patientLocation, req.user, coordinates);
+      const cleanLocType = ["current", "remote_saved", "custom_remote", "hospital"].includes(locationType) ? locationType : "current";
+
       const appointment = await Appointment.create({
         patient: req.user._id,
         doctor: doctor._id,
@@ -118,18 +172,9 @@ router.post(
         status: "confirmed",
         bookedFor: bookedFor === "family" ? "family" : "self",
         familyMemberId: familyMemberId || null,
-        patientDetails: patientDetails || {
-          name: req.user.name,
-          phone: req.user.phone,
-          age,
-          gender: req.user.gender || "other"
-        },
-        locationType: locationType || "current",
-        patientLocation: patientLocation || {
-          address: req.user.address || "",
-          city: req.user.city || "",
-          coordinates: coordinates || null
-        },
+        patientDetails: cleanDetails,
+        locationType: cleanLocType,
+        patientLocation: cleanLocation,
         aiTriage: {
           symptoms: Array.isArray(symptoms) ? symptoms : [symptoms],
           predictedSpecialty: matchResult.targetSpecialty,
@@ -174,9 +219,13 @@ router.post(
   protect,
   [
     body("pickupLocation").trim().notEmpty().withMessage("Pickup location is required"),
-    body("pickupCoordinates").optional().isObject(),
-    body("priority").optional().isIn(["low", "medium", "high", "critical"]),
-    body("bookedFor").optional().isIn(["self", "family"])
+    body("pickupCoordinates").optional({ nullable: true, checkFalsy: true }).custom((val) => {
+      if (val === null || val === undefined || val === "") return true;
+      if (typeof val === "object") return true;
+      throw new Error("Pickup coordinates must be an object or null");
+    }),
+    body("priority").optional({ nullable: true }).isIn(["low", "medium", "high", "critical"]).withMessage("Priority must be low, medium, high, or critical"),
+    body("bookedFor").optional({ nullable: true }).isIn(["self", "family"]).withMessage("bookedFor must be self or family")
   ],
   validateRequest,
   asyncHandler(async (req, res) => {

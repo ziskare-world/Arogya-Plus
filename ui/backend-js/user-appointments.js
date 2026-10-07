@@ -547,32 +547,64 @@ const runAiDoctorMatch = async () => {
   aiMatchDoctorBtn.disabled = true;
   aiMatchDoctorBtn.innerHTML = "<span>🤖 Analyzing...</span>";
 
-  // Determine patient coordinates
+  // Determine patient coordinates and location
   let coords = null;
   const isFamily = targetFamilyRadio?.checked;
   const locMode = document.querySelector('input[name="location-mode"]:checked')?.value || "current";
 
+  let patientLoc = null;
   if (locMode === "remote_saved" && isFamily) {
     const member = getSelectedFamilyMember();
     if (member?.coordinates?.lat && member?.coordinates?.lng) {
       coords = member.coordinates;
     }
+    patientLoc = {
+      address: member?.address || "",
+      city: member?.city || "",
+      coordinates: coords || undefined
+    };
   } else if (locMode === "current") {
     coords = currentPatientCoords;
+    patientLoc = {
+      address: activeUser?.address || "",
+      city: activeUser?.city || "",
+      coordinates: coords || undefined
+    };
+  } else if (locMode === "custom_remote") {
+    const addr = customAddressInput?.value.trim() || "";
+    const city = customCityInput?.value.trim() || "";
+    patientLoc = {
+      address: addr,
+      city: city
+    };
   }
 
   const selectedMember = isFamily ? getSelectedFamilyMember() : null;
   const age = selectedMember?.age || activeUser?.age || 30;
 
   try {
+    const matchPayload = {
+      symptoms: symptoms.split(",").map((s) => s.trim()).filter(Boolean),
+      disease: symptoms,
+      age
+    };
+    if (coords && typeof coords === "object" && Number.isFinite(Number(coords.lat))) {
+      matchPayload.coordinates = coords;
+    }
+    if (locMode) {
+      matchPayload.locationType = locMode;
+    }
+    if (patientLoc) {
+      matchPayload.patientLocation = patientLoc;
+    }
+    if (isFamily && selectedMember) {
+      matchPayload.bookedFor = "family";
+      matchPayload.familyMemberId = selectedMember._id;
+    }
+
     const data = await apiRequest("/api/ai/auto-assign-doctor", {
       method: "POST",
-      body: JSON.stringify({
-        symptoms: symptoms.split(",").map((s) => s.trim()),
-        disease: symptoms,
-        coordinates: coords,
-        age
-      })
+      body: JSON.stringify(matchPayload)
     });
 
     lastAiTriage = data.triage || null;
@@ -580,7 +612,12 @@ const runAiDoctorMatch = async () => {
     if (data.success && data.matchedDoctor) {
       const doc = data.matchedDoctor;
       const score = data.matchScore || 95;
-      const dist = data.distanceKm !== null ? `${data.distanceKm} km away` : "Nearby";
+      const locDisplay = patientLoc?.city || patientLoc?.address || "";
+      const dist = data.distanceKm !== null
+        ? `${data.distanceKm} km away`
+        : locDisplay
+        ? `Location: ${locDisplay}`
+        : "Nearby";
       const urgency = data.triage?.urgencyLevel || "medium";
       const urgencyColor = urgency === "critical" ? "#dc2626" : urgency === "high" ? "#ea580c" : "#2563eb";
 
@@ -603,7 +640,7 @@ const runAiDoctorMatch = async () => {
             </div>
           </div>
           <div style="font-size:0.82rem;line-height:1.4;color:#475569;margin-bottom:8px">
-            ${data.explanation || `Auto-matched based on your condition and doctor's clinic availability.`}
+            ${data.explanation || `Auto-matched based on your condition and clinic availability.`}
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;padding-top:6px;border-top:1px dashed #cbd5e1">
             <span style="font-size:0.8rem;color:#64748b">📍 ${dist}</span>
@@ -624,7 +661,6 @@ const runAiDoctorMatch = async () => {
       }
 
       toast(`Matched ${matchedDoctorDisplayName} (${score}% match)`, "success");
-
     }
   } catch (error) {
     toast(error.message || "Failed to analyze symptoms", "error");
@@ -835,6 +871,15 @@ if (bookForm) {
       return;
     }
 
+    if (!doctorSelect?.value) {
+      toast("Please select a doctor to book the appointment", "warning");
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Confirm & Book Appointment";
+      }
+      return;
+    }
+
     const isFamily = targetFamilyRadio?.checked;
     const selectedMember = isFamily ? getSelectedFamilyMember() : null;
 
@@ -854,7 +899,7 @@ if (bookForm) {
       patientLocation = {
         address: selectedMember.address || "",
         city: selectedMember.city || "",
-        coordinates: selectedMember.coordinates || undefined
+        coordinates: selectedMember.coordinates && Number.isFinite(Number(selectedMember.coordinates.lat)) ? selectedMember.coordinates : undefined
       };
     } else if (locMode === "custom_remote") {
       patientLocation = {
@@ -865,30 +910,30 @@ if (bookForm) {
       patientLocation = {
         address: activeUser?.address || "",
         city: activeUser?.city || "",
-        coordinates: currentPatientCoords || undefined
+        coordinates: currentPatientCoords && Number.isFinite(Number(currentPatientCoords.lat)) ? currentPatientCoords : undefined
       };
     }
 
     const patientDetails = isFamily && selectedMember
       ? {
           name: selectedMember.name,
-          relationship: selectedMember.relationship,
-          age: selectedMember.age,
-          gender: selectedMember.gender,
-          bloodGroup: selectedMember.bloodGroup,
-          phone: selectedMember.phone
+          relationship: selectedMember.relationship || "Family",
+          age: Number.isFinite(Number(selectedMember.age)) ? Number(selectedMember.age) : undefined,
+          gender: ["male", "female", "other"].includes(String(selectedMember.gender || "").toLowerCase()) ? String(selectedMember.gender).toLowerCase() : "other",
+          bloodGroup: selectedMember.bloodGroup || undefined,
+          phone: selectedMember.phone || ""
         }
       : {
           name: activeUser?.name || "Self",
           relationship: "Self",
-          age: activeUser?.age,
-          gender: activeUser?.gender,
-          bloodGroup: activeUser?.bloodGroup,
-          phone: activeUser?.phone
+          age: Number.isFinite(Number(activeUser?.age)) ? Number(activeUser?.age) : undefined,
+          gender: ["male", "female", "other"].includes(String(activeUser?.gender || "").toLowerCase()) ? String(activeUser?.gender).toLowerCase() : "other",
+          bloodGroup: activeUser?.bloodGroup || undefined,
+          phone: activeUser?.phone || ""
         };
 
     const payload = {
-      doctorId: doctorSelect?.value || "",
+      doctorId: doctorSelect.value,
       appointmentDate: parsedDate.toISOString(),
       consultationType: consultationTypeSelect?.value || "in_person",
       reason: String(document.getElementById("appointment-reason")?.value || "").trim(),
@@ -900,7 +945,7 @@ if (bookForm) {
       patientLocation,
       aiTriage: lastAiTriage
         ? {
-            symptoms: aiSymptomInput?.value.split(",").map((s) => s.trim()).filter(Boolean),
+            symptoms: aiSymptomInput?.value ? aiSymptomInput.value.split(",").map((s) => s.trim()).filter(Boolean) : [],
             predictedSpecialty: lastAiTriage.predictedSpecialty,
             urgencyLevel: lastAiTriage.urgencyLevel,
             diagnosisHint: lastAiTriage.diagnosisHint,

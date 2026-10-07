@@ -178,15 +178,19 @@ router.patch(
   [
     body("name").optional().trim().notEmpty().withMessage("Name cannot be empty"),
     body("email").optional().isEmail().withMessage("Valid email is required").normalizeEmail(),
-    body("phone").optional().isString(),
-    body("age").optional().isNumeric().withMessage("Age must be a number"),
-    body("gender").optional().isIn(["male", "female", "other"]).withMessage("Invalid gender"),
-    body("bloodGroup").optional().isString(),
-    body("address").optional().isString(),
-    body("city").optional().isString(),
-    body("coordinates").optional().isObject(),
-    body("allergies").optional().isArray(),
-    body("medicalHistory").optional().isArray()
+    body("phone").optional({ nullable: true }).isString().withMessage("Phone must be a string"),
+    body("age").optional({ nullable: true }).isNumeric().withMessage("Age must be a number"),
+    body("gender").optional({ nullable: true }).isIn(["male", "female", "other"]).withMessage("Invalid gender"),
+    body("bloodGroup").optional({ nullable: true }).isString().withMessage("Blood group must be a string"),
+    body("address").optional({ nullable: true }).isString().withMessage("Address must be a string"),
+    body("city").optional({ nullable: true }).isString().withMessage("City must be a string"),
+    body("coordinates").optional({ nullable: true, checkFalsy: true }).custom((val) => {
+      if (val === null || val === undefined || val === "") return true;
+      if (typeof val === "object") return true;
+      throw new Error("Coordinates must be an object or null");
+    }),
+    body("allergies").optional({ nullable: true }).isArray().withMessage("Allergies must be an array"),
+    body("medicalHistory").optional({ nullable: true }).isArray().withMessage("Medical history must be an array")
   ],
   validateRequest,
   asyncHandler(async (req, res) => {
@@ -257,16 +261,20 @@ router.post(
   authorize("patient"),
   [
     body("name").trim().notEmpty().withMessage("Profile name is required"),
-    body("relationship").optional().isString(),
-    body("age").optional(),
-    body("gender").optional(),
-    body("bloodGroup").optional(),
-    body("phone").optional(),
-    body("address").optional(),
-    body("city").optional(),
-    body("coordinates").optional(),
-    body("medicalHistory").optional(),
-    body("allergies").optional()
+    body("relationship").optional({ nullable: true }).isString().withMessage("Relationship must be a string"),
+    body("age").optional({ nullable: true }).isNumeric().withMessage("Age must be a number"),
+    body("gender").optional({ nullable: true }).isIn(["male", "female", "other"]).withMessage("Invalid gender"),
+    body("bloodGroup").optional({ nullable: true }).isString().withMessage("Blood group must be a string"),
+    body("phone").optional({ nullable: true }).isString().withMessage("Phone must be a string"),
+    body("address").optional({ nullable: true }).isString().withMessage("Address must be a string"),
+    body("city").optional({ nullable: true }).isString().withMessage("City must be a string"),
+    body("coordinates").optional({ nullable: true, checkFalsy: true }).custom((val) => {
+      if (val === null || val === undefined || val === "") return true;
+      if (typeof val === "object") return true;
+      throw new Error("Coordinates must be an object or null");
+    }),
+    body("medicalHistory").optional({ nullable: true }).isArray().withMessage("Medical history must be an array"),
+    body("allergies").optional({ nullable: true }).isArray().withMessage("Allergies must be an array")
   ],
   validateRequest,
   asyncHandler(async (req, res) => {
@@ -342,7 +350,7 @@ router.put(
   [
     param("memberId").isMongoId().withMessage("Valid family member id required"),
     body("name").optional().trim().notEmpty().withMessage("Name cannot be empty"),
-    body("relationship").optional().isString()
+    body("relationship").optional({ nullable: true }).isString().withMessage("Relationship must be a string")
   ],
   validateRequest,
   asyncHandler(async (req, res) => {

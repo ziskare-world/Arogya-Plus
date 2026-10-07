@@ -287,14 +287,21 @@ router.post(
   authorize("patient", "admin", "super-admin"),
   [
     body("pickupLocation").trim().notEmpty().withMessage("Pickup location is required"),
-    body("problemDescription").optional().isString().withMessage("problemDescription must be a string"),
-    body("hospitalLocation").optional().isString(),
-    body("pickupCoordinates").optional().isObject().withMessage("pickupCoordinates must be an object"),
-    body("pickupCoordinates.lat").optional().isFloat({ min: -90, max: 90 }),
-    body("pickupCoordinates.lng").optional().isFloat({ min: -180, max: 180 }),
-    body("hospitalCoordinates").optional().isObject().withMessage("hospitalCoordinates must be an object"),
-    body("hospitalCoordinates.lat").optional().isFloat({ min: -90, max: 90 }),
-    body("hospitalCoordinates.lng").optional().isFloat({ min: -180, max: 180 })
+    body("hospitalLocation").optional({ nullable: true }).isString().withMessage("hospitalLocation must be a string"),
+    body("pickupCoordinates").optional({ nullable: true, checkFalsy: true }).custom((val) => {
+      if (val === null || val === undefined || val === "") return true;
+      if (typeof val === "object") return true;
+      throw new Error("pickupCoordinates must be an object or null");
+    }),
+    body("pickupCoordinates.lat").optional({ nullable: true }).isFloat({ min: -90, max: 90 }).withMessage("Latitude must be between -90 and 90"),
+    body("pickupCoordinates.lng").optional({ nullable: true }).isFloat({ min: -180, max: 180 }).withMessage("Longitude must be between -180 and 180"),
+    body("hospitalCoordinates").optional({ nullable: true, checkFalsy: true }).custom((val) => {
+      if (val === null || val === undefined || val === "") return true;
+      if (typeof val === "object") return true;
+      throw new Error("hospitalCoordinates must be an object or null");
+    }),
+    body("hospitalCoordinates.lat").optional({ nullable: true }).isFloat({ min: -90, max: 90 }).withMessage("Latitude must be between -90 and 90"),
+    body("hospitalCoordinates.lng").optional({ nullable: true }).isFloat({ min: -180, max: 180 }).withMessage("Longitude must be between -180 and 180")
   ],
   validateRequest,
   asyncHandler(async (req, res) => {

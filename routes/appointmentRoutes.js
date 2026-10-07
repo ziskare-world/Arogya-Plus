@@ -34,6 +34,45 @@ const normalizeConsultationType = (value, { reason = "", notes = "" } = {}) => {
   return "in_person";
 };
 
+const sanitizePatientLocation = (loc, fallbackUser = null) => {
+  const address = loc && typeof loc === "object" && typeof loc.address === "string" ? loc.address.trim() : (fallbackUser?.address || "");
+  const city = loc && typeof loc === "object" && typeof loc.city === "string" ? loc.city.trim() : (fallbackUser?.city || "");
+
+  const rawCoords = loc && typeof loc === "object" ? loc.coordinates : fallbackUser?.coordinates;
+  let cleanCoords = undefined;
+  if (rawCoords && typeof rawCoords === "object") {
+    const lat = Number(rawCoords.lat !== undefined ? rawCoords.lat : rawCoords.latitude);
+    const lng = Number(rawCoords.lng !== undefined ? rawCoords.lng : rawCoords.longitude);
+    if (Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+      cleanCoords = { lat, lng };
+    }
+  }
+
+  const result = { address, city };
+  if (cleanCoords) {
+    result.coordinates = cleanCoords;
+  }
+  return result;
+};
+
+const sanitizePatientDetails = (details, fallbackUser = null) => {
+  const name = (details && typeof details === "object" && details.name) || fallbackUser?.name || "Patient";
+  const relationship = (details && typeof details === "object" && details.relationship) || "Self";
+  const phone = (details && typeof details === "object" && details.phone) || fallbackUser?.phone || "";
+  const bloodGroup = (details && typeof details === "object" && details.bloodGroup) || fallbackUser?.bloodGroup || "Unknown";
+
+  const rawAge = details && typeof details === "object" && details.age !== undefined ? details.age : fallbackUser?.age;
+  const ageNum = Number(rawAge);
+  const age = Number.isFinite(ageNum) && ageNum >= 0 && ageNum <= 130 ? ageNum : undefined;
+
+  const rawGender = String((details && typeof details === "object" && details.gender) || fallbackUser?.gender || "other").trim().toLowerCase();
+  const gender = ["male", "female", "other"].includes(rawGender) ? rawGender : "other";
+
+  const result = { name, relationship, phone, bloodGroup, gender };
+  if (age !== undefined) result.age = age;
+  return result;
+};
+
 router.post(
   "/",
   protect,
@@ -43,9 +82,15 @@ router.post(
     body("appointmentDate").isISO8601().withMessage("Valid appointment date is required"),
     body("reason").trim().notEmpty().withMessage("Reason is required"),
     body("consultationType")
-      .optional()
+      .optional({ nullable: true })
       .isIn(["in_person", "video"])
-      .withMessage("consultationType must be in_person or video")
+      .withMessage("consultationType must be in_person or video"),
+    body("locationType")
+      .optional({ nullable: true })
+      .isIn(["current", "remote_saved", "custom_remote", "hospital"])
+      .withMessage("Invalid locationType"),
+    body("patientLocation").optional({ nullable: true }),
+    body("patientDetails").optional({ nullable: true })
   ],
   validateRequest,
   asyncHandler(async (req, res) => {
@@ -68,6 +113,10 @@ router.post(
       return res.status(404).json({ success: false, message: "Doctor not found" });
     }
 
+    const cleanLocation = sanitizePatientLocation(patientLocation, req.user);
+    const cleanDetails = sanitizePatientDetails(patientDetails, req.user);
+    const cleanLocType = ["current", "remote_saved", "custom_remote", "hospital"].includes(locationType) ? locationType : "current";
+
     const appointment = await Appointment.create({
       patient: req.user._id,
       doctor: doctor._id,
@@ -79,15 +128,9 @@ router.post(
       notes,
       bookedFor: bookedFor === "family" ? "family" : "self",
       familyMemberId: familyMemberId || null,
-      patientDetails: patientDetails || {
-        name: req.user.name,
-        phone: req.user.phone
-      },
-      locationType: locationType || "current",
-      patientLocation: patientLocation || {
-        address: req.user.address || "",
-        city: req.user.city || ""
-      },
+      patientDetails: cleanDetails,
+      locationType: cleanLocType,
+      patientLocation: cleanLocation,
       aiTriage: aiTriage || undefined,
       tokenNumber: generateAppointmentToken()
     });
@@ -148,7 +191,7 @@ router.get(
   "/",
   protect,
   authorize("admin", "super-admin"),
-  [query("status").optional().isIn(["pending", "confirmed", "completed", "cancelled"])],
+  [query("status").optional({ nullable: true }).isIn(["pending", "confirmed", "completed", "cancelled"]).withMessage("Invalid status filter")],
   validateRequest,
   asyncHandler(async (req, res) => {
     const filter = {};
